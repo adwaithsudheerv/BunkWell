@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -13,6 +14,7 @@ import SubjectsPage from './pages/SubjectsPage';
 import ProfilePage from './pages/ProfilePage';
 import TodayPage from './pages/TodayPage';
 import OfflineBanner from './components/OfflineBanner';
+import { autoInitializeNotifications } from './lib/nativeNotifications';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -34,6 +36,11 @@ function PublicRoute({ children }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    // Automatically enable native notification channels and permissions on install & startup
+    autoInitializeNotifications();
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>

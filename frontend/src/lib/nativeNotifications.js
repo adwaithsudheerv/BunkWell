@@ -1,6 +1,38 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 
+export async function autoInitializeNotifications() {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      // 1. Create channel unconditionally
+      await LocalNotifications.createChannel({
+        id: 'bunkclub_alerts',
+        name: 'BunkClub Attendance & Class Alerts',
+        description: 'Daily morning schedules, period check-ins and bunk alerts',
+        importance: 5,
+        visibility: 1,
+        vibration: true
+      });
+
+      // 2. Request / verify permission automatically on install/launch
+      const check = await LocalNotifications.checkPermissions();
+      if (check.display !== 'granted') {
+        await LocalNotifications.requestPermissions();
+      }
+      return true;
+    } catch (e) {
+      console.warn('Native auto-notif initialization error:', e);
+    }
+  } else if ('Notification' in window) {
+    if (Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch (e) {}
+    }
+  }
+  return false;
+}
+
 export async function requestNotificationPermissions() {
   if (Capacitor.isNativePlatform()) {
     try {

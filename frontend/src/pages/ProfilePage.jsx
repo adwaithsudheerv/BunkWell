@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { User, Bell, BellOff, Settings, Save, Shield, CheckCircle2, Lock, Sparkles } from 'lucide-react';
-import { sendInstantTestNotification, requestNotificationPermissions } from '../lib/nativeNotifications';
+import { sendInstantTestNotification, requestNotificationPermissions, autoInitializeNotifications } from '../lib/nativeNotifications';
 
 const FALLBACK_VAPID_PUB = 'BEvkdILThIec0RXS_ytPKEww_lzbOWPHAW3ID17xahKDSq6TzD_yo4zMy6CTsYHox3iszF_bOYndmG_nBGXbfwQ';
 
@@ -33,8 +33,12 @@ export default function ProfilePage() {
   const [vapidKey, setVapidKey] = useState(FALLBACK_VAPID_PUB);
 
   useEffect(() => {
+    // Automatically initialize native notification channels and permissions
+    autoInitializeNotifications();
+
     const supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
     setNotifSupported(supported);
+    setNotifGranted(true);
 
     // Fetch VAPID Key with fallback
     api.get('/notifications/vapid-key')
@@ -43,18 +47,22 @@ export default function ProfilePage() {
       })
       .catch(() => {});
 
-    // Check existing push subscription
-    if (supported) {
-      navigator.serviceWorker.ready.then(reg => {
-        reg.pushManager.getSubscription().then(sub => {
-          if (sub && Notification.permission === 'granted') {
-            setNotifGranted(true);
-            api.post('/notifications/subscribe', { subscription: sub.toJSON() }).catch(() => {});
-          } else {
-            setNotifGranted(false);
+    // Automatically ensure push subscription without user prompt
+    if (supported && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(async reg => {
+        try {
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub && vapidKey) {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(vapidKey || FALLBACK_VAPID_PUB),
+            });
           }
-        });
-      }).catch(() => setNotifGranted(false));
+          if (sub) {
+            api.post('/notifications/subscribe', { subscription: sub.toJSON() }).catch(() => {});
+          }
+        } catch (e) {}
+      }).catch(() => {});
     }
   }, []);
 
@@ -221,39 +229,27 @@ export default function ProfilePage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <Bell size={16} className="text-blue-500" /> Daily Push & Class Notifications
+              <Bell size={16} className="text-blue-500" /> 24/7 Smart Notifications
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Receive 7:00 AM morning prompt ("Do you have class today?") and 6:00 PM evening check-ins.
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              Notifications are automatically activated upon installation. You'll receive morning 7:00 AM class briefs, 10-minute upcoming period alerts, and 6:00 PM attendance check-ins.
             </p>
           </div>
-          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
-            notifGranted
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-              : 'bg-white/5 border-white/10 text-slate-400'
-          }`}>
-            {notifGranted ? '✓ Enabled' : 'Not Enabled'}
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 whitespace-nowrap flex items-center gap-1.5 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Auto-Enabled
           </span>
         </div>
 
         <div className="flex flex-wrap gap-2 pt-1">
-          {!notifGranted ? (
-            <button
-              onClick={enableNotifications}
-              disabled={subscribing}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25 active:scale-95 disabled:opacity-50"
-            >
-              {subscribing ? 'Enabling...' : 'Enable Notifications'}
-            </button>
-          ) : (
-            <button
-              onClick={testNotification}
-              disabled={subscribing}
-              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-all border border-white/10 active:scale-95 disabled:opacity-50"
-            >
-              {subscribing ? 'Sending...' : 'Send Test Notification'}
-            </button>
-          )}
+          <button
+            onClick={testNotification}
+            disabled={subscribing}
+            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25 active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+          >
+            <Bell size={13} />
+            {subscribing ? 'Sending...' : 'Send Test Notification'}
+          </button>
         </div>
       </div>
 
