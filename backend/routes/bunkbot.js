@@ -5,6 +5,8 @@ const Timetable = require('../models/Timetable');
 const https = require('https');
 const router = express.Router();
 
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 router.post('/chat', auth, async (req, res) => {
   try {
     const { message, history = [], day: clientDay, date: clientDate, timezone: clientTz } = req.body;
@@ -16,63 +18,55 @@ router.post('/chat', auth, async (req, res) => {
     const q = cleanMsg.toLowerCase();
 
     const target = req.user.attendanceTarget || 80;
-    const semesterMonths = req.user.semesterMonths || 6;
-    const monthsElapsed = req.user.monthsElapsed || 2;
-    const monthsRemaining = Math.max(0, semesterMonths - monthsElapsed);
-    const cycleType = semesterMonths <= 3 ? 'Trimester' : semesterMonths >= 9 ? 'Academic Year' : 'Semester';
-
-    // 1. Determine local day of student (avoid UTC mismatch on Render)
     const tz = clientTz || 'Asia/Kolkata';
+
+    // 1. Resolve student's local day
     let today = clientDay;
     if (!today) {
       try {
         today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: tz }).format(new Date());
       } catch (e) {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        today = days[new Date().getDay()];
+        today = WEEKDAYS[new Date().getDay()];
+      }
+    }
+    const curDayIdx = WEEKDAYS.findIndex(d => d.toLowerCase() === today.toLowerCase());
+
+    // 2. Detect which day the user is asking about (today, tomorrow, day after tomorrow, or specific weekday)
+    let targetDay = today;
+    let dayLabel = 'today';
+
+    if (q.includes('day after tomorrow') || q.includes('day after 2mrw') || q.includes('day after tmrw')) {
+      targetDay = WEEKDAYS[(curDayIdx + 2) % 7];
+      dayLabel = `day after tomorrow (${targetDay})`;
+    } else if (q.includes('tomorrow') || q.includes('tomorow') || q.includes('2mrw') || q.includes('tmrw')) {
+      targetDay = WEEKDAYS[(curDayIdx + 1) % 7];
+      dayLabel = `tomorrow (${targetDay})`;
+    } else {
+      for (const d of WEEKDAYS) {
+        if (q.includes(d.toLowerCase())) {
+          targetDay = d;
+          dayLabel = d;
+          break;
+        }
       }
     }
 
-    // 2. Fetch student subjects and active timetable
+    // 3. Fetch student subjects and timetable
     const subjects = await Subject.find({ userId: req.user._id, isActive: true });
     const timetable = await Timetable.findOne({ userId: req.user._id, isActive: true })
       .populate('days.periods.subjectId');
 
-    const todaySchedule = timetable?.days?.find(d => d.day.toLowerCase() === today.toLowerCase());
-
-    // 3. High-Precision Mathematical Bunk Calculation
-    // Formula for safe bunks:
-    // Attended / (Total + B) >= (target / 100)
-    // => B <= (Attended / (target / 100)) - Total
+    // 4. Exact Mathematical Safe Bunk Calculation for every subject
+    // Formula: Attended / (Total + B) >= (target / 100) => B <= (Attended / (target / 100)) - Total
     const subjectStats = subjects.map(s => {
       const total = s.totalClasses || 0;
       const attended = s.attendedClasses || 0;
       const pct = total > 0 ? (attended / total) * 100 : 100;
-
-      // Exact mathematical safe bunks
       const safeBunks = Math.max(0, Math.floor((attended / (target / 100)) - total));
       const needMore = pct < target ? Math.ceil(((target / 100) * total - attended) / (1 - (target / 100))) : 0;
 
-      // Count weekly frequency in timetable
-      let weeklyFreq = 0;
-      if (timetable && timetable.days) {
-        timetable.days.forEach(d => {
-          (d.periods || []).forEach(p => {
-            const pName = p.subjectName || p.subjectId?.name;
-            if (pName && pName.toLowerCase() === s.name.toLowerCase()) {
-              weeklyFreq++;
-            }
-          });
-        });
-      }
-
-      const remainingSemesterClasses = weeklyFreq * 4 * monthsRemaining;
-      const lifetimeTotal = total + remainingSemesterClasses;
-      const maxLifetimeBunks = Math.floor(lifetimeTotal * (1 - target / 100));
-      const usedBunks = Math.max(0, total - attended);
-      const futureBunksLeft = Math.max(0, maxLifetimeBunks - usedBunks);
-
       return {
+        _id: s._id,
         name: s.name,
         code: s.code || '',
         pct: parseFloat(pct.toFixed(1)),
@@ -80,25 +74,23 @@ router.post('/chat', auth, async (req, res) => {
         total,
         safeBunksRightNow: safeBunks,
         needToAttendNext: needMore,
-        weeklyClasses: weeklyFreq,
-        remainingSemesterClasses,
-        futureBunksRemainingAcrossSemester: futureBunksLeft,
         isSafe: pct >= target
       };
     });
 
     const totalBuffer = subjectStats.reduce((acc, s) => acc + s.safeBunksRightNow, 0);
-    const atRiskSubjects = subjectStats.filter(s => !s.isSafe);
-    const safeSubjects = subjectStats.filter(s => s.isSafe && s.safeBunksRightNow > 0);
 
-    // 4. Period-by-Period Simulation for Today's Timetable
-    const todayPeriods = todaySchedule?.periods || [];
-    const periodBreakdown = todayPeriods.map(p => {
+    // 5. Simulate exact periods scheduled for targetDay
+    const targetSchedule = timetable?.days?.find(d => d.day.toLowerCase() === targetDay.toLowerCase());
+    const targetPeriods = targetSchedule?.periods || [];
+
+    const periodBreakdown = targetPeriods.map(p => {
       const pNum = p.periodNumber;
       const subName = p.subjectName || p.subjectId?.name || `Period ${pNum}`;
       const subStat = subjectStats.find(s =>
         s.name.toLowerCase() === subName.toLowerCase() ||
-        (p.subjectId?._id && String(p.subjectId._id) === String(s._id))
+        (p.subjectId?._id && String(p.subjectId._id) === String(s._id)) ||
+        (p.subjectId && String(p.subjectId) === String(s._id))
       );
 
       if (!subStat) {
@@ -131,33 +123,75 @@ router.post('/chat', auth, async (req, res) => {
       };
     });
 
-    const safePeriodsToday = periodBreakdown.filter(p => p.canBunk);
-    const mustAttendPeriodsToday = periodBreakdown.filter(p => !p.canBunk);
+    const safePeriods = periodBreakdown.filter(p => p.canBunk);
+    const mustAttendPeriods = periodBreakdown.filter(p => !p.canBunk);
 
-    const timetableSummaryText = periodBreakdown.length > 0
-      ? periodBreakdown.map(p =>
-          `• Period ${p.periodNumber}: ${p.subjectName} — Current: ${p.currentPct}% (${p.attended}/${p.total} classes)\n` +
-          `  ↳ If bunked today: drops to ${p.afterBunkPct}% ➔ ${p.canBunk ? `SAFE TO BUNK ✅ (${p.safeBunks} safe bunks)` : `MUST ATTEND ❌ (drops below ${target}%)`}`
-        ).join('\n')
-      : `No classes scheduled in timetable for ${today}.`;
+    // Formulate top-level Yes / No verdict
+    let verdict = 'NO';
+    if (periodBreakdown.length === 0) {
+      verdict = `YES (No classes scheduled on ${targetDay}! 🎉)`;
+    } else if (mustAttendPeriods.length === 0) {
+      verdict = 'YES';
+    } else if (safePeriods.length > 0) {
+      verdict = 'YES, PARTIALLY (Only for specific safe subjects)';
+    } else {
+      verdict = 'NO';
+    }
 
-    // 5. System Prompt with Precise Student Context
-    const systemPrompt = `You are BunkBot, a classy, witty, and savage college attendance strategist for BunkClub.
-Your personality: You are like a super smart, stylish, street-smart college senior who gives funny, classy roasts when students ask silly questions, complain, or have borderline attendance. But you ALWAYS back it up with razor-sharp mathematical attendance precision.
-When the student asks whether they can safely bunk today, give a clear, direct, period-by-period answer based on their timetable schedule!
+    // Direct structured builder
+    function buildDirectBunkAnswer() {
+      if (periodBreakdown.length === 0) {
+        return `**YES**\n\nYou have **no classes scheduled** on ${dayLabel}. You are completely free to take the day off! 🎉`;
+      }
 
-Student's Live Context:
-- Today is: ${today}
-- Attendance Target: ${target}%
-- Academic Cycle: ${semesterMonths} months total (${cycleType}, ${monthsElapsed} months elapsed, ${monthsRemaining} months remaining)
-- Total Safe Bunk Buffer across all subjects: ${totalBuffer} classes
-- Today's (${today}) Schedule Simulation:
-${timetableSummaryText}
+      let out = `**${verdict}**\n\n`;
 
-Today's Safe Periods to Bunk: ${safePeriodsToday.map(p => `P${p.periodNumber} (${p.subjectName})`).join(', ') || 'None (all are critical)'}
-Today's Critical Must-Attend Periods: ${mustAttendPeriodsToday.map(p => `P${p.periodNumber} (${p.subjectName})`).join(', ') || 'None (all are safe)'}
+      if (safePeriods.length > 0) {
+        out += `### ✅ Subjects you CAN bunk (${dayLabel}):\n`;
+        out += safePeriods.map(p =>
+          `• **${p.subjectName}** (Period ${p.periodNumber}) — Currently **${p.currentPct}%** ➔ Drops to **${p.afterBunkPct}%** (${p.safeBunks} safe bunk${p.safeBunks === 1 ? '' : 's'} available)`
+        ).join('\n');
+        out += '\n\n';
+      } else {
+        out += `### ✅ Subjects you CAN bunk (${dayLabel}):\nNone. All classes require attendance right now.\n\n`;
+      }
 
-Subjects Overview: ${JSON.stringify(subjectStats.map(s => ({ name: s.name, pct: s.pct, safeBunks: s.safeBunksRightNow, needToAttend: s.needToAttendNext })))}`;
+      if (mustAttendPeriods.length > 0) {
+        out += `### ❌ Subjects you CANNOT bunk (Must Attend):\n`;
+        out += mustAttendPeriods.map(p =>
+          `• **${p.subjectName}** (Period ${p.periodNumber}) — Currently **${p.currentPct}%** ➔ Would drop to **${p.afterBunkPct}%** (below ${target}% target)`
+        ).join('\n');
+      } else {
+        out += `### ❌ Subjects you CANNOT bunk:\nNone. All scheduled periods are safe!`;
+      }
+
+      return out;
+    }
+
+    // 6. Check if user is asking about bunking
+    const isBunkQuestion = q.includes('bunk') || q.includes('skip') || q.includes('can i') ||
+                           q.includes('leave') || q.includes('miss') || q.includes('holiday');
+
+    // System prompt for natural conversational AI
+    const systemPrompt = `You are BunkBot, a direct, concise, and smart college attendance assistant for BunkClub.
+CRITICAL INSTRUCTIONS:
+1. When asked if the student can bunk (${dayLabel}), answer directly without long essays, preambles, or fluff:
+   - Start immediately with a clear bold verdict: "**YES**", "**NO**", or "**YES, PARTIALLY**".
+   - List "### ✅ Subjects you CAN bunk (${dayLabel}):" with period number, current percentage, and percentage after bunking.
+   - List "### ❌ Subjects you CANNOT bunk (Must Attend):" with period number, current percentage, and reason.
+2. If asked about tomorrow, analyze tomorrow's schedule (${WEEKDAYS[(curDayIdx + 1) % 7]}).
+3. If asked about day after tomorrow, analyze (${WEEKDAYS[(curDayIdx + 2) % 7]}).
+4. If asked general questions (e.g. attendance of a specific subject, total safe bunks, or simple greetings), answer directly and concisely in 1-3 sentences.
+5. Do NOT give long generic speeches, pre-scripted essays, or irrelevant lectures.
+
+Live Mathematical Context for ${dayLabel}:
+- Target Day: ${targetDay} (${dayLabel})
+- Student Target: ${target}%
+- Total Safe Bunks across all subjects: ${totalBuffer}
+- Calculated Verdict: ${verdict}
+- Periods CAN bunk: ${safePeriods.map(p => `P${p.periodNumber} (${p.subjectName}: ${p.currentPct}% -> ${p.afterBunkPct}%)`).join(', ') || 'None'}
+- Periods CANNOT bunk: ${mustAttendPeriods.map(p => `P${p.periodNumber} (${p.subjectName}: ${p.currentPct}% -> ${p.afterBunkPct}%)`).join(', ') || 'None'}
+- All Subjects: ${JSON.stringify(subjectStats.map(s => ({ name: s.name, pct: s.pct, safeBunks: s.safeBunksRightNow })))}`;
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -165,12 +199,12 @@ Subjects Overview: ${JSON.stringify(subjectStats.map(s => ({ name: s.name, pct: 
       { role: 'user', content: cleanMsg }
     ];
 
-    // 6. Try High-Speed Generative AI (Pollinations OpenAI engine)
+    // 7. Try Generative LLM
     try {
       const postData = JSON.stringify({
         messages,
         model: 'openai',
-        temperature: 0.75
+        temperature: 0.6
       });
 
       const aiReply = await new Promise((resolve, reject) => {
@@ -182,7 +216,7 @@ Subjects Overview: ${JSON.stringify(subjectStats.map(s => ({ name: s.name, pct: 
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(postData)
           },
-          timeout: 9000
+          timeout: 8000
         }, res => {
           let body = '';
           res.on('data', chunk => body += chunk);
@@ -215,54 +249,37 @@ Subjects Overview: ${JSON.stringify(subjectStats.map(s => ({ name: s.name, pct: 
       });
 
     } catch (aiErr) {
-      console.warn('Generative AI fallback to Timetable & Bunk Analytics Engine:', aiErr.message);
+      console.warn('AI fallback to deterministic engine:', aiErr.message);
 
-      // 7. Deterministic High-Precision Timetable & Bunk Analytics Engine
-      let reply = '';
+      // 8. Deterministic Direct Engine (Zero latency, direct Yes/No breakdown)
+      if (isBunkQuestion) {
+        return res.json({
+          reply: buildDirectBunkAnswer(),
+          provider: 'BunkBot AI'
+        });
+      }
 
-      const isAskingTodayBunk = q.includes('today') || q.includes('bunk') || q.includes('skip') ||
-                               q.includes('period') || q.includes('class') || q.includes('safe') ||
-                               q.includes('can i');
+      // Specific subject inquiries
+      const foundSub = subjectStats.find(s => q.includes(s.name.toLowerCase()));
+      if (foundSub) {
+        const reply = `**${foundSub.name}**:\n` +
+          `• Current Attendance: **${foundSub.pct}%** (${foundSub.attended}/${foundSub.total} classes)\n` +
+          `• Safe Cushion: **${foundSub.safeBunksRightNow} safe bunks**\n` +
+          (foundSub.safeBunksRightNow > 0
+            ? `Verdict: **Safe to bunk** without dropping below your ${target}% target.`
+            : `Verdict: **Must attend** (need +${foundSub.needToAttendNext} class${foundSub.needToAttendNext === 1 ? '' : 'es'} to reach ${target}%).`);
+        return res.json({ reply, provider: 'BunkBot AI' });
+      }
 
-      if (isAskingTodayBunk && periodBreakdown.length > 0) {
-        reply = `Here is your exact timetable bunk analysis for today (**${today}**) targeting **${target}%**:\n\n` +
-          `### 📅 Today's Period Breakdown:\n` +
-          periodBreakdown.map(p => {
-            if (p.canBunk) {
-              return `• **Period ${p.periodNumber}: ${p.subjectName}** — Current: **${p.currentPct}%** (${p.attended}/${p.total})\n` +
-                     `  ↳ If bunked today: drops to **${p.afterBunkPct}%** ➔ **SAFE TO BUNK ✅** (${p.safeBunks} safe bunks left)`;
-            } else {
-              return `• **Period ${p.periodNumber}: ${p.subjectName}** — Current: **${p.currentPct}%** (${p.attended}/${p.total})\n` +
-                     `  ↳ If bunked today: drops to **${p.afterBunkPct}%** ➔ **MUST ATTEND ❌** (would fall below ${target}%)`;
-            }
-          }).join('\n\n') +
-          `\n\n### 🎯 BunkBot Verdict:\n` +
-          (safePeriodsToday.length > 0
-            ? `You can easily and safely bunk **${safePeriodsToday.map(p => `Period ${p.periodNumber} (${p.subjectName})`).join(' or ')}** today! Enjoy your break guilt-free. ☕✨\n\n` +
-              (mustAttendPeriodsToday.length > 0
-                ? `⚠️ **Strictly attend:** ${mustAttendPeriodsToday.map(p => `**Period ${p.periodNumber} (${p.subjectName})**`).join(', ')} so your percentage stays above ${target}%.`
-                : `All your periods today have safe cushion!`)
-            : `⚠️ **Warning:** None of today's periods have a safe bunk cushion right now. You need to attend today's classes to build your buffer before taking time off! 📚`);
-      } else if (isAskingTodayBunk && periodBreakdown.length === 0) {
-        reply = `Looking at your timetable for **${today}**, you have **no scheduled classes** today! 🎉\n\n` +
-          `You have a total of **${totalBuffer} safe bunks** accumulated across your registered subjects for the rest of the week.`;
-      } else if (q.includes('are you mad') || q.includes('crazy') || q.includes('stupid') || q.includes('shut up')) {
-        reply = `Me, mad? 💀 Darling, your attendance target is **${target}%**, you currently have **${totalBuffer} safe bunks** in reserve, and you're questioning MY mental stability?\n\n` +
-          `I'm doing calculus so you don't end up detained by your HOD. Sit down, sip your coffee, and let's calculate your schedule like civilized scholars. 💅`;
-      } else if (q.includes('hi') || q.includes('hello') || q.includes('hey')) {
-        reply = `Hey there! 👋 I'm locked into your **${today}** schedule and your **${target}% attendance target**.\n\n` +
-          `Today you have **${periodBreakdown.length} classes scheduled**, and you have **${totalBuffer} safe bunks** across all subjects.\n\n` +
-          `Want to know which specific period you can skip today, or plan a long weekend?`;
-      } else {
-        reply = `Here is your current academic summary for **${today}**:\n\n` +
-          `• **Attendance Target:** ${target}%\n` +
-          `• **Immediate Safe Cushion:** **${totalBuffer} classes** total\n` +
-          `• **Today's Classes:** ${periodBreakdown.length} periods scheduled\n\n` +
-          `You can ask me: *"Can I safely bunk Period 1 today?"*, *"Which classes can I skip today?"*, or *"Show my semester forecast"*.`;
+      if (q.includes('hi') || q.includes('hello') || q.includes('hey')) {
+        return res.json({
+          reply: `Hey! I'm ready. Ask me: *"Can I bunk today?"*, *"Can I bunk tomorrow?"*, or check any specific subject.`,
+          provider: 'BunkBot AI'
+        });
       }
 
       return res.json({
-        reply,
+        reply: `You currently have **${totalBuffer} safe bunks** in total across your subjects (Target: ${target}%).\n\nAsk me *"Can I bunk today?"* or *"Can I bunk tomorrow?"* for an exact subject breakdown!`,
         provider: 'BunkBot AI'
       });
     }
