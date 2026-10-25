@@ -89,22 +89,12 @@ export default function RegisterPage() {
         {/* Subtle glass highlight stripe */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Logo & Brand Header */}
+        {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/20">
-            <img
-              src="/logo-emblem.png"
-              alt="BunkClub Logo"
-              className="w-9 h-9 object-contain drop-shadow"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          </div>
-          <h1 className="text-2xl font-black tracking-tight text-white">
-            Create Account
+          <h1 className="bunkclub-brand text-3xl sm:text-4xl font-black tracking-tight text-white flex items-center justify-center">
+            <span>Bunk</span><span className="text-blue-500">Club</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-400 mt-1.5 tracking-wide uppercase font-semibold">
             Sign up with just a username & password
           </p>
         </div>

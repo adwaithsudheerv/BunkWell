@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+.bunkclub-brand {
+  font-family: 'Syne', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.035em;
+  font-weight: 900;
+}
+
 @layer reset, tokens, base, layout, components;
 
 @layer reset {

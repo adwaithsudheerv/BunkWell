@@ -59,12 +59,11 @@ export default function Layout() {
     <div className="flex flex-col h-full select-none">
       {/* Brand Header */}
       <div className={`flex items-center justify-between px-5 py-5 border-b ${isDark ? 'border-white/10' : 'border-[#e6e1d6]'}`}>
-        <Link to="/dashboard" className="flex items-center">
-          <img
-            src={isDark ? '/logo-white.png' : '/logo-dark.png'}
-            alt="BunkClub"
-            className="h-7 w-auto object-contain"
-          />
+        <Link to="/dashboard" className="flex items-center group">
+          <span className="bunkclub-brand text-2xl tracking-tight font-black select-none">
+            <span className={isDark ? "text-white" : "text-[#0a0a0c]"}>Bunk</span>
+            <span className="text-blue-500">Club</span>
+          </span>
         </Link>
         {/* Dark / Light Mode Toggle */}
         <button
@@ -189,11 +188,10 @@ export default function Layout() {
           }`}
         >
           <Link to="/dashboard" className="flex items-center">
-            <img
-              src={isDark ? '/logo-white.png' : '/logo-dark.png'}
-              alt="BunkClub"
-              className="h-7 w-auto object-contain"
-            />
+            <span className="bunkclub-brand text-2xl tracking-tight font-black select-none">
+              <span className={isDark ? "text-white" : "text-[#0a0a0c]"}>Bunk</span>
+              <span className="text-blue-500">Club</span>
+            </span>
           </Link>
           <div className="flex items-center gap-2">
             <button
