@@ -26,8 +26,13 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const login = async (identifier, password) => {
-    const res = await api.post('/auth/login', { identifier, password });
+  const checkUsername = async (username) => {
+    const res = await api.post('/auth/check-username', { username });
+    return res.data;
+  };
+
+  const login = async (username, password) => {
+    const res = await api.post('/auth/login', { username, password });
     localStorage.setItem('bunkwell_token', res.data.token);
     localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
@@ -39,6 +44,16 @@ export function AuthProvider({ children }) {
     localStorage.setItem('bunkwell_token', res.data.token);
     localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
+    return res.data;
+  };
+
+  const resetPasswordDirect = async (username, currentPassword, newPassword) => {
+    const res = await api.post('/auth/reset-password-direct', { username, currentPassword, newPassword });
+    if (res.data.token) {
+      localStorage.setItem('bunkwell_token', res.data.token);
+      localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
+      setUser(res.data.user);
+    }
     return res.data;
   };
 
@@ -77,8 +92,10 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user,
       loading,
+      checkUsername,
       login,
       register,
+      resetPasswordDirect,
       sendOTP,
       verifyOTP,
       resetPasswordWithOTP,

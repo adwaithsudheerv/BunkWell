@@ -6,7 +6,8 @@ const router = express.Router();
 
 // Get VAPID public key
 router.get('/vapid-key', (req, res) => {
-  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || '' });
+  const pubKey = process.env.VAPID_PUBLIC_KEY || 'BEvkdILThIec0RXS_ytPKEww_lzbOWPHAW3ID17xahKDSq6TzD_yo4zMy6CTsYHox3iszF_bOYndmG_nBGXbfwQ';
+  res.json({ publicKey: pubKey });
 });
 
 // Save push subscription

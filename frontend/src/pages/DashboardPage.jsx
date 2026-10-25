@@ -133,7 +133,7 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl lg:text-2xl font-bold flex items-center gap-2">
-            {greeting}, <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">{user?.name?.split(' ')[0]}</span> 👋
+            {greeting}, <span className="text-blue-500 font-extrabold">@{user?.username || 'student'}</span> 👋
           </h2>
           <p className="text-slate-500 text-sm mt-0.5">{today} • {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>

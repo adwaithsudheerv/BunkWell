@@ -93,14 +93,14 @@ export default function Layout() {
       <div className={`p-3 border-t ${isDark ? 'border-white/10 bg-black/40' : 'border-slate-200 bg-slate-50'}`}>
         <div className="flex items-center gap-3 px-2 py-2 mb-1">
           <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 shadow-sm">
-            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            {(user?.username || 'U').charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className={`text-sm font-semibold truncate leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              {user?.name || 'Student'}
+            <p className={`text-sm font-bold truncate leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              @{user?.username || 'user'}
             </p>
-            <p className={`text-xs truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              ID: {user?.studentId || user?.username}
+            <p className={`text-[11px] truncate ${isDark ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'}`}>
+              24/7 Cloud Tracker
             </p>
           </div>
         </div>

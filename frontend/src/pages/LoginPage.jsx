@@ -2,373 +2,287 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Lock, KeyRound, ArrowLeft, CheckCircle2, ShieldCheck, Mail, User, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function LoginPage() {
-  const { login, sendOTP, resetPasswordWithOTP } = useAuth();
+  const { login, register, checkUsername } = useAuth();
   const navigate = useNavigate();
 
-  // Mode: 'login' | 'forgot_send' | 'forgot_verify'
-  const [view, setView] = useState('login');
-
-  // Login form
-  const [identifier, setIdentifier] = useState('');
+  // Mode: 'login' | 'register'
+  const [mode, setMode] = useState('login');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [statusHint, setStatusHint] = useState(null); // { type: 'existing' | 'new', message: string }
 
-  // Recovery flow
-  const [recoveryEmail, setRecoveryEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [maskedEmail, setMaskedEmail] = useState('');
-  const [devCode, setDevCode] = useState('');
-  const [otpLoading, setOtpLoading] = useState(false);
+  // Check username on blur
+  const handleUsernameBlur = async () => {
+    const clean = username.trim().toLowerCase().replace(/\s+/g, '');
+    if (clean.length >= 3) {
+      try {
+        const res = await checkUsername(clean);
+        if (res.exists) {
+          setStatusHint({ type: 'existing', message: `Welcome back @${clean}! Enter your password to enter.` });
+          setMode('login');
+        } else {
+          setStatusHint({ type: 'new', message: `@${clean} is available! Enter password to create account.` });
+          setMode('register');
+        }
+      } catch (err) {}
+    }
+  };
 
-  const isLoginValid = identifier.trim().length > 0 && password.length >= 6;
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!identifier.trim() || !password) return;
+    const cleanUsername = username.trim().toLowerCase().replace(/\s+/g, '');
+
+    if (!cleanUsername || cleanUsername.length < 3) {
+      toast.error('Username must be at least 3 characters');
+      return;
+    }
+    if (!password || password.length < 4) {
+      toast.error('Password must be at least 4 characters');
+      return;
+    }
+
+    if (mode === 'register' && confirmPassword && password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
 
     setLoading(true);
     try {
-      await login(identifier.trim(), password);
-      toast.success('Welcome back to BunkClub! 🎓');
+      if (mode === 'login') {
+        await login(cleanUsername, password);
+        toast.success(`Welcome back @${cleanUsername}! 🎓`);
+      } else {
+        await register({
+          username: cleanUsername,
+          password,
+        });
+        toast.success(`Account created! Welcome @${cleanUsername} 🎉`);
+      }
       navigate('/dashboard');
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Sorry, your password or User ID was incorrect.';
-      toast.error(msg);
+      const msg = err.response?.data?.message || err.message || 'Authentication failed';
+      // If user not found during login, offer to create account
+      if (err.response?.data?.notFound) {
+        setMode('register');
+        setStatusHint({ type: 'new', message: `Username not registered yet. Create your account with this password!` });
+        toast(msg, { icon: '💡' });
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSendOTP = async (e) => {
-    e.preventDefault();
-    if (!recoveryEmail.trim()) {
-      toast.error('Enter your registered Email ID or User ID');
-      return;
-    }
-
-    setOtpLoading(true);
-    try {
-      const res = await sendOTP(recoveryEmail.trim());
-      setMaskedEmail(res.maskedEmail || res.email);
-      if (res.code) {
-        setDevCode(res.code);
-        toast.success(`Verification code sent! (Code: ${res.code})`, { duration: 6000 });
-      } else {
-        toast.success(res.message || '6-digit security code sent to your registered email!');
-      }
-      setView('forgot_verify');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not find account. Check info and try again.');
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleResetWithOTP = async (e) => {
-    e.preventDefault();
-    if (!otp.trim() || otp.trim().length < 6) {
-      toast.error('Please enter the 6-digit security code');
-      return;
-    }
-    if (!newPassword || newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters');
-      return;
-    }
-
-    setOtpLoading(true);
-    try {
-      const res = await resetPasswordWithOTP(recoveryEmail.trim(), otp.trim(), newPassword);
-      toast.success(res.message || 'Password changed successfully! Logged in. 🎉');
-      navigate('/dashboard');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Invalid or expired code. Please request a new one.');
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-black text-slate-100 font-sans">
-      {/* Ambient glassmorphic lighting */}
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#07090e] text-white font-sans selection:bg-blue-600 selection:text-white">
+      {/* Ambient Glassmorphic Lighting Background */}
       <div
         className="fixed inset-0 pointer-events-none -z-10"
         style={{
           background: `
-            radial-gradient(circle 650px at 15% 15%, rgba(0, 71, 255, 0.16), transparent 70%),
-            radial-gradient(circle 750px at 85% 85%, rgba(37, 99, 235, 0.14), transparent 70%),
-            radial-gradient(circle 500px at 50% 45%, rgba(29, 78, 216, 0.08), transparent 70%)
+            radial-gradient(circle 700px at 15% 15%, rgba(0, 71, 255, 0.20), transparent 70%),
+            radial-gradient(circle 700px at 85% 85%, rgba(37, 99, 235, 0.15), transparent 70%),
+            radial-gradient(circle 450px at 50% 50%, rgba(0, 71, 255, 0.10), transparent 70%)
           `
         }}
       />
 
-      {/* Decorative background grid pattern */}
+      {/* Decorative Grid Mesh */}
       <div
-        className="fixed inset-0 pointer-events-none -z-20 opacity-20"
+        className="fixed inset-0 pointer-events-none -z-20 opacity-15"
         style={{
-          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)',
-          backgroundSize: '32px 32px'
+          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px)',
+          backgroundSize: '36px 36px'
         }}
       />
 
-      <div className="w-full max-w-md relative z-10 flex flex-col gap-4">
-        {/* Main Glassmorphic Card */}
-        <div className="w-full rounded-3xl p-7 sm:p-9 backdrop-blur-2xl bg-white/[0.035] border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.75)] relative overflow-hidden">
-          {/* Top highlight sheen */}
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+      {/* Glassmorphic Container */}
+      <div className="w-full max-w-[420px] backdrop-blur-3xl bg-white/[0.04] border border-white/10 rounded-3xl p-7 sm:p-9 shadow-[0_16px_50px_rgba(0,0,0,0.6)] relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+        {/* Subtle glass highlight stripe */}
+        <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Logo & Brand Header */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-3">
-              <img src="/logo-white.png" alt="BunkClub" className="h-11 sm:h-12 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(0,71,255,0.3)]" />
-            </div>
-            <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5 font-medium">
-              Smart Attendance & Safe Bunk Intelligence
-            </p>
+        {/* Logo & Brand Header */}
+        <div className="text-center mb-6">
+          <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/20">
+            <img
+              src="/logo-emblem.png"
+              alt="BunkClub Logo"
+              className="w-9 h-9 object-contain drop-shadow"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
           </div>
-
-          {/* VIEW 1: NORMAL LOGIN */}
-          {view === 'login' && (
-            <form onSubmit={handleLogin} className="space-y-4">
-              {/* User ID / Username */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  User ID or Email
-                </label>
-                <div className="relative flex items-center">
-                  <div className="absolute left-3.5 text-slate-400 pointer-events-none">
-                    <User size={16} />
-                  </div>
-                  <input
-                    type="text"
-                    value={identifier}
-                    onChange={e => setIdentifier(e.target.value)}
-                    placeholder="e.g. adwaith_s or mail@gmail.com"
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white/[0.08] transition-all"
-                    required
-                    autoComplete="username"
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRecoveryEmail(identifier);
-                      setView('forgot_send');
-                    }}
-                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-semibold"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-                <div className="relative flex items-center">
-                  <div className="absolute left-3.5 text-slate-400 pointer-events-none">
-                    <Lock size={16} />
-                  </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white/[0.08] transition-all"
-                    required
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(p => !p)}
-                    className="absolute right-3.5 text-slate-400 hover:text-white transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={!isLoginValid || loading}
-                className="w-full mt-2 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
-              >
-                {loading ? 'Logging in…' : 'Log In'}
-              </button>
-            </form>
-          )}
-
-          {/* VIEW 2: FORGOT PASSWORD / RECOVER USER ID */}
-          {view === 'forgot_send' && (
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto mb-2">
-                <Lock size={22} />
-              </div>
-              <div className="text-center mb-4">
-                <h2 className="text-lg font-bold text-white">Recover Your Account</h2>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Enter your registered Email ID or User ID. We'll send you a 6-digit verification code to reset your password and confirm your User ID.
-                </p>
-              </div>
-
-              <form onSubmit={handleSendOTP} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Registered Email or User ID
-                  </label>
-                  <div className="relative flex items-center">
-                    <div className="absolute left-3.5 text-slate-400 pointer-events-none">
-                      <Mail size={16} />
-                    </div>
-                    <input
-                      type="text"
-                      value={recoveryEmail}
-                      onChange={e => setRecoveryEmail(e.target.value)}
-                      placeholder="e.g. student@gmail.com"
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:bg-white/[0.08] transition-all"
-                      required
-                      autoFocus
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={!recoveryEmail.trim() || otpLoading}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-red-500 text-white font-semibold text-sm hover:opacity-95 active:scale-[0.98] disabled:opacity-50 transition-all shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2"
-                >
-                  {otpLoading ? 'Sending Security Code…' : 'Send 6-Digit Code'}
-                </button>
-              </form>
-
-              <button
-                type="button"
-                onClick={() => setView('login')}
-                className="w-full py-2.5 text-xs text-slate-400 hover:text-white transition-colors flex items-center justify-center gap-1.5"
-              >
-                <ArrowLeft size={14} /> Back to Log In
-              </button>
-            </div>
-          )}
-
-          {/* VIEW 3: ENTER OTP & NEW PASSWORD */}
-          {view === 'forgot_verify' && (
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-2">
-                <KeyRound size={22} />
-              </div>
-              <div className="text-center mb-3">
-                <h2 className="text-lg font-bold text-white">Enter Security Code</h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Sent to <strong className="text-white">{maskedEmail}</strong>
-                </p>
-              </div>
-
-              {devCode && (
-                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-center text-xs text-amber-300">
-                  🔑 Verification Code: <strong>{devCode}</strong>
-                </div>
-              )}
-
-              <form onSubmit={handleResetWithOTP} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 text-center">
-                    6-Digit Security Code
-                  </label>
-                  <input
-                    type="text"
-                    value={otp}
-                    onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="######"
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-2xl py-3 text-center text-xl tracking-[8px] font-mono font-bold text-white focus:outline-none focus:border-emerald-400 focus:bg-white/[0.08] transition-all"
-                    required
-                    maxLength={6}
-                    autoFocus
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    New Password (min 6 characters)
-                  </label>
-                  <div className="relative flex items-center">
-                    <div className="absolute left-3.5 text-slate-400 pointer-events-none">
-                      <Lock size={16} />
-                    </div>
-                    <input
-                      type={showNewPassword ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={e => setNewPassword(e.target.value)}
-                      placeholder="Choose a strong password"
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:bg-white/[0.08] transition-all"
-                      required
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(p => !p)}
-                      className="absolute right-3.5 text-slate-400 hover:text-white transition-colors"
-                    >
-                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={otp.length < 6 || newPassword.length < 6 || otpLoading}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold text-sm hover:opacity-95 active:scale-[0.98] disabled:opacity-50 transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
-                >
-                  {otpLoading ? 'Verifying & Saving…' : 'Save New Password & Log In'}
-                </button>
-              </form>
-
-              <div className="flex items-center justify-between text-xs pt-2">
-                <button
-                  type="button"
-                  onClick={handleSendOTP}
-                  disabled={otpLoading}
-                  className="text-amber-400 hover:text-amber-300 transition-colors"
-                >
-                  Resend code
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setView('login')}
-                  className="text-slate-400 hover:text-white transition-colors"
-                >
-                  Back to login
-                </button>
-              </div>
-            </div>
-          )}
+          <h1 className="text-2xl font-black tracking-tight text-white flex items-center justify-center gap-1.5">
+            BunkClub
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            {mode === 'login' ? 'Sign in with your username & password' : 'Create your 24/7 attendance tracker'}
+          </p>
         </div>
 
-        {/* Secondary Glass Card: Sign Up Prompt */}
-        {view === 'login' && (
-          <div className="w-full rounded-2xl p-4 backdrop-blur-xl bg-white/[0.025] border border-white/10 text-center">
-            <p className="text-xs text-slate-400">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors ml-1">
-                Join BunkClub
-              </Link>
-            </p>
+        {/* Mode Toggle Tabs (Inkcrypt style) */}
+        <div className="grid grid-cols-2 p-1 rounded-2xl bg-white/5 border border-white/10 mb-5 text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => { setMode('login'); setStatusHint(null); }}
+            className={`py-2.5 rounded-xl transition-all ${
+              mode === 'login'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Log In
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode('register'); setStatusHint(null); }}
+            className={`py-2.5 rounded-xl transition-all ${
+              mode === 'register'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Create Account
+          </button>
+        </div>
+
+        {/* Status Hint */}
+        {statusHint && (
+          <div className={`p-3 rounded-xl mb-4 text-xs font-semibold flex items-center gap-2 border ${
+            statusHint.type === 'existing'
+              ? 'bg-blue-600/15 border-blue-500/30 text-blue-300'
+              : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+          }`}>
+            <Sparkles size={14} className="flex-shrink-0" />
+            <span>{statusHint.message}</span>
           </div>
         )}
 
-        {/* Security badge footer */}
-        <div className="flex items-center justify-center gap-1.5 text-slate-500 text-xs">
-          <ShieldCheck size={14} className="text-emerald-400" />
-          <span>Secured with Bcrypt Hashing & Verified Email OTP</span>
+        {/* Form: ONLY Username and Password */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Username */}
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+              Username
+            </label>
+            <div className="relative flex items-center">
+              <span className="absolute left-3.5 text-slate-500 font-bold text-sm">@</span>
+              <input
+                type="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+                placeholder="username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                onBlur={handleUsernameBlur}
+                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm font-semibold focus:outline-none focus:border-blue-500 focus:bg-white/[0.07] transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Password
+              </label>
+            </div>
+            <div className="relative flex items-center">
+              <Lock size={16} className="absolute left-3.5 text-slate-500" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder={mode === 'login' ? 'Enter your password' : 'Choose a password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full pl-10 pr-10 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm font-semibold focus:outline-none focus:border-blue-500 focus:bg-white/[0.07] transition-all"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 text-slate-500 hover:text-white transition-colors"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password (only on register) */}
+          {mode === 'register' && (
+            <div className="animate-[fadeIn_0.2s_ease-out]">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                Confirm Password
+              </label>
+              <div className="relative flex items-center">
+                <Lock size={16} className="absolute left-3.5 text-slate-500" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm font-semibold focus:outline-none focus:border-blue-500 focus:bg-white/[0.07] transition-all"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm disabled:opacity-50 transition-all shadow-lg shadow-blue-500/30 active:scale-[0.99] flex items-center justify-center gap-2 mt-2"
+          >
+            {loading ? (
+              'Processing...'
+            ) : mode === 'login' ? (
+              <>
+                Log In to BunkClub <ArrowRight size={16} />
+              </>
+            ) : (
+              <>
+                Create Account <Sparkles size={16} />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Footer info */}
+        <div className="mt-6 pt-5 border-t border-white/10 text-center text-xs text-slate-400">
+          <p>
+            {mode === 'login' ? (
+              <>
+                New student?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('register'); setStatusHint(null); }}
+                  className="text-blue-400 font-bold hover:underline"
+                >
+                  Create an account
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('login'); setStatusHint(null); }}
+                  className="text-blue-400 font-bold hover:underline"
+                >
+                  Log in here
+                </button>
+              </>
+            )}
+          </p>
         </div>
       </div>
     </div>

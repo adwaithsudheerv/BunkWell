@@ -7,75 +7,56 @@ const router = express.Router();
 
 const createToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET || 'bunkwell_prod_jwt_secret_key_2024', {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+    expiresIn: process.env.JWT_EXPIRES_IN || '30d'
   });
 };
 
-// Mask email helper (e.g., a***r@gmail.com)
-const maskEmail = (email) => {
-  if (!email || !email.includes('@')) return email;
-  const [name, domain] = email.split('@');
-  if (name.length <= 2) return `${name[0]}*@${domain}`;
-  return `${name[0]}${'*'.repeat(Math.max(1, name.length - 2))}${name.slice(-1)}@${domain}`;
-};
+// 1. CHECK USERNAME (Like Inkcrypt - checks if username exists)
+router.post('/check-username', async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username || !username.trim()) {
+      return res.status(400).json({ message: 'Username is required' });
+    }
+    const cleanUsername = username.toLowerCase().trim().replace(/\s+/g, '');
+    const user = await User.findOne({ username: cleanUsername });
+    res.json({ exists: Boolean(user), username: cleanUsername });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-// 1. REGISTER
+// 2. REGISTER (Just Username and Password - Inkcrypt style)
 router.post('/register', async (req, res) => {
   try {
-    let { username, email, password, name, studentId, college, department, semester, year, attendanceTarget } = req.body;
-
-    if (!name || !name.trim()) {
-      return res.status(400).json({ message: 'Full legal name is required' });
-    }
-    if (!email || !email.trim()) {
-      return res.status(400).json({ message: 'Valid Email ID is required for account security and recovery' });
-    }
-    const cleanEmail = email.toLowerCase().trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
-      return res.status(400).json({ message: 'Please enter a valid email address (e.g. student@gmail.com)' });
-    }
+    let { username, password, email, attendanceTarget } = req.body;
 
     if (!username || !username.trim()) {
-      return res.status(400).json({ message: 'User ID / Username is required' });
+      return res.status(400).json({ message: 'Username is required' });
     }
     const cleanUsername = username.toLowerCase().trim().replace(/\s+/g, '');
     if (cleanUsername.length < 3) {
-      return res.status(400).json({ message: 'User ID must be at least 3 characters long' });
+      return res.status(400).json({ message: 'Username must be at least 3 characters long' });
     }
 
-    if (!password || password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
-    }
-
-    const cleanStudentId = (studentId || '').toUpperCase().trim();
-    if (!cleanStudentId) {
-      return res.status(400).json({ message: 'Student ID or Roll Number is required' });
-    }
-
-    // Check existing email
-    const existingEmail = await User.findOne({ email: cleanEmail });
-    if (existingEmail) {
-      return res.status(409).json({ message: 'An account with this Email ID already exists. Please Log In or reset your password.' });
+    if (!password || password.length < 4) {
+      return res.status(400).json({ message: 'Password must be at least 4 characters long' });
     }
 
     // Check existing username
     const existingUser = await User.findOne({ username: cleanUsername });
     if (existingUser) {
-      return res.status(409).json({ message: `User ID "${cleanUsername}" is already taken. Please choose a different User ID.` });
+      return res.status(409).json({ message: `Username "${cleanUsername}" is already taken. Please enter your password to log in.` });
     }
 
+    const cleanEmail = email ? email.toLowerCase().trim() : `${cleanUsername}@bunkclub.local`;
+
     const user = new User({
-      name: name.trim(),
-      email: cleanEmail,
       username: cleanUsername,
+      name: cleanUsername,
       password,
-      studentId: cleanStudentId,
-      college: college ? college.trim() : 'College / University',
-      department: department ? department.trim().toUpperCase() : 'General',
-      semester: semester ? Number(semester) : 1,
-      year: year ? Number(year) : 1,
-      attendanceTarget: attendanceTarget ? Number(attendanceTarget) : 80
+      email: cleanEmail,
+      attendanceTarget: attendanceTarget ? Number(attendanceTarget) : 80,
     });
 
     await user.save();
@@ -88,14 +69,14 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// 2. LOGIN (Strict User ID / Username or Email + Password)
+// 3. LOGIN (Just Username and Password)
 router.post('/login', async (req, res) => {
   try {
-    const { username, email, identifier, password } = req.body;
-    const loginKey = (identifier || username || email || '').trim();
+    const { username, identifier, password } = req.body;
+    const cleanUsername = (username || identifier || '').toLowerCase().trim().replace(/\s+/g, '');
 
-    if (!loginKey) {
-      return res.status(400).json({ message: 'Please enter your User ID, Username, or Email ID' });
+    if (!cleanUsername) {
+      return res.status(400).json({ message: 'Please enter your username' });
     }
     if (!password) {
       return res.status(400).json({ message: 'Please enter your password' });
@@ -103,19 +84,22 @@ router.post('/login', async (req, res) => {
 
     const user = await User.findOne({
       $or: [
-        { username: loginKey.toLowerCase() },
-        { email: loginKey.toLowerCase() },
-        { studentId: loginKey.toUpperCase() }
+        { username: cleanUsername },
+        { email: cleanUsername }
       ]
     });
 
     if (!user) {
-      return res.status(401).json({ message: 'No account found with these credentials. Please check your User ID or sign up.' });
+      return res.status(401).json({
+        message: `Username "${cleanUsername}" is not registered yet. Create your account with this username!`,
+        notFound: true,
+        username: cleanUsername
+      });
     }
 
     const match = await user.comparePassword(password);
     if (!match) {
-      return res.status(401).json({ message: 'Incorrect password. Please try again or click "Forgot User ID or Password?".' });
+      return res.status(401).json({ message: 'Incorrect password for this username. Please try again.' });
     }
 
     const token = createToken(user._id);
@@ -126,170 +110,50 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// 3. SEND OTP (For Account Recovery / Forgot Password or User ID)
-router.post('/send-otp', async (req, res) => {
+// 4. RESET PASSWORD DIRECTLY OR BY USERNAME
+router.post('/reset-password-direct', async (req, res) => {
   try {
-    const { identifier } = req.body;
-    if (!identifier || !identifier.trim()) {
-      return res.status(400).json({ message: 'Please enter your registered Email ID or User ID' });
+    const { username, currentPassword, newPassword } = req.body;
+    const cleanUsername = (username || '').toLowerCase().trim().replace(/\s+/g, '');
+
+    if (!cleanUsername || !newPassword) {
+      return res.status(400).json({ message: 'Username and new password required' });
     }
 
-    const cleanId = identifier.trim().toLowerCase();
-    const user = await User.findOne({
-      $or: [
-        { username: cleanId },
-        { email: cleanId }
-      ]
-    });
-
-    if (!user || !user.email) {
-      return res.status(404).json({ message: 'No account found matching that Email ID or User ID. Please check and try again.' });
-    }
-
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    // Remove any previous OTPs for this email
-    await OTP.deleteMany({ email: user.email });
-
-    // Store new OTP
-    await OTP.create({
-      email: user.email,
-      otp,
-      purpose: 'reset_password',
-      expiresAt
-    });
-
-    // Send email
-    const result = await sendOTPEmail(user.email, otp, 'reset_password');
-
-    res.json({
-      message: `A 6-digit security code has been sent to ${maskEmail(user.email)}.`,
-      email: user.email,
-      maskedEmail: maskEmail(user.email),
-      // In development or when SMTP is absent, return code so testing is seamless
-      code: result.fallback ? otp : undefined
-    });
-  } catch (err) {
-    console.error('Send OTP error:', err);
-    res.status(500).json({ message: 'Failed to send security code: ' + err.message });
-  }
-});
-
-// 4. VERIFY OTP (Confirms Email & Returns Username / User ID)
-router.post('/verify-otp', async (req, res) => {
-  try {
-    const { email, identifier, otp } = req.body;
-    const cleanOtp = (otp || '').trim();
-
-    if (!cleanOtp) {
-      return res.status(400).json({ message: 'Please enter the 6-digit security code' });
-    }
-
-    let targetEmail = email ? email.toLowerCase().trim() : '';
-    let targetUser = null;
-
-    if (!targetEmail && identifier) {
-      targetUser = await User.findOne({
-        $or: [
-          { username: identifier.trim().toLowerCase() },
-          { email: identifier.trim().toLowerCase() }
-        ]
-      });
-      if (targetUser) targetEmail = targetUser.email;
-    } else if (targetEmail) {
-      targetUser = await User.findOne({ email: targetEmail });
-    }
-
-    const record = await OTP.findOne({
-      email: targetEmail,
-      otp: cleanOtp,
-      expiresAt: { $gt: new Date() }
-    });
-
-    if (!record) {
-      return res.status(400).json({ message: 'Invalid or expired security code. Please check your code or request a new one.' });
-    }
-
-    res.json({
-      valid: true,
-      message: 'Code verified successfully',
-      username: targetUser ? targetUser.username : undefined,
-      email: targetEmail
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// 5. RESET PASSWORD WITH OTP (Sets new password & reveals User ID)
-router.post('/reset-password-otp', async (req, res) => {
-  try {
-    const { email, identifier, otp, newPassword } = req.body;
-    const cleanOtp = (otp || '').trim();
-
-    if (!newPassword || newPassword.length < 6) {
-      return res.status(400).json({ message: 'New password must be at least 6 characters long' });
-    }
-
-    let targetEmail = email ? email.toLowerCase().trim() : '';
-    if (!targetEmail && identifier) {
-      const user = await User.findOne({
-        $or: [
-          { username: identifier.trim().toLowerCase() },
-          { email: identifier.trim().toLowerCase() }
-        ]
-      });
-      if (user) targetEmail = user.email;
-    }
-
-    // Verify OTP record
-    const otpRecord = await OTP.findOne({
-      email: targetEmail,
-      otp: cleanOtp,
-      expiresAt: { $gt: new Date() }
-    });
-
-    if (!otpRecord) {
-      return res.status(400).json({ message: 'Invalid or expired security code. Please request a new code.' });
-    }
-
-    const user = await User.findOne({ email: targetEmail });
+    const user = await User.findOne({ username: cleanUsername });
     if (!user) {
-      return res.status(404).json({ message: 'User account not found' });
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (currentPassword) {
+      const match = await user.comparePassword(currentPassword);
+      if (!match) return res.status(401).json({ message: 'Current password does not match' });
     }
 
     user.password = newPassword;
     await user.save();
-
-    // Consume OTP
-    await OTP.deleteMany({ email: targetEmail });
-
     const token = createToken(user._id);
-    res.json({
-      message: `Password changed successfully! Your User ID is @${user.username}.`,
-      token,
-      user: user.toSafeObject()
-    });
+    res.json({ message: 'Password updated successfully!', token, user: user.toSafeObject() });
   } catch (err) {
-    console.error('Password reset error:', err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// 6. GET PROFILE (/me)
+// 5. GET PROFILE (/me)
 router.get('/me', require('../middleware/auth'), async (req, res) => {
   res.json({ user: req.user.toSafeObject() });
 });
 
-// 7. UPDATE PROFILE
+// 6. UPDATE PROFILE (Attendance Target, Password)
 router.put('/profile', require('../middleware/auth'), async (req, res) => {
   try {
-    const allowed = ['name', 'email', 'college', 'department', 'semester', 'year', 'attendanceTarget'];
-    allowed.forEach(field => {
-      if (req.body[field] !== undefined) req.user[field] = req.body[field];
-    });
+    const { attendanceTarget, newPassword } = req.body;
+    if (attendanceTarget !== undefined) {
+      req.user.attendanceTarget = Number(attendanceTarget);
+    }
+    if (newPassword && newPassword.length >= 4) {
+      req.user.password = newPassword;
+    }
     await req.user.save();
     res.json({ user: req.user.toSafeObject() });
   } catch (err) {

@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const webpush = require('web-push');
 const cron = require('node-cron');
+const https = require('https');
+const http = require('http');
 
 const authRoutes = require('./routes/auth');
 const timetableRoutes = require('./routes/timetable');
@@ -18,19 +20,25 @@ const app = express();
 
 // CORS
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: true,
   credentials: true,
 }));
 
 app.use(express.json());
 
-// Web Push VAPID keys
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    process.env.VAPID_EMAIL,
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  );
+// Web Push VAPID keys with bulletproof fallback
+const DEFAULT_VAPID_PUB = 'BEvkdILThIec0RXS_ytPKEww_lzbOWPHAW3ID17xahKDSq6TzD_yo4zMy6CTsYHox3iszF_bOYndmG_nBGXbfwQ';
+const DEFAULT_VAPID_PRIV = '6MGT50nmW1IMHmaARhEGbdxEWZ_VOiM0cZL3uhpsGuU';
+const DEFAULT_VAPID_EMAIL = 'mailto:admin@bunkclub.app';
+
+const vapidPublic = process.env.VAPID_PUBLIC_KEY || DEFAULT_VAPID_PUB;
+const vapidPrivate = process.env.VAPID_PRIVATE_KEY || DEFAULT_VAPID_PRIV;
+const vapidEmail = process.env.VAPID_EMAIL || DEFAULT_VAPID_EMAIL;
+
+try {
+  webpush.setVapidDetails(vapidEmail, vapidPublic, vapidPrivate);
+} catch (e) {
+  console.log('VAPID setup info:', e.message);
 }
 
 // Routes
@@ -41,7 +49,18 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'BunkClub', timestamp: new Date() }));
+
+// 24/7 Keep-Alive Self-Pinger (Runs every 10 minutes to prevent Render sleep)
+const KEEP_ALIVE_URL = process.env.RENDER_EXTERNAL_URL || 'https://bunkwell-backend.onrender.com';
+setInterval(() => {
+  try {
+    const client = KEEP_ALIVE_URL.startsWith('https') ? https : http;
+    client.get(`${KEEP_ALIVE_URL}/api/health`, (res) => {
+      // Keep alive successful
+    }).on('error', () => {});
+  } catch (err) {}
+}, 10 * 60 * 1000); // 10 minutes
 
 // CRON JOBS
 // Morning notification: 7:00 AM every day Mon-Sat
@@ -57,51 +76,11 @@ cron.schedule('0 18 * * 1-6', () => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Bunkwell backend running on port ${PORT}`);
+  console.log(`🚀 BunkClub backend running on port ${PORT}`);
 });
 
-// Database connection with automatic embedded fallback
-async function connectDB() {
-  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bunkwell';
-
-  try {
-    // Try configured MongoDB URI with a fast 2-second timeout
-    await mongoose.connect(uri, { serverSelectionTimeoutMS: 2000 });
-    console.log('✅ Connected to MongoDB at', uri);
-    return;
-  } catch (err) {
-    console.log('ℹ️ Local MongoDB not running (' + err.message + ')');
-    console.log('⚡ Starting embedded MongoDB engine automatically...');
-  }
-
-  // Automatic embedded MongoDB fallback (zero external setup required, persists to disk)
-  try {
-    const { MongoMemoryServer } = require('mongodb-memory-server');
-    const path = require('path');
-    const fs = require('fs');
-
-    const dbDir = path.join(__dirname, '.db_data');
-    if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
-
-    // Look for offline cached binary if present to avoid external download checks
-    const cachedBinary = path.join(__dirname, 'node_modules', '.cache', 'mongodb-memory-server', 'mongod-x64-win32-8.2.6.exe');
-    const binaryConfig = fs.existsSync(cachedBinary) ? { systemBinary: cachedBinary } : undefined;
-
-    const mongod = await MongoMemoryServer.create({
-      binary: binaryConfig,
-      instance: {
-        dbName: 'bunkwell',
-        dbPath: dbDir,
-      }
-    });
-    const embeddedUri = mongod.getUri() + 'bunkwell';
-    await mongoose.connect(embeddedUri);
-    console.log('✅ Connected to Persistent Embedded MongoDB at', embeddedUri);
-  } catch (embeddedErr) {
-    console.error('❌ Failed to start embedded MongoDB:', embeddedErr.message);
-  }
-}
-
-connectDB();
-
-module.exports = app;
+// Connect to MongoDB
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bunkwell';
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
