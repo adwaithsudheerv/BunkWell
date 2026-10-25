@@ -16,7 +16,7 @@ router.get('/', auth, async (req, res) => {
 // Create subject
 router.post('/', auth, async (req, res) => {
   try {
-    const { name, color, type, timetableId, totalClasses, attendedClasses, totalPlannedClasses } = req.body;
+    const { name, color, type, timetableId, totalClasses, attendedClasses } = req.body;
     if (!name) return res.status(400).json({ message: 'Subject name required' });
     const subject = new Subject({
       userId: req.user._id,
@@ -26,7 +26,6 @@ router.post('/', auth, async (req, res) => {
       timetableId,
       totalClasses: Math.max(0, parseInt(totalClasses, 10) || 0),
       attendedClasses: Math.max(0, parseInt(attendedClasses, 10) || 0),
-      totalPlannedClasses: Math.max(1, parseInt(totalPlannedClasses, 10) || 45),
     });
     await subject.save();
     res.status(201).json({ subject });

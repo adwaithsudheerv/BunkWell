@@ -12,10 +12,10 @@ const STATUS_COLORS = { safe: '#10b981', warning: '#3b82f6', danger: '#ef4444' }
 function AttendancePieCard({ subject }) {
   const attended = subject.attendedClasses;
   const absent = subject.eligibleClasses - subject.attendedClasses;
-  const leftover = subject.leftoverClasses ?? Math.max(0, (subject.totalPlannedClasses || 45) - (subject.totalClasses || 0));
+  const bunked = Math.max(0, subject.totalClasses - subject.attendedClasses);
   const data = [
     { name: 'Attended', value: attended },
-    { name: 'Absent', value: absent },
+    { name: 'Bunked', value: bunked },
   ].filter(d => d.value > 0);
   const color = STATUS_COLORS[subject.status];
 
@@ -26,7 +26,7 @@ function AttendancePieCard({ subject }) {
           <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: subject.color || '#0047FF' }} />
           <div className="min-w-0">
             <p className="font-semibold text-sm truncate">{subject.name}</p>
-            <p className="text-xs text-slate-500 capitalize">{subject.type || 'theory'} · {leftover} classes left</p>
+            <p className="text-xs text-slate-500 capitalize">{subject.type || 'theory'} · {attended}/{subject.totalClasses} classes</p>
           </div>
         </div>
         <span className="text-xl font-bold flex-shrink-0 ml-2" style={{ color }}>{subject.percentage.toFixed(1)}%</span>
@@ -37,23 +37,19 @@ function AttendancePieCard({ subject }) {
         <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(subject.percentage, 100)}%`, background: color }} />
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-4 gap-2 text-center text-xs">
+      {/* Stats row: Bunked, Attended, Total */}
+      <div className="grid grid-cols-3 gap-2 text-center text-xs">
         <div className="rounded-lg bg-emerald-500/10 py-2">
           <p className="font-bold text-emerald-400">{subject.attendedClasses}</p>
           <p className="text-slate-500 text-[10px]">Attended</p>
         </div>
+        <div className="rounded-lg bg-red-500/10 py-2">
+          <p className="font-bold text-red-400">{bunked}</p>
+          <p className="text-slate-500 text-[10px]">Bunked</p>
+        </div>
         <div className="rounded-lg bg-white/5 py-2">
           <p className="font-bold text-slate-300">{subject.totalClasses}</p>
-          <p className="text-slate-500 text-[10px]">Completed</p>
-        </div>
-        <div className="rounded-lg bg-blue-500/10 py-2">
-          <p className="font-bold text-blue-400">{leftover}</p>
-          <p className="text-slate-500 text-[10px]">Leftover</p>
-        </div>
-        <div className="rounded-lg bg-red-500/10 py-2">
-          <p className="font-bold text-red-400">{subject.eligibleClasses - subject.attendedClasses}</p>
-          <p className="text-slate-500 text-[10px]">Absent</p>
+          <p className="text-slate-500 text-[10px]">Total</p>
         </div>
       </div>
 

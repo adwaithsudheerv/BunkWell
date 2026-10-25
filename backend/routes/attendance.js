@@ -26,6 +26,54 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// Quick 1-tap manual mark from subject card (like reference app)
+router.post('/quick-mark', auth, async (req, res) => {
+  try {
+    const { subjectId, status } = req.body; // status: 'present' | 'absent'
+    if (!subjectId || !['present', 'absent'].includes(status)) {
+      return res.status(400).json({ message: 'subjectId and valid status required' });
+    }
+
+    const subject = await Subject.findOne({ _id: subjectId, userId: req.user._id });
+    if (!subject) return res.status(404).json({ message: 'Subject not found' });
+
+    subject.totalClasses += 1;
+    if (status === 'present') {
+      subject.attendedClasses += 1;
+    }
+    await subject.save();
+
+    // If absent (bunk), record it so it appears in the bunk history with date and period
+    if (status === 'absent') {
+      const today = new Date();
+      const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(); dayEnd.setHours(23, 59, 59, 999);
+      const todayRecords = await AttendanceRecord.countDocuments({
+        userId: req.user._id,
+        date: { $gte: dayStart, $lte: dayEnd }
+      });
+      const periodNumber = todayRecords + 1;
+
+      const record = new AttendanceRecord({
+        userId: req.user._id,
+        subjectId,
+        date: today,
+        periodNumber,
+        status: 'absent',
+        markedAt: today
+      });
+      await record.save();
+    }
+
+    res.json({
+      message: status === 'present' ? 'Attended class logged! ✅' : 'Bunk recorded for today! ❌',
+      subject
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Mark attendance for a period
 router.post('/mark', auth, async (req, res) => {
   try {

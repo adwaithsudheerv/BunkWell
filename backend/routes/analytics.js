@@ -10,14 +10,17 @@ router.get('/overview', auth, async (req, res) => {
     const subjects = await Subject.find({ userId: req.user._id, isActive: true });
     const target = req.user.attendanceTarget || 80;
 
+    // Fetch all recorded bunks for this user (sorted newest first)
+    const bunkRecords = await AttendanceRecord.find({
+      userId: req.user._id,
+      status: 'absent'
+    }).sort({ date: -1, periodNumber: -1 });
+
     const overview = subjects.map(s => {
-      const eligible = s.totalClasses - s.cancelledClasses;
+      const eligible = s.totalClasses - (s.cancelledClasses || 0);
       const percentage = eligible > 0 ? parseFloat(((s.attendedClasses / eligible) * 100).toFixed(2)) : 100;
 
       // Classes can be bunked while staying at target
-      // attended / (total - cancelled + future) >= target/100
-      // future = (attended / (target/100)) - (total - cancelled)
-      // bunkable = (total - cancelled) - Math.ceil(attended / (target/100))
       const minNeeded = Math.ceil(eligible * target / 100);
       const canBunk = Math.max(0, s.attendedClasses - minNeeded);
 
@@ -26,34 +29,46 @@ router.get('/overview', auth, async (req, res) => {
         ? Math.ceil((target / 100 * eligible - s.attendedClasses) / (1 - target / 100))
         : 0;
 
-      const planned = s.totalPlannedClasses || 45;
-      const leftoverClasses = Math.max(0, planned - s.totalClasses);
+      const subjectBunks = bunkRecords
+        .filter(r => String(r.subjectId) === String(s._id))
+        .map(r => ({
+          date: r.date,
+          periodNumber: r.periodNumber,
+          dayOfWeek: r.dayOfWeek,
+        }));
 
       return {
         _id: s._id,
         name: s.name,
-        code: s.code,
-        faculty: s.faculty,
         color: s.color,
         type: s.type,
         totalClasses: s.totalClasses,
         attendedClasses: s.attendedClasses,
-        cancelledClasses: s.cancelledClasses,
-        totalPlannedClasses: planned,
-        leftoverClasses,
+        bunkedClasses: Math.max(0, s.totalClasses - s.attendedClasses),
+        cancelledClasses: s.cancelledClasses || 0,
         eligibleClasses: eligible,
         percentage,
         canBunk,
         needMore,
         status: percentage >= target ? 'safe' : percentage >= target - 10 ? 'warning' : 'danger',
+        bunkHistory: subjectBunks,
       };
     });
 
     const totalEligible = overview.reduce((a, s) => a + s.eligibleClasses, 0);
     const totalAttended = overview.reduce((a, s) => a + s.attendedClasses, 0);
+    const totalCompleted = overview.reduce((a, s) => a + s.totalClasses, 0);
+    const totalBunked = Math.max(0, totalCompleted - totalAttended);
     const overallPercentage = totalEligible > 0 ? parseFloat(((totalAttended / totalEligible) * 100).toFixed(2)) : 100;
 
-    res.json({ subjects: overview, overallPercentage, target });
+    res.json({
+      subjects: overview,
+      totalCompleted,
+      totalAttended,
+      totalBunked,
+      overallPercentage,
+      target
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
