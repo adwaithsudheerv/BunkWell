@@ -2,6 +2,10 @@
   "appId": "app.bunkclub.mobile",
   "appName": "BunkClub",
   "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 1500,
