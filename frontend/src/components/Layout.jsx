@@ -121,10 +121,10 @@ export default function Layout() {
             Architected by <span className="font-bold text-blue-500">Adwaith Sudheer</span>
           </p>
           <a
-            href="mailto:adwaithsudheer@gmail.com"
+            href="mailto:adwaithsudheerv@gmail.com"
             className="text-slate-500 hover:text-blue-400 truncate block mt-0.5 transition-colors"
           >
-            adwaithsudheer@gmail.com
+            adwaithsudheerv@gmail.com
           </a>
         </div>
       </div>

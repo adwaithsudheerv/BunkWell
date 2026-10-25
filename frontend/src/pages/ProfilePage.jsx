@@ -271,15 +271,15 @@ export default function ProfilePage() {
               </span>
             </div>
             <a
-              href="mailto:adwaithsudheer@gmail.com"
+              href="mailto:adwaithsudheerv@gmail.com"
               className="text-xs text-blue-300 hover:text-white underline mt-0.5 block transition-colors"
             >
-              adwaithsudheer@gmail.com
+              adwaithsudheerv@gmail.com
             </a>
           </div>
         </div>
         <a
-          href="mailto:adwaithsudheer@gmail.com"
+          href="mailto:adwaithsudheerv@gmail.com"
           className="px-3.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-xs font-bold border border-blue-500/30 transition-all shrink-0"
         >
           Contact Creator
