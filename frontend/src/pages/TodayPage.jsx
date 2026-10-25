@@ -183,7 +183,18 @@ export default function TodayPage() {
   const [loading, setLoading] = useState(true);
   const [showEveningModal, setShowEveningModal] = useState(false);
 
-  const dateStr = new Date().toISOString().split('T')[0];
+  // Dynamic local date (YYYY-MM-DD) and weekday name based on user device timezone (not UTC server time)
+  const getLocalDateInfo = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    const dayName = now.toLocaleDateString('en-US', { weekday: 'long' });
+    return { dateStr, dayName };
+  };
+
+  const { dateStr, dayName: localDayName } = getLocalDateInfo();
   const storageKey = `bunkclub_morning_choice_${dateStr}`;
 
   // Morning question state: null (not chosen yet) | 'yes' | 'no'
@@ -195,13 +206,14 @@ export default function TodayPage() {
 
   const loadData = async () => {
     try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata';
       const [ttRes, attRes, subRes] = await Promise.all([
-        api.get('/timetable/today'),
+        api.get(`/timetable/today?day=${localDayName}&date=${dateStr}&timezone=${encodeURIComponent(tz)}`),
         api.get(`/attendance?date=${dateStr}`),
         api.get('/subjects'),
       ]);
 
-      setTodayDay(ttRes.data.day);
+      setTodayDay(ttRes.data.day || localDayName);
       setDaySchedule(ttRes.data.schedule);
       setTimetable(ttRes.data.timetable);
       setSubjects(subRes.data.subjects || []);
@@ -320,7 +332,7 @@ export default function TodayPage() {
             <CalendarDays size={24} className="text-blue-500" /> Today's Attendance
           </h2>
           <p className="text-slate-500 text-sm mt-0.5">
-            {todayDay} · {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {todayDay || localDayName} · {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
 

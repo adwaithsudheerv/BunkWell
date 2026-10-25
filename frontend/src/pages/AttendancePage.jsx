@@ -54,10 +54,11 @@ export default function AttendancePage() {
     }
   };
 
-  // Group records by unique Date (YYYY-MM-DD)
+  // Group records by unique local Date (YYYY-MM-DD)
   const dateMap = {};
   records.forEach(rec => {
-    const dStr = new Date(rec.date).toISOString().split('T')[0];
+    const d = new Date(rec.date);
+    const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     if (!dateMap[dStr]) {
       dateMap[dStr] = {
         dateStr: dStr,

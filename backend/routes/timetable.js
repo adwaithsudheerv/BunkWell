@@ -50,7 +50,18 @@ router.put('/:id', auth, async (req, res) => {
 router.get('/today', auth, async (req, res) => {
   try {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const today = days[new Date().getDay()];
+    let today = req.query.day;
+
+    // Dynamically respect client's local day or timezone instead of UTC server time
+    if (!today || !days.includes(today)) {
+      const tz = req.query.timezone || 'Asia/Kolkata';
+      try {
+        today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: tz }).format(new Date());
+      } catch (e) {
+        today = days[new Date().getDay()];
+      }
+    }
+
     const timetable = await Timetable.findOne({ userId: req.user._id, isActive: true })
       .populate('days.periods.subjectId');
     if (!timetable) return res.json({ schedule: null, day: today });

@@ -67,17 +67,16 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.1.0',
-    versionCode: 2,
+    latestVersion: '1.2.0',
+    versionCode: 3,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: 'BunkClub v1.1.0 Available! 🚀',
-    message: 'New Play Protect certified build, Electric Blue glow logo, and auto notifications.',
+    title: '🚀 BunkClub v1.2.0 Update Available',
+    message: 'Fixed Monday timezone bug on Today attendance screen. Tap to download the latest build!',
     changelog: [
-      'Play Protect Certified: upgraded targetSdk to modern Android 15 standard',
-      'Electric Blue Glow brand logo matching obsidian theme',
-      'Minimalist home-screen widget with safe bunk counter',
-      '24/7 automatic morning & period notifications'
+      'Bug Fix: Real-time timezone sync for Today attendance (accurate Monday display)',
+      'Clean interface: all download buttons removed from mobile app',
+      'Google Play Protect certified Android 15 standard'
     ]
   });
 });
@@ -87,8 +86,8 @@ router.post('/broadcast-update', async (req, res) => {
   try {
     const users = await User.find({ 'pushSubscriptions.0': { $exists: true } });
     const payload = JSON.stringify({
-      title: '🚀 BunkClub Update Available!',
-      body: 'New version v1.1.0 is ready. Tap to download and install the update now!',
+      title: '🚀 BunkClub v1.2.0 Update Available',
+      body: 'New update available! Fixed Today attendance day display. Tap to update your app now!',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: {
