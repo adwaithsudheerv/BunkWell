@@ -5,6 +5,7 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { User, Bell, BellOff, Settings, Save, Shield, CheckCircle2, Lock, Sparkles, Download } from 'lucide-react';
 import { sendInstantTestNotification, requestNotificationPermissions, autoInitializeNotifications } from '../lib/nativeNotifications';
+import { CURRENT_APP_VERSION, CURRENT_VERSION_CODE, isVersionOutdated } from '../components/AppUpdateModal';
 
 const FALLBACK_VAPID_PUB = 'BEvkdILThIec0RXS_ytPKEww_lzbOWPHAW3ID17xahKDSq6TzD_yo4zMy6CTsYHox3iszF_bOYndmG_nBGXbfwQ';
 
@@ -149,14 +150,21 @@ export default function ProfilePage() {
   const checkForUpdatesManual = async () => {
     try {
       const res = await api.get('/notifications/version');
-      toast.success(`Latest Version: v${res.data?.latestVersion || '1.1.0'}!`);
-      await sendInstantTestNotification(
-        '🚀 BunkClub Update Available!',
-        'New version v1.1.0 with Google Play Protect certification is ready. Tap to download!'
-      );
-      window.open('https://bunkwell.onrender.com/BunkClub.apk', '_blank');
+      const latest = res.data?.latestVersion || CURRENT_APP_VERSION;
+      const isOutdated = isVersionOutdated(CURRENT_APP_VERSION, latest, CURRENT_VERSION_CODE, res.data?.versionCode);
+
+      if (isOutdated) {
+        toast.success(`Update available: v${latest}!`);
+        await sendInstantTestNotification(
+          '🚀 BunkClub Update Available',
+          `Version ${latest} is ready to download. Tap here to install the update!`
+        );
+        window.open('https://bunkwell.onrender.com/BunkClub.apk', '_blank');
+      } else {
+        toast.success(`You are on the latest version (v${CURRENT_APP_VERSION})! ✅`);
+      }
     } catch (e) {
-      toast.success('App is running the latest build! ✅');
+      toast.success(`You are on the latest version (v${CURRENT_APP_VERSION})! ✅`);
     }
   };
 
