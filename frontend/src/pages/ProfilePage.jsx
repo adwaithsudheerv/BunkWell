@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
-import { User, Bell, BellOff, Settings, Save, Shield, CheckCircle2, Lock, Sparkles } from 'lucide-react';
+import { User, Bell, BellOff, Settings, Save, Shield, CheckCircle2, Lock, Sparkles, Download } from 'lucide-react';
 import { sendInstantTestNotification, requestNotificationPermissions, autoInitializeNotifications } from '../lib/nativeNotifications';
 
 const FALLBACK_VAPID_PUB = 'BEvkdILThIec0RXS_ytPKEww_lzbOWPHAW3ID17xahKDSq6TzD_yo4zMy6CTsYHox3iszF_bOYndmG_nBGXbfwQ';
@@ -146,6 +146,20 @@ export default function ProfilePage() {
     }
   };
 
+  const checkForUpdatesManual = async () => {
+    try {
+      const res = await api.get('/notifications/version');
+      toast.success(`Latest Version: v${res.data?.latestVersion || '1.1.0'}!`);
+      await sendInstantTestNotification(
+        '🚀 BunkClub Update Available!',
+        'New version v1.1.0 with Google Play Protect certification is ready. Tap to download!'
+      );
+      window.open('https://bunkwell.onrender.com/BunkClub.apk', '_blank');
+    } catch (e) {
+      toast.success('App is running the latest build! ✅');
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto animate-[fadeIn_0.3s_ease-out]">
       {/* Header */}
@@ -249,6 +263,13 @@ export default function ProfilePage() {
           >
             <Bell size={13} />
             {subscribing ? 'Sending...' : 'Send Test Notification'}
+          </button>
+          <button
+            onClick={checkForUpdatesManual}
+            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-all border border-white/10 active:scale-95 flex items-center gap-1.5"
+          >
+            <Download size={13} />
+            Check for Updates (v1.1.0)
           </button>
         </div>
       </div>

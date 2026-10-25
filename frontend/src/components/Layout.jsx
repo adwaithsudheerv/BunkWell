@@ -9,6 +9,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import InstallPWAButton from './InstallPWAButton';
 import BunkBotModal from './BunkBotModal';
+import AppUpdateModal from './AppUpdateModal';
 import { Sparkles, Bot } from 'lucide-react';
 
 const navItems = [
@@ -308,6 +309,7 @@ export default function Layout() {
       </button>
 
       <BunkBotModal isOpen={bunkBotOpen} onClose={() => setBunkBotOpen(false)} />
+      <AppUpdateModal />
     </div>
   );
 }
