@@ -59,8 +59,15 @@ export default function Layout() {
     <div className="flex flex-col h-full select-none">
       {/* Brand Header */}
       <div className={`flex items-center justify-between px-5 py-5 border-b ${isDark ? 'border-white/10' : 'border-[#e6e1d6]'}`}>
-        <Link to="/dashboard" className="flex items-center group">
-          <span className="bunkclub-brand text-2xl tracking-tight font-black select-none">
+        <Link to="/dashboard" className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 rounded-lg bg-black/90 border border-blue-500/30 flex items-center justify-center overflow-hidden shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform">
+            <img
+              src="/logo-blue.png"
+              alt="BunkClub"
+              className="w-7 h-7 object-contain"
+            />
+          </div>
+          <span className="bunkclub-brand text-2xl tracking-tight font-extrabold select-none">
             <span className={isDark ? "text-white" : "text-[#0a0a0c]"}>Bunk</span>
             <span className="text-blue-500">Club</span>
           </span>
@@ -187,8 +194,15 @@ export default function Layout() {
             isDark ? 'border-white/10 bg-[#0c0e14]/90' : 'border-[#e6e1d6] bg-[#fbf9f4]/95 text-black'
           }`}
         >
-          <Link to="/dashboard" className="flex items-center">
-            <span className="bunkclub-brand text-2xl tracking-tight font-black select-none">
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-black/90 border border-blue-500/30 flex items-center justify-center overflow-hidden shadow-sm shadow-blue-500/20">
+              <img
+                src="/logo-blue.png"
+                alt="BunkClub"
+                className="w-6 h-6 object-contain"
+              />
+            </div>
+            <span className="bunkclub-brand text-xl sm:text-2xl tracking-tight font-extrabold select-none">
               <span className={isDark ? "text-white" : "text-[#0a0a0c]"}>Bunk</span>
               <span className="text-blue-500">Club</span>
             </span>

@@ -89,9 +89,19 @@ export default function RegisterPage() {
         {/* Subtle glass highlight stripe */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Brand Header */}
+        {/* Brand Header with Glowing Blue Emblem */}
         <div className="text-center mb-6">
-          <h1 className="bunkclub-brand text-3xl sm:text-4xl font-black tracking-tight text-white flex items-center justify-center">
+          <div className="relative mx-auto mb-3.5 w-16 h-16 flex items-center justify-center">
+            <div className="absolute inset-0 bg-blue-500/25 rounded-2xl blur-lg" />
+            <div className="relative w-16 h-16 rounded-2xl bg-black/80 border border-blue-500/30 flex items-center justify-center shadow-lg shadow-blue-500/20 overflow-hidden">
+              <img
+                src="/logo-blue.png"
+                alt="BunkClub"
+                className="w-13 h-13 object-contain drop-shadow"
+              />
+            </div>
+          </div>
+          <h1 className="bunkclub-brand text-3xl font-extrabold tracking-tight text-white flex items-center justify-center">
             <span>Bunk</span><span className="text-blue-500">Club</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1.5 tracking-wide uppercase font-semibold">
