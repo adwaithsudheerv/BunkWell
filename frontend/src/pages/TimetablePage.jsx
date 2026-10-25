@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import ShareTimetableModal from '../components/ShareTimetableModal';
 import AITimetableScannerModal from '../components/AITimetableScannerModal';
+import { scheduleScheduleReminders } from '../lib/nativeNotifications';
 import { Link } from 'react-router-dom';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -197,6 +198,7 @@ export default function TimetablePage() {
         const res = await api.post('/timetable', payload);
         setTimetableId(res.data.timetable._id);
       }
+      scheduleScheduleReminders(payload);
       toast.success('Timetable saved successfully! 💾');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save timetable');
@@ -228,46 +230,46 @@ export default function TimetablePage() {
             8:00 AM – 6:00 PM hourly block schedule (Monday to Saturday)
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto">
           {/* View toggle */}
           <div className="flex bg-white/5 border border-white/10 rounded-xl p-1">
             <button
               onClick={() => setViewMode('day')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 viewMode === 'day' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <List size={14} /> Day Blocks
+              <List size={14} /> Day
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <LayoutGrid size={14} /> Week Matrix
+              <LayoutGrid size={14} /> Week
             </button>
           </div>
 
           <button
             onClick={() => setShowScannerModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600/20 to-indigo-600/20 hover:from-blue-600/30 hover:to-indigo-600/30 text-blue-300 text-xs font-bold border border-blue-500/30 transition-all shadow-sm active:scale-95"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-blue-600/20 to-indigo-600/20 hover:from-blue-600/30 hover:to-indigo-600/30 text-blue-300 text-xs font-bold border border-blue-500/30 transition-all shadow-sm active:scale-95"
           >
-            <Camera size={15} className="text-blue-400" />
-            📸 AI Photo Scan
+            <Camera size={14} className="text-blue-400" />
+            AI Scan
           </button>
           <button
             onClick={() => setShowShareModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-semibold border border-blue-500/20 transition-all shadow-sm"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-semibold border border-blue-500/20 transition-all shadow-sm"
           >
-            <Users size={15} /> Section Sync
+            <Users size={14} /> Section
           </button>
           <button
             onClick={saveTimetable}
             disabled={saving}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold disabled:opacity-50 transition-all shadow-md shadow-blue-500/25 active:scale-95"
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold disabled:opacity-50 transition-all shadow-md shadow-blue-500/25 active:scale-95"
           >
-            <Save size={16} /> {saving ? 'Saving...' : 'Save Timetable'}
+            <Save size={15} /> {saving ? 'Saving...' : 'Save Timetable'}
           </button>
         </div>
       </div>

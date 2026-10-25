@@ -140,7 +140,7 @@ export default function AITimetableScannerModal({ isOpen, onClose, onTimetableAp
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-extrabold text-white">AI Timetable Photo Scanner</h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                  DeepSeek Vision
+                  Smart Vision AI
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
@@ -214,7 +214,7 @@ export default function AITimetableScannerModal({ isOpen, onClose, onTimetableAp
                       <RefreshCw size={36} className="text-blue-400 animate-spin mb-3" />
                       <p className="text-sm font-bold text-white">{scanStage}</p>
                       <p className="text-xs text-blue-300 mt-1">
-                        DeepSeek is parsing periods, days, and subjects...
+                        AI is parsing periods, days, and subjects...
                       </p>
                     </div>
                   )}
@@ -234,7 +234,7 @@ export default function AITimetableScannerModal({ isOpen, onClose, onTimetableAp
                     className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                   >
                     <Sparkles size={16} />
-                    {isScanning ? 'Extracting Schedule...' : 'Scan with DeepSeek AI'}
+                    {isScanning ? 'Extracting Schedule...' : 'Scan with Smart AI'}
                   </button>
                 </div>
               </div>

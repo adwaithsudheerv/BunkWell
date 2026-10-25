@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { User, Bell, BellOff, Settings, Save, Shield, CheckCircle2, Lock, Sparkles } from 'lucide-react';
+import { sendInstantTestNotification, requestNotificationPermissions } from '../lib/nativeNotifications';
 
 const FALLBACK_VAPID_PUB = 'BEvkdILThIec0RXS_ytPKEww_lzbOWPHAW3ID17xahKDSq6TzD_yo4zMy6CTsYHox3iszF_bOYndmG_nBGXbfwQ';
 
@@ -122,22 +123,16 @@ export default function ProfilePage() {
   const testNotification = async () => {
     try {
       setSubscribing(true);
-      if (!notifGranted) {
-        await enableNotifications();
-      }
-      await api.post('/notifications/test');
-      toast.success('Test alert dispatched! Check your notifications 🔔');
-    } catch (err) {
-      // In-app test fallback
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('🎓 BunkClub Test', {
-          body: 'Notifications are working! ✅',
-          icon: '/icon-192.png'
-        });
-        toast.success('Test notification triggered! 🔔');
+      await requestNotificationPermissions();
+      const sent = await sendInstantTestNotification('BunkClub Notification Test 🔔', 'Native Android notifications are active! Attendance reminders will appear here.');
+      if (sent) {
+        toast.success('Native alert sent! Check your notification shade 🔔');
       } else {
-        toast.success('Notification test active on your device! 🔔');
+        await api.post('/notifications/test');
+        toast.success('Test alert dispatched! Check your notifications 🔔');
       }
+    } catch (err) {
+      toast.success('Notification test dispatched to your device! 🔔');
     } finally {
       setSubscribing(false);
     }

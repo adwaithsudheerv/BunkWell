@@ -1,0 +1,145 @@
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
+
+export async function requestNotificationPermissions() {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const status = await LocalNotifications.requestPermissions();
+      if (status.display === 'granted') {
+        // Create high-priority notification channel for Android
+        await LocalNotifications.createChannel({
+          id: 'bunkclub_alerts',
+          name: 'BunkClub Attendance & Class Alerts',
+          description: 'Daily morning schedules, period check-ins and bunk alerts',
+          importance: 5,
+          visibility: 1,
+          vibration: true
+        });
+        return true;
+      }
+    } catch (e) {
+      console.warn('Native notification permission error:', e);
+    }
+  } else if ('Notification' in window) {
+    const perm = await Notification.requestPermission();
+    return perm === 'granted';
+  }
+  return false;
+}
+
+export async function sendInstantTestNotification(title = 'BunkClub Live Alert 🔔', body = 'Your attendance tracking is active and running 24/7!') {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await requestNotificationPermissions();
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title,
+            body,
+            id: Math.floor(Math.random() * 100000),
+            schedule: { at: new Date(Date.now() + 1000) },
+            channelId: 'bunkclub_alerts',
+            smallIcon: 'ic_launcher_round',
+            sound: undefined
+          }
+        ]
+      });
+      return true;
+    } catch (e) {
+      console.error('Failed to trigger native notification:', e);
+    }
+  } else if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '/icon-192.png' });
+    return true;
+  }
+  return false;
+}
+
+export async function scheduleScheduleReminders(timetable) {
+  if (!Capacitor.isNativePlatform() || !timetable || !timetable.days) return;
+
+  try {
+    await requestNotificationPermissions();
+
+    // Cancel previously scheduled local notifications
+    const pending = await LocalNotifications.getPending();
+    if (pending.notifications?.length > 0) {
+      await LocalNotifications.cancel({ notifications: pending.notifications });
+    }
+
+    const notificationsToSchedule = [];
+    const daysMap = {
+      Sunday: 1,
+      Monday: 2,
+      Tuesday: 3,
+      Wednesday: 4,
+      Thursday: 5,
+      Friday: 6,
+      Saturday: 7
+    };
+
+    let notifId = 100;
+
+    for (const d of timetable.days) {
+      const dayNum = daysMap[d.day];
+      if (!dayNum || !d.periods || d.periods.length === 0) continue;
+
+      // 1. Morning 08:00 AM summary on this day of week
+      const subjectNames = d.periods.map(p => p.subjectName).filter(Boolean).slice(0, 3).join(', ');
+      notificationsToSchedule.push({
+        id: notifId++,
+        title: `🌅 Good Morning! Classes for ${d.day}`,
+        body: `You have ${d.periods.length} class(es) today (${subjectNames}...). Tap to check your bunk budget!`,
+        schedule: {
+          on: {
+            weekday: dayNum,
+            hour: 8,
+            minute: 0
+          },
+          allowWhileIdle: true
+        },
+        channelId: 'bunkclub_alerts'
+      });
+
+      // 2. Schedule reminders 10 minutes before classes
+      for (const p of d.periods) {
+        if (!p.startTime) continue;
+        const [h, m] = p.startTime.split(':').map(Number);
+        if (isNaN(h) || isNaN(m)) continue;
+
+        let alertHour = h;
+        let alertMin = m - 10;
+        if (alertMin < 0) {
+          alertHour = Math.max(0, h - 1);
+          alertMin = 50;
+        }
+
+        notificationsToSchedule.push({
+          id: notifId++,
+          title: `⏰ Upcoming: ${p.subjectName || 'Class'} at ${p.startTime}`,
+          body: `Period ${p.periodNumber} is about to begin. Check your safe bunk cushion before skipping.`,
+          schedule: {
+            on: {
+              weekday: dayNum,
+              hour: alertHour,
+              minute: alertMin
+            },
+            allowWhileIdle: true
+          },
+          channelId: 'bunkclub_alerts'
+        });
+      }
+    }
+
+    if (notificationsToSchedule.length > 0) {
+      // Schedule first 30 notifications (Android limit is 50-64 alarms)
+      await LocalNotifications.schedule({
+        notifications: notificationsToSchedule.slice(0, 30)
+      });
+      console.log(`[LocalNotif] Successfully scheduled ${Math.min(30, notificationsToSchedule.length)} native alarms`);
+    }
+
+  } catch (err) {
+    console.warn('Failed to schedule local notifications:', err);
+  }
+}

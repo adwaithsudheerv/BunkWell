@@ -228,7 +228,61 @@ const Tesseract = require('tesseract.js');
 const https = require('https');
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-2cfa7b2980b6475bb4067a4ab1e9c007';
 
-// Helper to query DeepSeek / Fallback LLM with OCR text
+// Helper to run OCR on image (OCR.space Table/Handwriting Engine 2 with Tesseract fallback)
+async function extractOcrText(base64Data, imgBuffer) {
+  // 1. Try OCR.space specialized handwriting & table OCR engine (Engine 2)
+  try {
+    const postData = 'apikey=helloworld&isOverlayRequired=false&base64Image=' + encodeURIComponent('data:image/jpeg;base64,' + base64Data) + '&isTable=true&OCREngine=2';
+    const ocrText = await new Promise((resolve, reject) => {
+      const apiReq = https.request({
+        hostname: 'api.ocr.space',
+        path: '/parse/image',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(postData)
+        },
+        timeout: 18000
+      }, res => {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(body);
+            const text = parsed.ParsedResults?.[0]?.ParsedText || '';
+            if (text && text.trim().length > 10) {
+              resolve(text.trim());
+            } else {
+              reject(new Error(parsed.ErrorMessage?.[0] || 'OCR.space returned empty text'));
+            }
+          } catch (e) {
+            reject(e);
+          }
+        });
+      });
+      apiReq.on('error', reject);
+      apiReq.on('timeout', () => { apiReq.destroy(); reject(new Error('OCR.space timeout')); });
+      apiReq.write(postData);
+      apiReq.end();
+    });
+
+    console.log('[OCR] OCR.space extracted text successfully:', ocrText.slice(0, 80));
+    return ocrText;
+  } catch (ocrSpaceErr) {
+    console.warn('[OCR] OCR.space fallback to Tesseract:', ocrSpaceErr.message);
+  }
+
+  // 2. Fallback to Tesseract
+  try {
+    const ocrResult = await Tesseract.recognize(imgBuffer, 'eng', { logger: () => {} });
+    return (ocrResult?.data?.text || '').trim();
+  } catch (tessErr) {
+    console.warn('[OCR] Tesseract error:', tessErr.message);
+    return '';
+  }
+}
+
+// Helper to query AI parser with OCR text
 async function parseTimetableWithAI(ocrText) {
   const prompt = `You are an expert college timetable parsing AI.
 A student took a photo of their college timetable schedule.
@@ -433,12 +487,8 @@ router.post('/ai-scan', auth, async (req, res) => {
       return res.status(400).json({ message: 'Invalid image data.' });
     }
 
-    // Step 1: Optical Character Recognition (OCR) via Tesseract
-    const ocrResult = await Tesseract.recognize(imgBuffer, 'eng', {
-      logger: () => {}
-    });
-
-    const ocrText = (ocrResult?.data?.text || '').trim();
+    // Step 1: Optical Character Recognition (OCR) via OCR.space Engine 2 + Tesseract fallback
+    const ocrText = await extractOcrText(base64Data, imgBuffer);
 
     if (!ocrText || ocrText.length < 5) {
       return res.status(422).json({
@@ -446,7 +496,7 @@ router.post('/ai-scan', auth, async (req, res) => {
       });
     }
 
-    // Step 2: Pass OCR Text to DeepSeek / LLM to structure into schedule JSON
+    // Step 2: Pass OCR Text to AI parser to structure into schedule JSON
     const parsedData = await parseTimetableWithAI(ocrText);
 
     res.json({

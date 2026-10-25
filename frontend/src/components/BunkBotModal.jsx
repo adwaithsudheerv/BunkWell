@@ -167,7 +167,7 @@ export default function BunkBotModal({ isOpen, onClose }) {
               <div className="flex items-center gap-1.5">
                 <h3 className="font-extrabold text-sm sm:text-base text-white">BunkBot AI</h3>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30 flex items-center gap-1">
-                  <Sparkles size={10} /> DeepSeek
+                  <Sparkles size={10} /> Smart AI
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">Live attendance & semester forecast strategist</p>
