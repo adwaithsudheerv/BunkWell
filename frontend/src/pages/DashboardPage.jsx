@@ -341,32 +341,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Empty State */}
-      {(!analytics?.subjects || analytics.subjects.length === 0) && !loading && (
-        <div className="glass-card rounded-3xl p-8 lg:p-12 text-center max-w-2xl mx-auto border border-white/10">
-          <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center mx-auto mb-4 text-blue-400">
-            <BookOpen size={32} />
-          </div>
-          <h3 className="font-black text-xl mb-2">Welcome to BunkClub!</h3>
-          <p className="text-slate-400 text-xs mb-6 max-w-md mx-auto">
-            You don't have any subjects yet. Load a sample semester or add your subjects to start tracking safe bunks.
-          </p>
-          <div className="flex flex-wrap gap-3 justify-center items-center">
-            <button
-              onClick={handleSeedDemo}
-              className="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold active:scale-95 transition-all shadow-md shadow-blue-500/30 flex items-center gap-2"
-            >
-              <Sparkles size={16} /> Load Sample Semester
-            </button>
-            <Link
-              to="/subjects"
-              className="px-5 py-3 rounded-2xl border border-white/20 text-slate-300 text-xs font-bold hover:text-white hover:border-white/40 transition-colors"
-            >
-              Add Subjects Manually
-            </Link>
-          </div>
-        </div>
-      )}
+
 
       {/* Modals */}
       <OnboardingModal
