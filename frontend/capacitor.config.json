@@ -1,0 +1,20 @@
+{
+  "appId": "app.bunkclub.mobile",
+  "appName": "BunkClub",
+  "webDir": "dist",
+  "server": {
+    "url": "https://bunkwell.onrender.com",
+    "cleartext": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#090B0E",
+      "showSpinner": false
+    }
+  },
+  "android": {
+    "backgroundColor": "#090B0E",
+    "allowMixedContent": true
+  }
+}
