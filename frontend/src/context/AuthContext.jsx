@@ -11,7 +11,11 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('bunkwell_token');
     const savedUser = localStorage.getItem('bunkwell_user');
     if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        // ignore
+      }
       // Verify token is still valid
       api.get('/auth/me')
         .then(res => setUser(res.data.user))
@@ -22,8 +26,8 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const login = async (username, password) => {
-    const res = await api.post('/auth/login', { username, password });
+  const login = async (identifier, password) => {
+    const res = await api.post('/auth/login', { identifier, password });
     localStorage.setItem('bunkwell_token', res.data.token);
     localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
@@ -35,6 +39,24 @@ export function AuthProvider({ children }) {
     localStorage.setItem('bunkwell_token', res.data.token);
     localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
+    return res.data;
+  };
+
+  const loginWithGoogle = async (googlePayload) => {
+    const res = await api.post('/auth/google', googlePayload);
+    localStorage.setItem('bunkwell_token', res.data.token);
+    localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
+    setUser(res.data.user);
+    return res.data;
+  };
+
+  const forgotPassword = async (identifier, newPassword) => {
+    const res = await api.post('/auth/forgot-password', { identifier, newPassword });
+    if (res.data.token) {
+      localStorage.setItem('bunkwell_token', res.data.token);
+      localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
+      setUser(res.data.user);
+    }
     return res.data;
   };
 
@@ -50,7 +72,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, forgotPassword, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

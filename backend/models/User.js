@@ -2,8 +2,11 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true, trim: true },
-  password: { type: String, required: true },
+  username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+  email: { type: String, trim: true, lowercase: true, index: true },
+  password: { type: String },
+  googleId: { type: String, sparse: true, index: true },
+  avatar: { type: String },
   name: { type: String, required: true, trim: true },
   studentId: { type: String, required: true, trim: true },
   college: { type: String, trim: true },
@@ -18,13 +21,14 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password') || !this.password) return next();
   this.password = await bcrypt.hash(this.password, 12);
   this.updatedAt = new Date();
   next();
 });
 
 userSchema.methods.comparePassword = async function (candidate) {
+  if (!this.password) return false;
   return bcrypt.compare(candidate, this.password);
 };
 

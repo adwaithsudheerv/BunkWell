@@ -3,21 +3,29 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import {
-  User, Lock, Eye, EyeOff, IdCard, Building2,
+  User, Mail, Lock, Eye, EyeOff, IdCard, Building2,
   GraduationCap, Check, ShieldCheck, Sparkles,
-  BookOpen, ChevronRight, ChevronLeft, Award, CheckCircle2
+  BookOpen, ChevronRight, ChevronLeft, Award, CheckCircle2, X
 } from 'lucide-react';
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [step, setStep] = useState(1);
+
+  // Google Modal
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleName, setGoogleName] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
+
   const [form, setForm] = useState({
+    name: '',
+    email: '',
     username: '',
     password: '',
-    name: '',
     studentId: '',
     college: '',
     department: '',
@@ -26,7 +34,16 @@ export default function RegisterPage() {
     attendanceTarget: 80,
   });
 
-  const update = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  const update = (key, val) => {
+    setForm(f => {
+      const updated = { ...f, [key]: val };
+      // Auto-suggest username when email is typed (if username hasn't been manually set)
+      if (key === 'email' && (!f.username || f.username === f.email.split('@')[0])) {
+        updated.username = val.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+      }
+      return updated;
+    });
+  };
 
   // Live password strength calculation
   const passStrength = useMemo(() => {
@@ -55,17 +72,17 @@ export default function RegisterPage() {
   // ID verification format check
   const isIdVerified = useMemo(() => {
     const id = form.studentId.trim();
-    return id.length >= 4;
+    return id.length >= 3;
   }, [form.studentId]);
 
   const handleNextStep = (e) => {
     e.preventDefault();
-    if (!form.username.trim()) {
-      toast.error('Please choose a username');
+    if (!form.name.trim()) {
+      toast.error('Please enter your full legal name');
       return;
     }
-    if (form.username.length < 3) {
-      toast.error('Username must be at least 3 characters');
+    if (!form.email.trim() && !form.username.trim()) {
+      toast.error('Please enter your Email address or Username');
       return;
     }
     if (!form.password) {
@@ -81,10 +98,6 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) {
-      toast.error('Please enter your full student name');
-      return;
-    }
     if (!form.studentId.trim()) {
       toast.error('Please enter your Student ID or Roll number');
       return;
@@ -92,7 +105,12 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(form);
+      await register({
+        ...form,
+        username: (form.username || form.email.split('@')[0] || form.name.toLowerCase().replace(/\s+/g, '')).toLowerCase().trim(),
+        email: form.email.trim().toLowerCase(),
+        studentId: form.studentId.trim().toUpperCase()
+      });
       toast.success('Registration verified & complete! 🎓');
       navigate('/dashboard');
     } catch (err) {
@@ -100,6 +118,31 @@ export default function RegisterPage() {
       toast.error(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSubmit = async (e) => {
+    e.preventDefault();
+    if (!googleEmail.trim()) {
+      toast.error('Please enter your Gmail address');
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle({
+        email: googleEmail.trim().toLowerCase(),
+        name: googleName.trim() || googleEmail.split('@')[0],
+        googleId: 'g_' + btoa(googleEmail).replace(/=/g, '').slice(0, 16)
+      });
+      toast.success('Account created with Google! 🎓');
+      navigate('/dashboard');
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Google registration failed';
+      toast.error(msg);
+    } finally {
+      setGoogleLoading(false);
+      setShowGoogleModal(false);
     }
   };
 
@@ -112,24 +155,67 @@ export default function RegisterPage() {
 
         <div className="box" style={{ padding: '36px 36px 32px' }}>
           {/* Header Brand */}
-          <div className="brand-icon-wrap" style={{ marginBottom: 14 }}>
+          <div className="brand-icon-wrap" style={{ marginBottom: 12 }}>
             <div className="brand-icon" style={{ width: 48, height: 48, borderRadius: 14 }}>
               <GraduationCap size={24} />
             </div>
           </div>
 
           <h3 style={{ fontSize: 26, marginBottom: 4 }}>Student Registration</h3>
-          <p className="sub-text" style={{ marginBottom: 20 }}>
-            {step === 1 ? 'Step 1 of 2: Create Secure Account' : 'Step 2 of 2: ID Verification & Goals'}
+          <p className="sub-text" style={{ marginBottom: 16 }}>
+            {step === 1 ? 'Step 1 of 2: Personal & Login Credentials' : 'Step 2 of 2: College ID Verification & Goals'}
           </p>
 
+          {/* Quick Sign up with Google */}
+          {step === 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowGoogleModal(true)}
+                style={{
+                  width: '100%',
+                  height: 42,
+                  borderRadius: 30,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  cursor: 'pointer',
+                  marginBottom: 16,
+                  transition: 'background 0.2s',
+                }}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                Sign up with Google / Gmail
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+                <span style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Or enter your details
+                </span>
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+              </div>
+            </>
+          )}
+
           {/* Stepper with descriptive headers */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
                 style={{
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   borderRadius: '50%',
                   display: 'grid',
                   placeItems: 'center',
@@ -152,8 +238,8 @@ export default function RegisterPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
                 style={{
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   borderRadius: '50%',
                   display: 'grid',
                   placeItems: 'center',
@@ -175,11 +261,43 @@ export default function RegisterPage() {
 
           <form onSubmit={step === 1 ? handleNextStep : handleSubmit}>
             {step === 1 ? (
-              <div className="animate-in" style={{ display: 'grid', gap: 18 }}>
-                {/* Username Input */}
+              <div className="animate-in" style={{ display: 'grid', gap: 16 }}>
+                {/* Full Legal Name */}
                 <div className="input-box" style={{ marginBottom: 0 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    <User size={13} className="text-amber-400" /> Choose Username
+                    <User size={13} className="text-amber-400" /> Full Legal Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Adwaith Sudheer"
+                    className="input-control"
+                    value={form.name}
+                    onChange={e => update('name', e.target.value)}
+                    required
+                    autoComplete="name"
+                  />
+                </div>
+
+                {/* College / Personal Email Address */}
+                <div className="input-box" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <Mail size={13} className="text-amber-400" /> Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="e.g. adwaith@amrita.edu or your@gmail.com"
+                    className="input-control"
+                    value={form.email}
+                    onChange={e => update('email', e.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+
+                {/* Username Input (Auto-suggested from email) */}
+                <div className="input-box" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <User size={13} className="text-amber-400" /> Username
                   </label>
                   <input
                     type="text"
@@ -187,7 +305,6 @@ export default function RegisterPage() {
                     className="input-control"
                     value={form.username}
                     onChange={e => update('username', e.target.value.toLowerCase().trim())}
-                    required
                     autoComplete="username"
                   />
                 </div>
@@ -196,7 +313,7 @@ export default function RegisterPage() {
                 <div className="input-box" style={{ marginBottom: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <Lock size={13} className="text-amber-400" /> Password
+                      <Lock size={13} className="text-amber-400" /> Password *
                     </label>
                     {form.password && (
                       <span style={{ fontSize: 11, color: passStrength.color, fontWeight: 600 }}>
@@ -226,7 +343,7 @@ export default function RegisterPage() {
 
                 {/* Password Strength Meter */}
                 {form.password && (
-                  <div style={{ marginTop: -8, marginBottom: 4 }}>
+                  <div style={{ marginTop: -6, marginBottom: 2 }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 5 }}>
                       {[1, 2, 3, 4].map(barIndex => (
                         <div
@@ -240,61 +357,16 @@ export default function RegisterPage() {
                         />
                       ))}
                     </div>
-                    <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 11, color: '#94a3b8' }}>
-                      <span style={{ color: form.password.length >= 6 ? '#10b981' : '#64748b', display: 'flex', alignItems: 'center', gap: 3 }}>
-                        ✓ 6+ chars
-                      </span>
-                      <span style={{ color: /[0-9]/.test(form.password) ? '#10b981' : '#64748b', display: 'flex', alignItems: 'center', gap: 3 }}>
-                        ✓ Number
-                      </span>
-                      <span style={{ color: /[A-Z]/.test(form.password) ? '#10b981' : '#64748b', display: 'flex', alignItems: 'center', gap: 3 }}>
-                        ✓ Uppercase
-                      </span>
-                    </div>
                   </div>
                 )}
-
-                {/* Security Guarantee Pill */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '8px 12px',
-                    borderRadius: 10,
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    fontSize: 11,
-                    color: '#94a3b8',
-                  }}
-                >
-                  <ShieldCheck size={16} style={{ color: '#10b981', flexShrink: 0 }} />
-                  <span>Passwords are hashed with Bcrypt (salt rounds: 12) & JWT authenticated.</span>
-                </div>
               </div>
             ) : (
               <div className="animate-in" style={{ display: 'grid', gap: 16 }}>
-                {/* Full Name */}
-                <div className="input-box" style={{ marginBottom: 0 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    <User size={13} className="text-amber-400" /> Full Legal Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Adwaith Sudheer"
-                    className="input-control"
-                    value={form.name}
-                    onChange={e => update('name', e.target.value)}
-                    required
-                    autoComplete="name"
-                  />
-                </div>
-
                 {/* Student ID Verification Input with Live Badge */}
                 <div className="input-box" style={{ marginBottom: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <IdCard size={13} className="text-amber-400" /> Student Roll No / ID Card Number
+                      <IdCard size={13} className="text-amber-400" /> Student Roll No / ID Card Number *
                     </label>
                     {isIdVerified && (
                       <span style={{ fontSize: 10, color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 8px', borderRadius: 99, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -304,11 +376,12 @@ export default function RegisterPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="e.g. 21CS042 / STU-2024"
+                    placeholder="e.g. MY.AC.P2MCA26001 or 21CS042"
                     className="input-control"
                     value={form.studentId}
                     onChange={e => update('studentId', e.target.value.toUpperCase())}
                     required
+                    autoFocus
                   />
                 </div>
 
@@ -316,11 +389,11 @@ export default function RegisterPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div className="input-box" style={{ marginBottom: 0 }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <Building2 size={12} className="text-amber-400" /> College
+                      <Building2 size={12} className="text-amber-400" /> College / University
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Apex Institute"
+                      placeholder="e.g. Amrita University"
                       className="input-control"
                       value={form.college}
                       onChange={e => update('college', e.target.value)}
@@ -332,7 +405,7 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. CSE / IT"
+                      placeholder="e.g. CS / MCA"
                       className="input-control"
                       value={form.department}
                       onChange={e => update('department', e.target.value.toUpperCase())}
@@ -416,7 +489,7 @@ export default function RegisterPage() {
                           {form.name}
                         </p>
                         <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>
-                          {form.studentId ? `ID: ${form.studentId}` : 'ID Verification Pending'} • {form.department || 'General'}
+                          {form.studentId ? `ID: ${form.studentId}` : 'ID Verification Pending'} • {form.department || 'Student'}
                         </p>
                       </div>
                     </div>
@@ -449,7 +522,7 @@ export default function RegisterPage() {
                 {loading ? (
                   <>
                     <span style={{ width: 16, height: 16, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block' }} className="spin" />
-                    Verifying & Creating…
+                    Creating Account…
                   </>
                 ) : step === 1 ? (
                   <>
@@ -472,6 +545,58 @@ export default function RegisterPage() {
           </p>
         </div>
       </div>
+
+      {/* Google Sign Up Modal */}
+      {showGoogleModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
+          <div className="box animate-in" style={{ width: '100%', maxWidth: '420px', padding: '28px 28px 24px', background: '#0d1117', border: '1px solid rgba(255,255,255,0.15)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <h4 style={{ color: '#fff', fontSize: 17, margin: 0 }}>Sign up with Google</h4>
+              </div>
+              <button onClick={() => setShowGoogleModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+                <X size={18} />
+              </button>
+            </div>
+            <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 18 }}>
+              Enter your Gmail address to instantly create your student profile:
+            </p>
+            <form onSubmit={handleGoogleSubmit}>
+              <div className="input-box" style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Gmail Address</label>
+                <input
+                  type="email"
+                  placeholder="yourname@gmail.com"
+                  className="input-control"
+                  value={googleEmail}
+                  onChange={e => setGoogleEmail(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="input-box" style={{ marginBottom: 20 }}>
+                <label style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Full Name (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Adwaith Sudheer"
+                  className="input-control"
+                  value={googleName}
+                  onChange={e => setGoogleName(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="btn-auth" disabled={googleLoading} style={{ marginTop: 0 }}>
+                {googleLoading ? 'Creating profile…' : 'Continue to Dashboard'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
