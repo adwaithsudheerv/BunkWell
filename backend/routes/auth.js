@@ -6,14 +6,24 @@ const router = express.Router();
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, name, studentId, college, department, semester, year } = req.body;
+    const { username, password, name, studentId, college, department, semester, year, attendanceTarget } = req.body;
     if (!username || !password || !name || !studentId) {
       return res.status(400).json({ message: 'Username, password, name and student ID are required' });
     }
     const exists = await User.findOne({ username });
     if (exists) return res.status(409).json({ message: 'Username already taken' });
 
-    const user = new User({ username, password, name, studentId, college, department, semester, year });
+    const user = new User({
+      username,
+      password,
+      name,
+      studentId,
+      college,
+      department,
+      semester,
+      year,
+      attendanceTarget: attendanceTarget ? Number(attendanceTarget) : 80
+    });
     await user.save();
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
