@@ -119,6 +119,151 @@ router.get('/bunk-suggestions', auth, async (req, res) => {
   }
 });
 
+// Dynamic Ways to Bunk: Full Day Bunks, Morning Sleep-ins, Subject Bunk Cushions & Scenarios
+router.get('/bunk-ways', auth, async (req, res) => {
+  try {
+    const Timetable = require('../models/Timetable');
+    const target = req.user.attendanceTarget || 80;
+    const subjects = await Subject.find({ userId: req.user._id, isActive: true });
+    const timetable = await Timetable.findOne({ userId: req.user._id, isActive: true })
+      .populate('days.periods.subjectId');
+
+    const subjectMap = {};
+    const subjectCushions = [];
+
+    subjects.forEach(s => {
+      const eligible = Math.max(0, s.totalClasses - (s.cancelledClasses || 0));
+      const attended = s.attendedClasses || 0;
+      const pct = eligible > 0 ? (attended / eligible) * 100 : 100;
+      const minNeeded = Math.ceil(eligible * (target / 100));
+      const safeBunks = Math.max(0, attended - minNeeded);
+      const needMore = pct < target
+        ? Math.ceil(((target / 100) * eligible - attended) / (1 - (target / 100)))
+        : 0;
+
+      const obj = {
+        _id: s._id,
+        name: s.name,
+        color: s.color || '#0047FF',
+        type: s.type || 'theory',
+        total: s.totalClasses,
+        attended: s.attendedClasses,
+        pct: parseFloat(pct.toFixed(1)),
+        safeBunks,
+        needMore,
+        status: pct >= target ? 'safe' : pct >= target - 10 ? 'warning' : 'danger'
+      };
+      subjectMap[String(s._id)] = obj;
+      subjectCushions.push(obj);
+    });
+
+    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayScenarios = [];
+    const morningScenarios = [];
+
+    if (timetable && timetable.days) {
+      DAYS.forEach(dayName => {
+        const daySchedule = timetable.days.find(d => d.day === dayName);
+        const periods = (daySchedule?.periods || []).filter(p => p.subjectName || p.subjectId);
+
+        if (!periods.length) {
+          dayScenarios.push({
+            day: dayName,
+            totalClasses: 0,
+            isHoliday: true,
+            status: 'safe',
+            label: 'No Classes',
+            impacts: []
+          });
+          return;
+        }
+
+        // Count occurrences of each subject on this day
+        const daySubCounts = {};
+        periods.forEach(p => {
+          const sId = p.subjectId?._id ? String(p.subjectId._id) : null;
+          const sName = p.subjectName || p.subjectId?.name || 'Class';
+          const key = sId || sName;
+          if (!daySubCounts[key]) daySubCounts[key] = { id: sId, name: sName, count: 0 };
+          daySubCounts[key].count++;
+        });
+
+        const impacts = [];
+        let allSafe = true;
+
+        Object.values(daySubCounts).forEach(item => {
+          const sub = (item.id && subjectMap[item.id])
+            ? subjectMap[item.id]
+            : subjectCushions.find(s => s.name.toLowerCase() === item.name.toLowerCase());
+
+          if (sub) {
+            const currentTotal = sub.total;
+            const currentAttended = sub.attended;
+            const newTotal = currentTotal + item.count;
+            const projPct = newTotal > 0 ? (currentAttended / newTotal) * 100 : 100;
+            const isSafe = projPct >= target;
+            if (!isSafe) allSafe = false;
+
+            impacts.push({
+              name: sub.name,
+              color: sub.color,
+              classesCount: item.count,
+              currentPct: sub.pct,
+              projectedPct: parseFloat(projPct.toFixed(1)),
+              drop: parseFloat((sub.pct - projPct).toFixed(1)),
+              isSafe
+            });
+          }
+        });
+
+        dayScenarios.push({
+          day: dayName,
+          totalClasses: periods.length,
+          isHoliday: false,
+          isSafe: allSafe,
+          status: allSafe ? 'safe' : 'risk',
+          label: allSafe ? 'Safe to Take Off 🎉' : 'Risky Bunk ⚠️',
+          impacts
+        });
+
+        // Morning sleep-in (Period 1)
+        const p1 = periods.find(p => p.periodNumber === 1);
+        if (p1) {
+          const sId = p1.subjectId?._id ? String(p1.subjectId._id) : null;
+          const sName = p1.subjectName || p1.subjectId?.name || 'Period 1';
+          const sub = (sId && subjectMap[sId])
+            ? subjectMap[sId]
+            : subjectCushions.find(s => s.name.toLowerCase() === sName.toLowerCase());
+
+          if (sub) {
+            const newTotal = sub.total + 1;
+            const projPct = newTotal > 0 ? (sub.attended / newTotal) * 100 : 100;
+            morningScenarios.push({
+              day: dayName,
+              subjectName: sub.name,
+              color: sub.color,
+              time: p1.startTime || '8:00 AM',
+              currentPct: sub.pct,
+              projectedPct: parseFloat(projPct.toFixed(1)),
+              isSafe: projPct >= target
+            });
+          }
+        }
+      });
+    }
+
+    res.json({
+      target,
+      subjectCushions,
+      dayScenarios,
+      morningScenarios,
+      totalSafeBunksAcrossAll: subjectCushions.reduce((acc, s) => acc + s.safeBunks, 0)
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Weekly attendance trend
 router.get('/weekly', auth, async (req, res) => {
   try {

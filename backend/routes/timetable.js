@@ -123,6 +123,8 @@ router.post('/share', auth, async (req, res) => {
       success: true,
       shareCode: shared.shareCode,
       title: shared.title,
+      subjects: shared.subjects,
+      days: shared.days,
       message: `Timetable shared! Classmates can import using code ${shared.shareCode}`
     });
   } catch (err) {

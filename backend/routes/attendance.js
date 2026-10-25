@@ -43,27 +43,25 @@ router.post('/quick-mark', auth, async (req, res) => {
     }
     await subject.save();
 
-    // If absent (bunk), record it so it appears in the bunk history with date and period
-    if (status === 'absent') {
-      const today = new Date();
-      const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(); dayEnd.setHours(23, 59, 59, 999);
-      const todayRecords = await AttendanceRecord.countDocuments({
-        userId: req.user._id,
-        date: { $gte: dayStart, $lte: dayEnd }
-      });
-      const periodNumber = todayRecords + 1;
+    // Record in AttendanceRecord so it appears in the MAM register / attendance log
+    const today = new Date();
+    const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(); dayEnd.setHours(23, 59, 59, 999);
+    const todayRecords = await AttendanceRecord.countDocuments({
+      userId: req.user._id,
+      date: { $gte: dayStart, $lte: dayEnd }
+    });
+    const periodNumber = todayRecords + 1;
 
-      const record = new AttendanceRecord({
-        userId: req.user._id,
-        subjectId,
-        date: today,
-        periodNumber,
-        status: 'absent',
-        markedAt: today
-      });
-      await record.save();
-    }
+    const record = new AttendanceRecord({
+      userId: req.user._id,
+      subjectId,
+      date: today,
+      periodNumber,
+      status: status, // 'present' or 'absent'
+      markedAt: today
+    });
+    await record.save();
 
     res.json({
       message: status === 'present' ? 'Attended class logged! ✅' : 'Bunk recorded for today! ❌',
