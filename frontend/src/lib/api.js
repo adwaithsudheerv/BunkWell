@@ -1,6 +1,14 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+    return 'https://bunkwell-backend.onrender.com/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
+const API_BASE = getBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE,

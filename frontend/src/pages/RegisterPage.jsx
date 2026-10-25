@@ -96,7 +96,8 @@ export default function RegisterPage() {
       toast.success('Registration verified & complete! 🎓');
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      const msg = err.response?.data?.message || err.message || 'Registration failed';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
