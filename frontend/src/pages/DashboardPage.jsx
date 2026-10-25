@@ -131,25 +131,25 @@ export default function DashboardPage() {
       {/* Greeting & Quick Action Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
-            {greeting}, <span className="bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">{user?.name?.split(' ')[0]}</span> 👋
+          <h2 className="text-xl lg:text-2xl font-bold flex items-center gap-2">
+            {greeting}, <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">{user?.name?.split(' ')[0]}</span> 👋
           </h2>
           <p className="text-slate-500 text-sm mt-0.5">{today} • {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowShareModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-xs font-semibold text-purple-300 border border-purple-500/30 transition-all shadow"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-xs font-semibold text-blue-400 border border-blue-500/20 transition-all shadow-sm"
           >
             <Users size={15} /> Section Sync
           </button>
           <button
             onClick={() => setShowTour(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-amber-400 border border-amber-500/20 transition-all hover:border-amber-500/40"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 border border-white/10 transition-all"
           >
             <HelpCircle size={15} /> BunkClub Guide
           </button>
-          <Link to="/today" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-orange-500/25">
+          <Link to="/today" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all shadow-md shadow-blue-500/25">
             <Clock size={16} />
             Today's Log
           </Link>
@@ -160,17 +160,17 @@ export default function DashboardPage() {
       <div className="glass-card rounded-2xl p-6 flex items-center gap-6">
         <div className="relative w-24 h-24 flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
-            <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="100%" data={[{ value: analytics?.overallPercentage || 0, fill: '#f59e0b' }]} startAngle={90} endAngle={-270}>
+            <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="100%" data={[{ value: analytics?.overallPercentage || 0, fill: '#0047FF' }]} startAngle={90} endAngle={-270}>
               <RadialBar dataKey="value" cornerRadius={8} />
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-lg font-bold text-white">{(analytics?.overallPercentage || 0).toFixed(0)}%</span>
+            <span className="text-lg font-bold">{(analytics?.overallPercentage || 0).toFixed(0)}%</span>
           </div>
         </div>
         <div>
           <p className="text-slate-400 text-sm">Overall Attendance</p>
-          <p className="text-2xl font-bold text-white mt-1">{(analytics?.overallPercentage || 0).toFixed(1)}%</p>
+          <p className="text-2xl font-bold mt-1">{(analytics?.overallPercentage || 0).toFixed(1)}%</p>
           <div className="flex items-center gap-2 mt-2">
             <span className={`text-xs px-2 py-1 rounded-full font-medium ${
               (analytics?.overallPercentage || 0) >= target
@@ -196,9 +196,9 @@ export default function DashboardPage() {
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Subjects" value={analytics?.subjects?.length || 0} icon={BookOpen} color="#f59e0b" />
+        <StatCard label="Total Subjects" value={analytics?.subjects?.length || 0} icon={BookOpen} color="#0047FF" />
         <StatCard label="BunkBank Passes" value={`${totalBunkPasses} Safe`} sublabel="Available skips" icon={Wallet} color="#10b981" />
-        <StatCard label="Today's Periods" value={todaySchedule?.schedule?.periods?.length || 0} sublabel={today} icon={CalendarDays} color="#8b5cf6" />
+        <StatCard label="Today's Periods" value={todaySchedule?.schedule?.periods?.length || 0} sublabel={today} icon={CalendarDays} color="#3b82f6" />
         <StatCard label="At Risk" value={danger} sublabel={danger > 0 ? 'Need recovery' : 'All safe'} icon={AlertTriangle} color="#ef4444" />
       </div>
 
@@ -211,22 +211,22 @@ export default function DashboardPage() {
       {todaySchedule?.schedule && (
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-white flex items-center gap-2">
-              <CalendarDays size={18} className="text-[#6366f1]" />
+            <h3 className="font-semibold flex items-center gap-2">
+              <CalendarDays size={18} className="text-blue-500" />
               Today's Schedule
             </h3>
-            <Link to="/today" className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1">
+            <Link to="/today" className="text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1 font-semibold">
               Mark Attendance <ChevronRight size={14} />
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {todaySchedule.schedule.periods.map(p => (
               <div key={p.periodNumber} className="flex items-center gap-2 p-3 rounded-xl bg-white/5">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-400">
+                <div className="w-7 h-7 rounded-lg bg-blue-600/20 flex items-center justify-center text-xs font-bold text-blue-400">
                   {p.periodNumber}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-white truncate">{p.subjectName || 'Subject'}</p>
+                  <p className="text-xs font-medium truncate">{p.subjectName || 'Subject'}</p>
                   {p.startTime && <p className="text-xs text-slate-500">{p.startTime}</p>}
                 </div>
               </div>
@@ -239,11 +239,11 @@ export default function DashboardPage() {
       {analytics?.subjects && analytics.subjects.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-white flex items-center gap-2">
-              <Zap size={18} className="text-[#6366f1]" />
+            <h3 className="font-semibold flex items-center gap-2">
+              <Zap size={18} className="text-blue-500" />
               Subject Overview
             </h3>
-            <Link to="/analytics" className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1">
+            <Link to="/analytics" className="text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1 font-semibold">
               Full Analytics <ChevronRight size={14} />
             </Link>
           </div>
@@ -256,17 +256,17 @@ export default function DashboardPage() {
       {/* Empty state */}
       {(!analytics?.subjects || analytics.subjects.length === 0) && !loading && (
         <div className="glass-card rounded-2xl p-8 lg:p-12 text-center max-w-2xl mx-auto border border-white/10">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-red-500/20 border border-orange-500/30 flex items-center justify-center mx-auto mb-4 text-amber-400">
+          <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center mx-auto mb-4 text-blue-400">
             <BookOpen size={32} />
           </div>
-          <h3 className="text-white font-bold text-xl mb-2">Welcome to your Bunkwell Dashboard!</h3>
+          <h3 className="font-bold text-xl mb-2">Welcome to BunkClub!</h3>
           <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">
             You don't have any subjects yet. You can add your own subjects & timetable, or load a realistic sample semester to test all features instantly.
           </p>
           <div className="flex flex-wrap gap-3 justify-center items-center">
             <button
               onClick={handleSeedDemo}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-orange-500/30 flex items-center gap-2"
+              className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold active:scale-95 transition-all shadow-md shadow-blue-500/30 flex items-center gap-2"
             >
               <Sparkles size={17} /> Load Sample Semester (1-Click Demo)
             </button>

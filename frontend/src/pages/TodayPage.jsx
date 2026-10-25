@@ -7,7 +7,7 @@ const STATUS_CONFIG = {
   present: { label: 'Present', icon: CheckCircle2, color: '#10b981', bg: 'bg-emerald-500/20 border-emerald-500/30' },
   absent: { label: 'Absent', icon: XCircle, color: '#ef4444', bg: 'bg-red-500/20 border-red-500/30' },
   cancelled: { label: 'Cancelled', icon: Ban, color: '#64748b', bg: 'bg-slate-500/20 border-slate-500/30' },
-  substitute: { label: 'Substitute', icon: UserCheck, color: '#f59e0b', bg: 'bg-amber-500/20 border-amber-500/30' },
+  substitute: { label: 'Substitute', icon: UserCheck, color: '#3b82f6', bg: 'bg-blue-500/20 border-blue-500/30' },
   lab: { label: 'Lab', icon: FlaskConical, color: '#8b5cf6', bg: 'bg-purple-500/20 border-purple-500/30' },
   not_marked: { label: 'Not Marked', icon: Clock, color: '#94a3b8', bg: 'bg-white/5 border-white/10' },
 };
@@ -101,12 +101,12 @@ function PeriodCard({ period, date, onMark }) {
             placeholder="Enter substitute faculty name"
             value={substituteFaculty}
             onChange={e => setSubstituteFaculty(e.target.value)}
-            className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-[#2a2a4a] text-white text-sm placeholder-slate-500 focus:outline-none focus:border-amber-500"
+            className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500"
           />
           <button
             onClick={() => mark('substitute', substituteFaculty)}
             disabled={marking}
-            className="px-3 py-2 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 text-sm hover:bg-amber-500/30 transition-colors disabled:opacity-60"
+            className="px-3 py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 text-sm hover:bg-blue-500/30 transition-colors disabled:opacity-60"
           >
             ✓
           </button>
@@ -117,7 +117,7 @@ function PeriodCard({ period, date, onMark }) {
       )}
 
       {substituteFaculty && status === 'substitute' && (
-        <p className="text-xs text-amber-400/70 mt-2">Faculty: {substituteFaculty}</p>
+        <p className="text-xs text-blue-400 mt-2 font-medium">Faculty: {substituteFaculty}</p>
       )}
     </div>
   );
@@ -175,8 +175,8 @@ export default function TodayPage() {
     <div className="p-4 lg:p-6 space-y-6 animate-[fadeIn_0.3s_ease-out]">
       {/* Header */}
       <div>
-        <h2 className="text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
-          <CalendarDays size={24} className="text-amber-500" />
+        <h2 className="text-xl lg:text-2xl font-bold flex items-center gap-2">
+          <CalendarDays size={24} className="text-blue-500" />
           Today's Attendance
         </h2>
         <p className="text-slate-500 text-sm mt-0.5">{today} · {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
@@ -184,11 +184,11 @@ export default function TodayPage() {
 
       {/* Morning question */}
       {hasClasses === null && periods.length > 0 && (
-        <div className="glass-card rounded-2xl p-6 text-center border border-amber-500/30 animate-[slideUp_0.4s_ease-out]">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
-            <CalendarDays size={28} className="text-amber-500" />
+        <div className="glass-card rounded-2xl p-6 text-center border border-blue-500/20 animate-[slideUp_0.4s_ease-out]">
+          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4 text-blue-500">
+            <CalendarDays size={28} />
           </div>
-          <h3 className="text-white font-semibold text-lg mb-1">Do you have classes today?</h3>
+          <h3 className="font-semibold text-lg mb-1">Do you have classes today?</h3>
           <p className="text-slate-500 text-sm mb-6">{periods.length} period(s) scheduled for {today}</p>
           <div className="flex gap-3 justify-center">
             <button

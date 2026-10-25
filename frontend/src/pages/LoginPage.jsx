@@ -100,9 +100,9 @@ export default function LoginPage() {
         className="fixed inset-0 pointer-events-none -z-10"
         style={{
           background: `
-            radial-gradient(circle 650px at 15% 15%, rgba(245, 158, 11, 0.16), transparent 70%),
-            radial-gradient(circle 750px at 85% 85%, rgba(139, 92, 246, 0.18), transparent 70%),
-            radial-gradient(circle 500px at 50% 45%, rgba(239, 68, 68, 0.09), transparent 70%)
+            radial-gradient(circle 650px at 15% 15%, rgba(0, 71, 255, 0.16), transparent 70%),
+            radial-gradient(circle 750px at 85% 85%, rgba(37, 99, 235, 0.14), transparent 70%),
+            radial-gradient(circle 500px at 50% 45%, rgba(29, 78, 216, 0.08), transparent 70%)
           `
         }}
       />
@@ -120,15 +120,15 @@ export default function LoginPage() {
         {/* Main Glassmorphic Card */}
         <div className="w-full rounded-3xl p-7 sm:p-9 backdrop-blur-2xl bg-white/[0.035] border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.75)] relative overflow-hidden">
           {/* Top highlight sheen */}
-          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
 
           {/* Logo & Brand Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-3">
-              <img src="/logo-white.png" alt="BunkClub" className="h-11 sm:h-12 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(1,47,251,0.25)]" />
+              <img src="/logo-white.png" alt="BunkClub" className="h-11 sm:h-12 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(0,71,255,0.3)]" />
             </div>
             <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5 font-medium">
-              <Sparkles size={13} className="text-amber-400" /> Smart Attendance & Safe Bunk Intelligence
+              Smart Attendance & Safe Bunk Intelligence
             </p>
           </div>
 
@@ -149,7 +149,7 @@ export default function LoginPage() {
                     value={identifier}
                     onChange={e => setIdentifier(e.target.value)}
                     placeholder="e.g. adwaith_s or mail@gmail.com"
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:bg-white/[0.08] transition-all"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white/[0.08] transition-all"
                     required
                     autoComplete="username"
                   />
@@ -168,7 +168,7 @@ export default function LoginPage() {
                       setRecoveryEmail(identifier);
                       setView('forgot_send');
                     }}
-                    className="text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium"
+                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-semibold"
                   >
                     Forgot Password?
                   </button>
@@ -182,7 +182,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:bg-white/[0.08] transition-all"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white/[0.08] transition-all"
                     required
                     autoComplete="current-password"
                   />
@@ -200,7 +200,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={!isLoginValid || loading}
-                className="w-full mt-2 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white font-semibold text-sm hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all shadow-xl shadow-orange-500/25 flex items-center justify-center gap-2"
+                className="w-full mt-2 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
               >
                 {loading ? 'Logging in…' : 'Log In'}
               </button>
@@ -358,7 +358,7 @@ export default function LoginPage() {
           <div className="w-full rounded-2xl p-4 backdrop-blur-xl bg-white/[0.025] border border-white/10 text-center">
             <p className="text-xs text-slate-400">
               Don't have an account?{' '}
-              <Link to="/register" className="text-amber-400 hover:text-amber-300 font-semibold transition-colors ml-1">
+              <Link to="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors ml-1">
                 Join BunkClub
               </Link>
             </p>

@@ -83,7 +83,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
         {/* Top Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center">
               <Users size={19} />
             </div>
             <div>
@@ -104,7 +104,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
           <button
             onClick={() => setTab('share')}
             className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              tab === 'share' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
+              tab === 'share' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
             }`}
           >
             <Share2 size={14} /> Share My Timetable
@@ -112,7 +112,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
           <button
             onClick={() => setTab('import')}
             className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              tab === 'import' ? 'bg-amber-500 text-black shadow' : 'text-slate-400 hover:text-white'
+              tab === 'import' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
             }`}
           >
             <Download size={14} /> Import Class Code
@@ -137,7 +137,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
                     value={section}
                     onChange={e => setSection(e.target.value.toUpperCase())}
                     placeholder="e.g. A, B, CS-1"
-                    className="w-full bg-[#18181b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                    className="w-full bg-[#18181b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                     maxLength={10}
                     required
                   />
@@ -151,7 +151,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
                     value={customCode}
                     onChange={e => setCustomCode(e.target.value.toUpperCase().replace(/\s+/g, '-'))}
                     placeholder="e.g. AMR-MCA-A"
-                    className="w-full bg-[#18181b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
+                    className="w-full bg-[#18181b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
                     maxLength={14}
                   />
                 </div>
@@ -160,7 +160,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
               <button
                 type="submit"
                 disabled={shareLoading}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white font-semibold text-xs hover:opacity-90 active:scale-95 transition-all shadow flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs active:scale-95 transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5"
               >
                 <Sparkles size={14} />
                 {shareLoading ? 'Generating Share Code…' : 'Generate Class Share Code'}
@@ -168,8 +168,8 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
             </form>
 
             {generatedCode && (
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-center animate-[fadeIn_0.2s_ease-out]">
-                <span className="text-xs text-amber-300 font-semibold uppercase tracking-wider block mb-1">
+              <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-center animate-[fadeIn_0.2s_ease-out]">
+                <span className="text-xs text-blue-400 font-semibold uppercase tracking-wider block mb-1">
                   Your Section Share Code
                 </span>
                 <div className="text-2xl font-black text-white font-mono tracking-widest my-2 select-all">

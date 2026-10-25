@@ -126,20 +126,20 @@ export default function TimetablePage() {
     <div className="p-4 lg:p-6 space-y-6 animate-[fadeIn_0.3s_ease-out]">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
-            <CalendarDays size={24} className="text-amber-500" /> Timetable
+          <h2 className="text-xl lg:text-2xl font-bold flex items-center gap-2">
+            <CalendarDays size={24} className="text-blue-500" /> Timetable
           </h2>
           <p className="text-slate-500 text-sm mt-0.5">Set up your weekly class schedule</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowShareModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-sm font-semibold border border-purple-500/30 transition-all shadow"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm font-semibold border border-blue-500/20 transition-all shadow-sm"
           >
-            <Users size={16} /> Section Sync / Share
+            <Users size={16} /> Section Sync
           </button>
           <button onClick={save} disabled={saving}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-orange-500/25">
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold hover:opacity-95 disabled:opacity-50 transition-all shadow-md shadow-blue-500/25">
             <Save size={16} /> {saving ? 'Saving...' : 'Save Timetable'}
           </button>
         </div>
@@ -147,14 +147,14 @@ export default function TimetablePage() {
 
       {/* Semester name */}
       <div className="glass-card rounded-xl px-4 py-3 flex items-center gap-3">
-        <BookOpen size={18} className="text-amber-500 flex-shrink-0" />
+        <BookOpen size={18} className="text-blue-500 flex-shrink-0" />
         <input type="text" value={semName} onChange={e => setSemName(e.target.value)}
           placeholder="Semester name (e.g. Semester 3 - 2024)"
-          className="flex-1 bg-transparent text-white placeholder-slate-500 focus:outline-none text-sm" />
+          className="flex-1 bg-transparent placeholder-slate-500 focus:outline-none text-sm" />
       </div>
 
       {subjects.length === 0 && (
-        <div className="glass-card rounded-xl p-4 border border-amber-500/30 text-amber-400 text-sm flex items-center gap-2">
+        <div className="glass-card rounded-xl p-4 border border-blue-500/30 text-blue-400 text-sm flex items-center gap-2">
           ⚠️ No subjects found. Add subjects first to assign them to periods.
         </div>
       )}
@@ -163,14 +163,14 @@ export default function TimetablePage() {
       <div className="space-y-4">
         {DAYS.map(day => (
           <div key={day} className="glass-card rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a]">
-              <h3 className="font-semibold text-white text-sm flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
                 {day}
                 <span className="text-slate-500 font-normal">({days[day].length} periods)</span>
               </h3>
               <button onClick={() => addPeriod(day)}
-                className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium">
+                className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors font-semibold">
                 <Plus size={15} /> Add Period
               </button>
             </div>
@@ -221,7 +221,7 @@ export default function TimetablePage() {
       </div>
 
       <button onClick={save} disabled={saving}
-        className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-orange-500/25">
+        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-50 transition-all shadow-md shadow-blue-500/25">
         {saving ? 'Saving...' : '💾 Save Timetable'}
       </button>
 

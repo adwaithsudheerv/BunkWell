@@ -1,8 +1,9 @@
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   LayoutDashboard, CalendarDays, ClipboardCheck, BarChart3,
-  BookOpen, User, LogOut, Menu, X, GraduationCap, Sparkles
+  BookOpen, User, LogOut, Menu, X, Sun, Moon
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -14,11 +15,11 @@ const navItems = [
   { to: '/timetable', icon: CalendarDays, label: 'Timetable' },
   { to: '/attendance', icon: BookOpen, label: 'Attendance Log' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics & Bunk' },
-  { to: '/subjects', icon: GraduationCap, label: 'Subjects' },
+  { to: '/subjects', icon: BookOpen, label: 'Subjects' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
 
-function NavItem({ to, icon: Icon, label, onClick }) {
+function NavItem({ to, icon: Icon, label, onClick, isDark }) {
   return (
     <NavLink
       to={to}
@@ -26,8 +27,10 @@ function NavItem({ to, icon: Icon, label, onClick }) {
       className={({ isActive }) =>
         `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
           isActive
-            ? 'bg-gradient-to-r from-[color:var(--yellow,#f59e0b)] to-[color:var(--red,#ef4444)] text-white shadow-lg shadow-orange-500/20 font-semibold'
-            : 'text-[color:var(--color-muted)] hover:text-white hover:bg-white/5'
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 font-semibold'
+            : isDark
+            ? 'text-slate-400 hover:text-white hover:bg-white/5'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
         }`
       }
     >
@@ -39,6 +42,7 @@ function NavItem({ to, icon: Icon, label, onClick }) {
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -49,40 +53,60 @@ export default function Layout() {
   };
 
   const SidebarContent = ({ onNavigate }) => (
-    <div className="flex flex-col h-full">
-      {/* Brand Logo */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-[color:var(--color-line)]">
+    <div className="flex flex-col h-full select-none">
+      {/* Brand Header */}
+      <div className={`flex items-center justify-between px-5 py-5 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
         <Link to="/dashboard" className="flex items-center">
-          <img src="/logo-white.png" alt="BunkClub" className="h-8 w-auto object-contain" />
+          <img
+            src={isDark ? '/logo-white.png' : '/logo-dark.png'}
+            alt="BunkClub"
+            className="h-7 w-auto object-contain"
+          />
         </Link>
+        {/* Dark / Light Mode Toggle */}
+        <button
+          onClick={toggleTheme}
+          className={`p-2 rounded-xl transition-all ${
+            isDark
+              ? 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+          }`}
+          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {isDark ? <Sun size={17} className="text-blue-400" /> : <Moon size={17} className="text-slate-700" />}
+        </button>
       </div>
 
-      {/* PWA Install Banner in Sidebar */}
+      {/* PWA Install Button */}
       <div className="px-3 pt-3">
         <InstallPWAButton className="w-full justify-center py-2" />
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map(item => (
-          <NavItem key={item.to} {...item} onClick={onNavigate} />
+          <NavItem key={item.to} {...item} onClick={onNavigate} isDark={isDark} />
         ))}
       </nav>
 
       {/* User info & Logout */}
-      <div className="p-3 border-t border-[color:var(--color-line)] bg-black/20">
-        <div className="flex items-center gap-3 px-2 py-2 mb-2">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-red-500 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+      <div className={`p-3 border-t ${isDark ? 'border-white/10 bg-black/40' : 'border-slate-200 bg-slate-50'}`}>
+        <div className="flex items-center gap-3 px-2 py-2 mb-1">
+          <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 shadow-sm">
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate leading-tight">{user?.name || 'Student'}</p>
-            <p className="text-xs text-[color:var(--color-muted)] truncate">ID: {user?.studentId || user?.username}</p>
+            <p className={`text-sm font-semibold truncate leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              {user?.name || 'Student'}
+            </p>
+            <p className={`text-xs truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              ID: {user?.studentId || user?.username}
+            </p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-500 hover:bg-red-500/10 transition-colors"
         >
           <LogOut size={15} />
           <span>Sign Out</span>
@@ -92,17 +116,29 @@ export default function Layout() {
   );
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#000', color: 'var(--text-light-grey)' }}>
-      {/* Background ambient lighting */}
-      <div
-        className="fixed inset-0 pointer-events-none -z-10"
-        style={{
-          background: 'radial-gradient(circle 500px at 0% 100%, rgba(0, 0, 255, 0.18), transparent 70%), radial-gradient(circle 500px at 100% 0%, rgba(238, 130, 238, 0.15), transparent 70%)',
-        }}
-      />
+    <div
+      className={`min-h-screen flex transition-colors duration-200 ${
+        isDark ? 'bg-[#090b0e] text-slate-100' : 'bg-[#f8fafc] text-slate-900'
+      }`}
+    >
+      {/* Background ambient lighting for Dark Mode */}
+      {isDark && (
+        <div
+          className="fixed inset-0 pointer-events-none -z-10"
+          style={{
+            background: 'radial-gradient(circle 600px at 0% 100%, rgba(0, 71, 255, 0.12), transparent 70%), radial-gradient(circle 600px at 100% 0%, rgba(37, 99, 235, 0.08), transparent 70%)',
+          }}
+        />
+      )}
 
       {/* Desktop Sticky Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-[color:var(--color-line)] bg-[color:var(--glass-bg-color)] backdrop-blur-[16px] sticky top-0 h-screen z-20">
+      <aside
+        className={`hidden lg:flex flex-col w-64 flex-shrink-0 sticky top-0 h-screen z-20 transition-colors duration-200 ${
+          isDark
+            ? 'border-r border-white/10 bg-[#0c0e14]/90 backdrop-blur-xl'
+            : 'border-r border-slate-200 bg-white/95 backdrop-blur-xl shadow-sm'
+        }`}
+      >
         <SidebarContent />
       </aside>
 
@@ -110,9 +146,16 @@ export default function Layout() {
       {drawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-72 bg-[#0d0e12] border-r border-[color:var(--color-line)] flex flex-col z-10 shadow-2xl">
+          <aside
+            className={`absolute left-0 top-0 h-full w-72 flex flex-col z-10 shadow-2xl transition-colors ${
+              isDark ? 'bg-[#0c0e14] border-r border-white/10' : 'bg-white border-r border-slate-200'
+            }`}
+          >
             <div className="flex items-center justify-end px-4 pt-4">
-              <button onClick={() => setDrawerOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-white">
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className={`p-1.5 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-black'}`}
+              >
                 <X size={20} />
               </button>
             </div>
@@ -124,13 +167,30 @@ export default function Layout() {
       {/* Main viewport */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile topbar */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-[color:var(--color-line)] bg-[#0d0e12]/80 backdrop-blur-md sticky top-0 z-10">
+        <header
+          className={`lg:hidden flex items-center justify-between px-4 py-3 border-b sticky top-0 z-10 backdrop-blur-md transition-colors ${
+            isDark ? 'border-white/10 bg-[#0c0e14]/90' : 'border-slate-200 bg-white/90'
+          }`}
+        >
           <Link to="/dashboard" className="flex items-center">
-            <img src="/logo-white.png" alt="BunkClub" className="h-7 w-auto object-contain" />
+            <img
+              src={isDark ? '/logo-white.png' : '/logo-dark.png'}
+              alt="BunkClub"
+              className="h-7 w-auto object-contain"
+            />
           </Link>
           <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className={`p-1.5 rounded-lg ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+            >
+              {isDark ? <Sun size={17} className="text-blue-400" /> : <Moon size={17} />}
+            </button>
             <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
-            <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-lg text-slate-300 hover:text-white">
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className={`p-2 rounded-lg ${isDark ? 'text-slate-300 hover:text-white' : 'text-slate-700 hover:text-black'}`}
+            >
               <Menu size={22} />
             </button>
           </div>

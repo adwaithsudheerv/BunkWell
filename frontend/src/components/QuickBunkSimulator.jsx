@@ -27,11 +27,11 @@ export default function QuickBunkSimulator({ subjects = [], target = 80 }) {
     <div className="glass-card rounded-2xl p-5 border border-white/10 relative overflow-hidden bg-gradient-to-br from-white/[0.04] to-white/[0.01]">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center">
             <Zap size={18} />
           </div>
           <div>
-            <h3 className="font-bold text-white text-sm">Quick Bunk Simulator</h3>
+            <h3 className="font-bold text-sm">Quick Bunk Simulator</h3>
             <p className="text-slate-400 text-xs">Can I safely skip the next lecture?</p>
           </div>
         </div>
@@ -40,7 +40,7 @@ export default function QuickBunkSimulator({ subjects = [], target = 80 }) {
         <select
           value={selectedSubjectId}
           onChange={e => setSelectedSubjectId(e.target.value)}
-          className="bg-[#18181b] border border-white/15 text-white text-xs font-semibold rounded-xl px-3 py-1.5 focus:outline-none focus:border-amber-400 transition-colors cursor-pointer"
+          className="bg-[#18181b] border border-white/15 text-xs font-semibold rounded-xl px-3 py-1.5 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
         >
           {subjects.map(s => (
             <option key={s._id} value={s._id} className="bg-[#18181b] text-white">
