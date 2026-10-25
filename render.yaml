@@ -1,0 +1,40 @@
+services:
+  # Bunkwell Backend Web Service
+  - type: web
+    name: bunkwell-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        value: BEvkdILThIec0RXS_ytPKEww_lzbOWPHAW3ID17xahKDSq6TzD_yo4zMy6CTsYHox3iszF_bOYndmG_nBGXbfwQ
+      - key: VAPID_PRIVATE_KEY
+        value: 6MGT50nmW1IMHmaARhEGbdxEWZ_VOiM0cZL3uhpsGuU
+      - key: VAPID_EMAIL
+        value: mailto:admin@bunkwell.app
+
+  # Bunkwell Frontend Static Web App
+  - type: web
+    name: bunkwell-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false
