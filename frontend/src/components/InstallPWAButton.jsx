@@ -70,7 +70,7 @@ export default function InstallPWAButton({ className = "" }) {
       {/* Visual Install Guide Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-[fadeIn_0.15s_ease-out]">
-          <div className="w-full max-w-md rounded-3xl bg-[#101319] border border-white/10 shadow-2xl p-6 text-white relative">
+          <div className="w-full max-w-md rounded-3xl modal-surface shadow-2xl p-6 relative">
             {/* Close button */}
             <button
               onClick={() => setShowModal(false)}

@@ -159,7 +159,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-      <div className="w-full max-w-lg rounded-3xl bg-[#121212] border border-[#262626] shadow-2xl p-6 sm:p-8 relative overflow-hidden flex flex-col">
+      <div className="w-full max-w-lg rounded-3xl modal-surface shadow-2xl p-6 sm:p-8 relative overflow-hidden flex flex-col">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">

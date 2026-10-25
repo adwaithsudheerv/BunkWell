@@ -1621,9 +1621,63 @@ html.light .glass-card {
   color: #0a0a0c;
 }
 
-/* Ensure rich black text contrast throughout day mode */
-html.light .text-white {
+/* Modal surfaces adapt smoothly between obsidian glass and warm cream */
+.modal-surface {
+  background-color: #101319;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+html.light .modal-surface {
+  background-color: #faf8f5 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
   color: #0a0a0c !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Ensure rich black text contrast on card surfaces and titles in day mode */
+html.light .glass-card h1,
+html.light .glass-card h2,
+html.light .glass-card h3,
+html.light .glass-card h4,
+html.light .modal-surface h1,
+html.light .modal-surface h2,
+html.light .modal-surface h3,
+html.light .modal-surface h4 {
+  color: #0a0a0c !important;
+}
+
+/* In day mode, general body text-white inside cards turns to black, EXCEPT on colored buttons/badges */
+html.light .glass-card > p,
+html.light .glass-card > div > p,
+html.light .glass-card span.text-white:not([class*="bg-"]),
+html.light .modal-surface span.text-white:not([class*="bg-"]) {
+  color: #0a0a0c !important;
+}
+
+/* CRITICAL: Ensure all action buttons & badges retain crisp white text in day mode */
+html.light button.bg-blue-600,
+html.light button.bg-blue-600 *,
+html.light button.bg-blue-700,
+html.light button.bg-blue-700 *,
+html.light button.bg-emerald-500,
+html.light button.bg-emerald-500 *,
+html.light button.bg-emerald-600,
+html.light button.bg-emerald-600 *,
+html.light button.bg-red-600,
+html.light button.bg-red-600 *,
+html.light button.bg-red-700,
+html.light button.bg-red-700 *,
+html.light a.bg-blue-600,
+html.light a.bg-blue-600 *,
+html.light .bg-blue-600,
+html.light .bg-blue-600 *,
+html.light .bg-emerald-500,
+html.light .bg-emerald-500 *,
+html.light .bg-red-600,
+html.light .bg-red-600 *,
+html.light .bg-slate-900,
+html.light .bg-slate-900 * {
+  color: #ffffff !important;
 }
 
 html.light .text-slate-100,

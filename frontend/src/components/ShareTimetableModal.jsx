@@ -79,7 +79,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-      <div className="w-full max-w-lg rounded-3xl bg-[#121212] border border-[#262626] shadow-2xl p-6 sm:p-7 relative overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-lg rounded-3xl modal-surface shadow-2xl p-6 sm:p-7 relative overflow-hidden flex flex-col max-h-[90vh]">
         {/* Top Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
