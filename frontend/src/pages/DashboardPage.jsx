@@ -8,6 +8,7 @@ import {
   AlertTriangle, CheckCircle2, Clock, ChevronRight, Zap, Sparkles, HelpCircle, Users, ChevronDown, ChevronUp, Download
 } from 'lucide-react';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
+import { Capacitor } from '@capacitor/core';
 import OnboardingModal from '../components/OnboardingModal';
 import QuickBunkSimulator from '../components/QuickBunkSimulator';
 import ShareTimetableModal from '../components/ShareTimetableModal';
@@ -209,14 +210,16 @@ export default function DashboardPage() {
           <p className="text-slate-500 text-xs mt-0.5">{today} • {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <a
-            href="/BunkClub.apk"
-            download="BunkClub.apk"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600/20 to-teal-600/20 hover:from-emerald-600/30 hover:to-teal-600/30 text-xs font-bold text-emerald-400 border border-emerald-500/30 transition-all shadow-sm active:scale-95"
-            title="Download native Android APK to share on WhatsApp or install directly"
-          >
-            <Download size={15} /> Get Android APK
-          </a>
+          {!Capacitor.isNativePlatform() && (
+            <a
+              href="/BunkClub.apk"
+              download="BunkClub.apk"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600/20 to-teal-600/20 hover:from-emerald-600/30 hover:to-teal-600/30 text-xs font-bold text-emerald-400 border border-emerald-500/30 transition-all shadow-sm active:scale-95"
+              title="Download native Android APK to share on WhatsApp or install directly"
+            >
+              <Download size={15} /> Get Android APK
+            </a>
+          )}
           <button
             onClick={() => setShowShareModal(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-xs font-bold text-blue-400 border border-blue-500/20 transition-all shadow-sm"

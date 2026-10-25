@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
 import InstallPWAButton from './InstallPWAButton';
 import BunkBotModal from './BunkBotModal';
 import AppUpdateModal from './AppUpdateModal';
@@ -87,10 +88,12 @@ export default function Layout() {
         </button>
       </div>
 
-      {/* PWA Install Button */}
-      <div className="px-3 pt-3">
-        <InstallPWAButton className="w-full justify-center py-2" />
-      </div>
+      {/* PWA Install Button (Web Only) */}
+      {!Capacitor.isNativePlatform() && (
+        <div className="px-3 pt-3">
+          <InstallPWAButton className="w-full justify-center py-2" />
+        </div>
+      )}
 
       {/* Nav links */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -215,7 +218,9 @@ export default function Layout() {
             >
               {isDark ? <Sun size={17} className="text-blue-400" /> : <Moon size={17} className="text-black" />}
             </button>
-            <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
+            {!Capacitor.isNativePlatform() && (
+              <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
+            )}
             <button
               onClick={() => setDrawerOpen(true)}
               className={`p-2 rounded-lg ${isDark ? 'text-slate-300 hover:text-white' : 'text-black hover:bg-[#ede7db]'}`}

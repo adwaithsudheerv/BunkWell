@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Download, Monitor, Smartphone, Share2, X, CheckCircle2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
 
 export default function InstallPWAButton({ className = "" }) {
+  // If running inside the native Android mobile app, never show download/install option
+  if (Capacitor.isNativePlatform()) return null;
+
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showModal, setShowModal] = useState(false);

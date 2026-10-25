@@ -272,13 +272,6 @@ export default function ProfilePage() {
             <Bell size={13} />
             {subscribing ? 'Sending...' : 'Send Test Notification'}
           </button>
-          <button
-            onClick={checkForUpdatesManual}
-            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-all border border-white/10 active:scale-95 flex items-center gap-1.5"
-          >
-            <Download size={13} />
-            Check for Updates (v1.1.0)
-          </button>
         </div>
       </div>
 
