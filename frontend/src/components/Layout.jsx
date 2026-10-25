@@ -200,15 +200,82 @@ export default function Layout() {
         </header>
 
         {/* Content outlet */}
-        <main className="flex-1 p-4 lg:p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 p-3 sm:p-4 lg:p-8 max-w-7xl mx-auto w-full pb-24 lg:pb-8">
           <Outlet />
         </main>
       </div>
 
-      {/* Floating BunkBot AI Button */}
+      {/* Fixed Native Mobile Bottom Navigation Bar (Thumb-reach Ergonomics) */}
+      <nav
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl px-2 py-1.5 flex items-center justify-around transition-all ${
+          isDark
+            ? 'bg-[#090b0e]/95 border-white/10 text-slate-400'
+            : 'bg-[#faf8f5]/95 border-black/10 text-slate-600 shadow-xl'
+        }`}
+      >
+        <NavLink
+          to="/dashboard"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-blue-500 scale-105' : 'hover:text-white'
+            }`
+          }
+        >
+          <LayoutDashboard size={19} />
+          <span>Home</span>
+        </NavLink>
+
+        <NavLink
+          to="/today"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-blue-500 scale-105' : 'hover:text-white'
+            }`
+          }
+        >
+          <ClipboardCheck size={19} />
+          <span>Today</span>
+        </NavLink>
+
+        {/* Center Hero BunkBot AI Button */}
+        <button
+          type="button"
+          onClick={() => setBunkBotOpen(true)}
+          className="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/40 active:scale-90 transition-all border-2 border-[#090b0e] flex-shrink-0"
+          title="Ask BunkBot AI"
+        >
+          <Sparkles size={20} />
+        </button>
+
+        <NavLink
+          to="/timetable"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-blue-500 scale-105' : 'hover:text-white'
+            }`
+          }
+        >
+          <CalendarDays size={19} />
+          <span>Schedule</span>
+        </NavLink>
+
+        <NavLink
+          to="/attendance"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-blue-500 scale-105' : 'hover:text-white'
+            }`
+          }
+        >
+          <BookOpen size={19} />
+          <span>Register</span>
+        </NavLink>
+      </nav>
+
+      {/* Floating BunkBot AI Button (Desktop Only) */}
       <button
         onClick={() => setBunkBotOpen(true)}
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-xl shadow-blue-500/35 active:scale-95 transition-all hover:scale-105 border border-blue-400/30"
+        className="hidden lg:flex fixed bottom-6 right-6 z-40 items-center gap-2 px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-xl shadow-blue-500/35 active:scale-95 transition-all hover:scale-105 border border-blue-400/30"
         title="Ask BunkBot AI"
       >
         <Sparkles size={15} />

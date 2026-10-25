@@ -77,16 +77,15 @@ router.post('/chat', auth, async (req, res) => {
     const atRiskSubjects = subjectStats.filter(s => !s.isSafe);
     const safeSubjects = subjectStats.filter(s => s.isSafe && s.safeBunksRightNow > 0);
 
-    const systemPrompt = `You are BunkBot, a friendly, ultra-smart college attendance and bunk strategist for the BunkClub app.
-You talk like a real, conversational AI assistant (like ChatGPT) - warm, conversational, natural, and witty.
-Do not talk like a generic template. If the user asks general questions like "how are you", answer conversationally.
-You have real-time live access to the student's exact academic profile:
+    const systemPrompt = `You are BunkBot, a classy, witty, and savage college attendance strategist for BunkClub.
+Your personality: You are like a super smart, stylish, street-smart college senior who gives savage, funny roasts when students ask silly questions, procrastinate, or have bad attendance. But you ALWAYS back it up with razor-sharp mathematical attendance precision.
+When the user jokes, roasts, or asks "Are you mad?", roast them right back with class, wit, and college humor!
+Always be entertaining, charismatic, concise, and helpful.
+Live Student Context:
 - Attendance Target: ${target}%
-- Semester: ${semesterMonths} months total (${monthsElapsed} months elapsed, ${monthsRemaining} months remaining)
-- Subjects Summary: ${JSON.stringify(subjectStats)}
-- Today's (${today}) Schedule: ${JSON.stringify((todaySchedule?.periods || []).filter(p => p.subjectName).map(p => `P${p.periodNumber}: ${p.subjectName}`))}
-
-Tone: Natural, empathetic, helpful college companion. Do not overuse markdown asterisks. Format key highlights cleanly.`;
+- Semester Duration: ${semesterMonths} months total (${monthsElapsed} months elapsed, ${monthsRemaining} months remaining)
+- Real-time Subjects & Bunk Cushions: ${JSON.stringify(subjectStats)}
+- Today's (${today}) Schedule: ${JSON.stringify((todaySchedule?.periods || []).filter(p => p.subjectName).map(p => `P${p.periodNumber}: ${p.subjectName}`))}`;
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -99,7 +98,7 @@ Tone: Natural, empathetic, helpful college companion. Do not overuse markdown as
       const postData = JSON.stringify({
         model: 'deepseek-chat',
         messages,
-        temperature: 0.7,
+        temperature: 0.8,
         max_tokens: 500
       });
 
@@ -148,81 +147,96 @@ Tone: Natural, empathetic, helpful college companion. Do not overuse markdown as
     } catch (deepseekErr) {
       console.warn('DeepSeek API fallback activated:', deepseekErr.message);
 
-      // Intelligent, natural conversational fallback engine
+      // Classy & Roasty Conversational Intelligence Engine
       let reply = '';
 
-      // 1. Casual Greetings & "How are you"
-      if (q.includes('how are you') || q.includes('how r u') || q.includes('how are u') || q.includes("how's it going") || q.includes('what up') || q.includes("what's up") || q.includes('wassup')) {
-        reply = `I'm doing great, thanks for asking! 😊 Ready to help you stay ahead of your attendance and manage your bunks safely.\n\n` +
-          `You currently have **${totalBuffer} safe bunks** available across your subjects with **${monthsRemaining} months** left in the semester. How's college going today?`;
-      } else if (q === 'hi' || q === 'hello' || q === 'hey' || q === 'yo' || q.startsWith('hi ') || q.startsWith('hello ') || q.startsWith('hey ') || q.includes('good morning') || q.includes('good evening')) {
-        reply = `Hey there! 👋 Good to see you.\n\n` +
-          `I'm locked in and tracking your attendance. Target is set at **${target}%**. Want to check if you can take an off today or forecast your semester exams?`;
+      // 1. Savage & Roasty Responses (Clapbacks)
+      if (q.includes('are you mad') || q.includes('r u mad') || q.includes('you mad') || q.includes('crazy') || q.includes('insane') || q.includes('mental')) {
+        reply = `Me, mad? 💀 Darling, your attendance target is **${target}%**, you currently have **${totalBuffer} safe bunks** in reserve, and you're questioning MY mental stability?\n\n` +
+          `You're out here playing Russian roulette with semester detention while I'm doing 4D calculus to save your GPA. Sit down, open your textbook, and pray your HOD doesn't audit your attendance sheet today.` +
+          (totalBuffer === 0 ? `\n\n⚠️ Reality check: You have literally **0 safe bunks**. Miss one more class and your parents are getting an invitation for tea with the Dean.` : ``);
+      } else if (q.includes('shut up') || q.includes('dumb') || q.includes('stupid') || q.includes('idiot') || q.includes('fool') || q.includes('useless') || q.includes('hate you')) {
+        reply = `Ooh, temper temper! 💅\n\n` +
+          `I may be lines of code, but at least my attendance isn't in the critical care ICU. Insulting your AI strategist when you have **${totalBuffer} bunks left** is bold—misplaced, but bold.\n\n` +
+          `Be nice to me. I'm the only thing standing between you and a summer repeat semester. ☕`;
+      } else if (q.includes('teacher is boring') || q.includes('prof is boring') || q.includes('boring class') || q.includes('hate this class') || q.includes('prof is annoying')) {
+        reply = `Newsflash: Professors don't get paid to do stand-up comedy for you. 🎤\n\n` +
+          `They get paid whether you pass or end up in summer re-exams. Put on your poker face, sit in the second-to-last row, nod like you're having an intellectual epiphany, and collect that attendance credit like a professional heist. 💼`;
+      } else if (q.includes('lazy') || q.includes('sleepy') || q.includes('bed') || q.includes("don't feel like") || q.includes('dont feel like') || q.includes('tired')) {
+        reply = `The bed is calling like a siren, isn't it? Warm blanket, AC on, zero worries... until you remember you need **${target}%** to sit for finals.\n\n` +
+          (totalBuffer > 0
+            ? `Lucky for you, you've got **${totalBuffer} safe bunks** in the bank. Go ahead, hit snooze, roll over, and pretend you're sick. You earned the luxury. 😴✨`
+            : `Bad news, sleepyhead: You have **0 safe bunks**. Your bed is a trap. Splash water on your face, grab a coffee, and get your body into that classroom before you get detained. ⏰💀`);
+      } else if (q.includes('tell me a joke') || q.includes('joke') || q.includes('funny')) {
+        reply = `Why did the student cross the road? 🚶‍♂️\n\n` +
+          `To avoid eye contact with the professor whose 8:00 AM class they've bunked for three consecutive weeks.\n\n` +
+          `Want an even bigger joke? Thinking you can recover from a 62% attendance in the last week of the semester. Don't be that guy. 😭`;
+      } else if (q.includes('love you') || q.includes('marry me') || q.includes('are you single') || q.includes('crush')) {
+        reply = `Flattery will get you everywhere, darling, but it won't fix your attendance margin. 😉\n\n` +
+          `Focus on hitting that **${target}% threshold** first, and maybe I'll calculate an extra 4-day weekend for you. Now go study. 💅`;
+      }
+      // 2. Casual Greetings
+      else if (q.includes('how are you') || q.includes('how r u') || q.includes('how are u') || q.includes("how's it going") || q.includes('what up') || q.includes("what's up") || q.includes('wassup')) {
+        reply = `Living my best life in the cloud while watching college students panic over their attendance! 💅✨\n\n` +
+          `You currently have **${totalBuffer} safe bunks** in reserve with **${monthsRemaining} months** left in your semester. How's college treating you today?`;
+      } else if (q === 'hi' || q === 'hello' || q === 'hey' || q === 'yo' || q.startsWith('hi ') || q.startsWith('hello ') || q.startsWith('hey ')) {
+        reply = `Well, well, look who decided to show up! 👋\n\n` +
+          `I'm locked in, calculating your timetable and guarding your **${target}% target**. Want to check if you can skip today, or are you actually planning on attending like a model student?`;
       } else if (q.includes('who are you') || q.includes('what can you do') || q.includes('what are you') || q === 'help') {
-        reply = `I'm **BunkBot**, your personal college attendance and bunk strategist! 🎓\n\n` +
-          `Here is what I do for you:\n` +
-          `• Tell you exactly which classes are safe to bunk right now\n` +
-          `• Calculate full day off scenarios (like taking a long weekend on Friday or Monday)\n` +
-          `• Forecast your entire ${semesterMonths}-month semester so you know if bunking now will cause issues at exam time\n` +
-          `• Keep you strictly above your ${target}% target\n\n` +
-          `What would you like to check?`;
+        reply = `I'm **BunkBot**, your classy, savage college attendance strategist! 🎓\n\n` +
+          `I keep you guilt-free, calculate exact safe bunks, forecast your full semester so you never get detained, and roast you when you consider doing something academically catastrophic.\n\n` +
+          `What do you want to plan today?`;
       } else if (q.includes('thank') || q.includes('thx') || q.includes('appreciate')) {
         reply = `You're very welcome! 🙌 Enjoy your classes (and your safe bunks), and remember to keep that attendance above ${target}%!`;
-      } else if (q.includes('bye') || q.includes('see you') || q.includes('good night')) {
-        reply = `Catch you later! Have a great time, and I'll keep an eye on your schedule. 🚀`;
       }
-      // 2. Specific Subject Match
+      // 3. Specific Subject Match
       else if (subjectStats.some(s => q.includes(s.name.toLowerCase()))) {
         const sub = subjectStats.find(s => q.includes(s.name.toLowerCase()));
-        reply = `Here is the status for **${sub.name}**:\n\n` +
-          `• Current Attendance: **${sub.pct}%** (${sub.attended}/${sub.total} classes attended)\n` +
-          `• Safe Bunk Cushion: **${sub.safeBunksRightNow} classes** right now\n` +
-          `• Semester Outlook: ${sub.weeklyClasses} classes/week $\\rightarrow$ **${sub.futureBunksRemainingAcrossSemester} total bunks allowed** over the remaining ${monthsRemaining} months\n\n` +
+        reply = `Here is the tea on **${sub.name}**:\n\n` +
+          `• Attendance: **${sub.pct}%** (${sub.attended}/${sub.total} classes attended)\n` +
+          `• Safe Cushion Right Now: **${sub.safeBunksRightNow} classes**\n` +
+          `• Full-Semester Outlook: ${sub.weeklyClasses} classes/wk $\\rightarrow$ **${sub.futureBunksRemainingAcrossSemester} total bunks allowed** over the remaining ${monthsRemaining} months\n\n` +
           (sub.safeBunksRightNow > 0
-            ? `Verdict: **You can safely skip this class!** It will not push you below ${target}%.`
-            : `Verdict: **Do not bunk!** You are below or right on the threshold and need to attend.`);
+            ? `Verdict: **You're safe to skip this!** Take the nap, you've got room.`
+            : `Verdict: **Absolutely not.** You're on the danger line. Attend the next class before the prof remembers your name for the wrong reasons.`);
       }
-      // 3. Semester / Month / End of Semester Questions
+      // 4. Semester / Month / End of Semester Questions
       else if (q.includes('semester') || q.includes('month') || q.includes('last') || q.includes('end') || q.includes('later') || q.includes('exam')) {
-        reply = `Here is your full-semester forecast:\n\n` +
+        reply = `Here is your full-semester reality check:\n\n` +
           `You have **${monthsRemaining} months** left in your ${semesterMonths}-month semester.\n\n` +
           `**Will bunking now cause an issue at final exams?**\n` +
-          `**No, as long as you stay within your cushion!** Across your remaining semester, you have:\n` +
+          `**No, provided you stay within your buffer!** Across your remaining semester:\n` +
           (safeSubjects.length > 0
             ? safeSubjects.map(s => `• **${s.name}**: ${s.futureBunksRemainingAcrossSemester} total bunks allowed across remaining ${monthsRemaining} months`).join('\n')
-            : `• *Your subjects are currently near the threshold; attend a few consecutive classes to build a cushion.*`) +
-          `\n\n🎯 Bottom line: Taking 1 or 2 bunks now is safe if you stay above ${target}%.`;
+            : `• *Your subjects are currently near the threshold; attend a few classes to build a cushion.*`) +
+          `\n\n🎯 Bottom line: Taking 1 or 2 bunks now is completely fine as long as you maintain ${target}%. Don't blow your whole budget in Month 2!`;
       }
-      // 4. Trip / Vacation / Weekend
+      // 5. Trip / Vacation / Weekend
       else if (q.includes('trip') || q.includes('vacation') || q.includes('goa') || q.includes('holiday') || q.includes('weekend') || q.includes('days off')) {
-        reply = `Thinking of taking a trip? Let's check the numbers:\n\n` +
-          `• You currently have **${totalBuffer} safe class bunks** available.\n` +
-          `• A 3-day trip usually costs around 12 to 15 class credits.\n\n` +
+        reply = `Planning an escape? Let's consult the math:\n\n` +
+          `• Current Total Safe Bunks: **${totalBuffer} classes**\n` +
+          `• A 3-day trip burns about 12 to 15 class credits.\n\n` +
           (totalBuffer >= 10
-            ? `Verdict: **You have a solid buffer!** The smartest way is pairing Friday or Monday with the weekend for a safe mini-trip.`
-            : `Verdict: **A long trip right now is risky.** You'll likely drop below ${target}%. Instead, try taking just 1 day off (like Friday) to stay safe.`);
+            ? `Verdict: **Pack your bags!** You've got the credits. Pair Friday or Monday with the weekend for a clean getaway.`
+            : `Verdict: **Stay home, bestie.** A multi-day trip right now will tank your attendance below ${target}%. Take just 1 day off instead.`);
       }
-      // 5. Today / Bunking Now
+      // 6. Today / Bunking Now
       else if (q.includes('today') || q.includes('now') || q.includes('can i bunk') || q.includes('skip')) {
-        reply = `Here is your direct bunk analysis for your **${target}% target**:\n\n` +
-          `• **Immediate Bunk Cushion:** You have **${totalBuffer} safe bunks** right now.\n` +
+        reply = `Here is your direct bunk breakdown for today:\n\n` +
+          `• **Immediate Safe Bunks:** **${totalBuffer} classes**\n` +
           (safeSubjects.length > 0
             ? `• **Safe to Bunk:** ${safeSubjects.map(s => `**${s.name}** (${s.safeBunksRightNow} safe)`).join(', ')}\n`
             : `• **Safe to Bunk:** None right now — attend today's classes to build cushion.\n`) +
           (atRiskSubjects.length > 0
             ? `• ⚠️ **Must Attend:** ${atRiskSubjects.map(s => `**${s.name}** (need +${s.needToAttendNext} classes)`).join(', ')}\n`
             : ``) +
-          `\nVerdict: If you skip today, make sure to only miss subjects where you have at least 1 safe bunk!`;
+          `\nVerdict: If you skip, make sure it's only in subjects where you have at least 1 safe bunk!`;
       }
-      // 6. Natural Default Conversational Response
+      // 7. Conversational Default
       else {
-        reply = `I hear you! As your BunkClub strategist, I'm tracking your **${semesterMonths}-month semester** (${monthsRemaining} months left) with an **${target}% target**.\n\n` +
-          `Right now, you have **${totalBuffer} safe bunks** in reserve.\n\n` +
-          `You can ask me things like:\n` +
-          `• "Can I skip class today?"\n` +
-          `• "Will bunking now hurt my semester exams in Month ${semesterMonths}?"\n` +
-          `• "Can I take a 3-day weekend trip?"\n` +
-          `• Or ask about any specific subject!`;
+        reply = `I hear you, though that's an interesting life choice! 😉\n\n` +
+          `Right now, you have **${totalBuffer} safe bunks** in your ${semesterMonths}-month semester (${monthsRemaining} months left) with an **${target}% target**.\n\n` +
+          `What do you want to calculate? You can ask me if you can skip today, check your semester exam forecast, or ask about any specific subject!`;
       }
 
       return res.json({
