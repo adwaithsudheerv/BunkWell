@@ -2,8 +2,6 @@ import axios from 'axios';
 import offlineSync from './offlineSync';
 
 const getBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-
   if (typeof window !== 'undefined') {
     // ONLY use localhost:5000 when developing in desktop browser with Vite (port 5173)
     if (window.location.hostname === 'localhost' && window.location.port === '5173') {
