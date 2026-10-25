@@ -27,10 +27,10 @@ function NavItem({ to, icon: Icon, label, onClick, isDark }) {
       className={({ isActive }) =>
         `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
           isActive
-            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 font-semibold'
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 font-bold'
             : isDark
             ? 'text-slate-400 hover:text-white hover:bg-white/5'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            : 'text-stone-700 hover:text-black hover:bg-[#ede7db] font-semibold'
         }`
       }
     >
@@ -55,7 +55,7 @@ export default function Layout() {
   const SidebarContent = ({ onNavigate }) => (
     <div className="flex flex-col h-full select-none">
       {/* Brand Header */}
-      <div className={`flex items-center justify-between px-5 py-5 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+      <div className={`flex items-center justify-between px-5 py-5 border-b ${isDark ? 'border-white/10' : 'border-[#e6e1d6]'}`}>
         <Link to="/dashboard" className="flex items-center">
           <img
             src={isDark ? '/logo-white.png' : '/logo-dark.png'}
@@ -69,11 +69,11 @@ export default function Layout() {
           className={`p-2 rounded-xl transition-all ${
             isDark
               ? 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white'
-              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              : 'bg-[#ede7db] hover:bg-[#e2dcce] text-black font-bold'
           }`}
-          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          title={isDark ? 'Switch to Day Mode (Cream & Black)' : 'Switch to Dark Mode'}
         >
-          {isDark ? <Sun size={17} className="text-blue-400" /> : <Moon size={17} className="text-slate-700" />}
+          {isDark ? <Sun size={17} className="text-blue-400" /> : <Moon size={17} className="text-black" />}
         </button>
       </div>
 
@@ -90,16 +90,16 @@ export default function Layout() {
       </nav>
 
       {/* User info & Logout */}
-      <div className={`p-3 border-t ${isDark ? 'border-white/10 bg-black/40' : 'border-slate-200 bg-slate-50'}`}>
+      <div className={`p-3 border-t ${isDark ? 'border-white/10 bg-black/40' : 'border-[#e6e1d6] bg-[#f5f1e8]'}`}>
         <div className="flex items-center gap-3 px-2 py-2 mb-1">
           <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 shadow-sm">
             {(user?.username || 'U').charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className={`text-sm font-bold truncate leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <p className={`text-sm font-bold truncate leading-tight ${isDark ? 'text-white' : 'text-black'}`}>
               @{user?.username || 'user'}
             </p>
-            <p className={`text-[11px] truncate ${isDark ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'}`}>
+            <p className={`text-[11px] truncate ${isDark ? 'text-blue-400 font-medium' : 'text-blue-600 font-bold'}`}>
               24/7 Cloud Tracker
             </p>
           </div>
@@ -118,7 +118,7 @@ export default function Layout() {
   return (
     <div
       className={`min-h-screen flex transition-colors duration-200 ${
-        isDark ? 'bg-[#090b0e] text-slate-100' : 'bg-[#f8fafc] text-slate-900'
+        isDark ? 'bg-[#090b0e] text-slate-100' : 'bg-[#f8f6f0] text-[#0a0a0c]'
       }`}
     >
       {/* Background ambient lighting for Dark Mode */}
@@ -136,7 +136,7 @@ export default function Layout() {
         className={`hidden lg:flex flex-col w-64 flex-shrink-0 sticky top-0 h-screen z-20 transition-colors duration-200 ${
           isDark
             ? 'border-r border-white/10 bg-[#0c0e14]/90 backdrop-blur-xl'
-            : 'border-r border-slate-200 bg-white/95 backdrop-blur-xl shadow-sm'
+            : 'border-r border-[#e6e1d6] bg-[#fbf9f4]/95 backdrop-blur-xl shadow-sm text-black'
         }`}
       >
         <SidebarContent />
@@ -148,13 +148,13 @@ export default function Layout() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
           <aside
             className={`absolute left-0 top-0 h-full w-72 flex flex-col z-10 shadow-2xl transition-colors ${
-              isDark ? 'bg-[#0c0e14] border-r border-white/10' : 'bg-white border-r border-slate-200'
+              isDark ? 'bg-[#0c0e14] border-r border-white/10' : 'bg-[#fbf9f4] border-r border-[#e6e1d6] text-black'
             }`}
           >
             <div className="flex items-center justify-end px-4 pt-4">
               <button
                 onClick={() => setDrawerOpen(false)}
-                className={`p-1.5 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-black'}`}
+                className={`p-1.5 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-700 hover:text-black'}`}
               >
                 <X size={20} />
               </button>
@@ -169,7 +169,7 @@ export default function Layout() {
         {/* Mobile topbar */}
         <header
           className={`lg:hidden flex items-center justify-between px-4 py-3 border-b sticky top-0 z-10 backdrop-blur-md transition-colors ${
-            isDark ? 'border-white/10 bg-[#0c0e14]/90' : 'border-slate-200 bg-white/90'
+            isDark ? 'border-white/10 bg-[#0c0e14]/90' : 'border-[#e6e1d6] bg-[#fbf9f4]/95 text-black'
           }`}
         >
           <Link to="/dashboard" className="flex items-center">
@@ -182,14 +182,14 @@ export default function Layout() {
           <div className="flex items-center gap-2">
             <button
               onClick={toggleTheme}
-              className={`p-1.5 rounded-lg ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+              className={`p-1.5 rounded-lg ${isDark ? 'text-slate-300' : 'text-black'}`}
             >
-              {isDark ? <Sun size={17} className="text-blue-400" /> : <Moon size={17} />}
+              {isDark ? <Sun size={17} className="text-blue-400" /> : <Moon size={17} className="text-black" />}
             </button>
             <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
             <button
               onClick={() => setDrawerOpen(true)}
-              className={`p-2 rounded-lg ${isDark ? 'text-slate-300 hover:text-white' : 'text-slate-700 hover:text-black'}`}
+              className={`p-2 rounded-lg ${isDark ? 'text-slate-300 hover:text-white' : 'text-black hover:bg-[#ede7db]'}`}
             >
               <Menu size={22} />
             </button>
