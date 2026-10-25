@@ -3,7 +3,7 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
   Sparkles, Send, X, Bot, User, ShieldCheck, AlertTriangle,
-  Clock, Zap, Calendar, CornerDownLeft, RefreshCw
+  Clock, Zap, Calendar, RefreshCw
 } from 'lucide-react';
 
 const QUICK_PROMPTS = [
@@ -14,11 +14,96 @@ const QUICK_PROMPTS = [
   'Give me a strategy to sleep late on Mondays'
 ];
 
+// Helper component that formats bold text, bullet points, headers, and eliminates all raw asterisks (**)
+function FormattedMessage({ text }) {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+
+  return (
+    <div className="space-y-1.5 leading-relaxed text-xs">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={idx} className="h-1" />;
+
+        // Header ###
+        if (trimmed.startsWith('###')) {
+          const content = trimmed.replace(/^###\s*/, '');
+          return (
+            <div key={idx} className="font-extrabold text-sm text-white pt-1 pb-0.5">
+              {renderInline(content)}
+            </div>
+          );
+        }
+
+        // Bullet point • or * or -
+        if (trimmed.startsWith('•') || trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+          const content = trimmed.replace(/^[•*-]\s*/, '');
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-0.5">
+              <span className="text-blue-400 font-bold mt-0.5 flex-shrink-0">•</span>
+              <span className="flex-1 text-slate-200">{renderInline(content)}</span>
+            </div>
+          );
+        }
+
+        // Standard paragraph
+        return (
+          <p key={idx} className="text-slate-200">
+            {renderInline(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+// Parses **bold** and *italic* into actual styled JSX tags
+function renderInline(str) {
+  if (!str) return '';
+
+  const parts = [];
+  let remaining = str;
+  let key = 0;
+
+  while (remaining.length > 0) {
+    const boldMatch = remaining.match(/\*\*(.*?)\*\*/);
+    const italicMatch = remaining.match(/\*(.*?)\*/);
+
+    if (boldMatch && (!italicMatch || boldMatch.index <= italicMatch.index)) {
+      if (boldMatch.index > 0) {
+        parts.push(remaining.substring(0, boldMatch.index));
+      }
+      parts.push(
+        <strong key={key++} className="font-bold text-white">
+          {boldMatch[1]}
+        </strong>
+      );
+      remaining = remaining.substring(boldMatch.index + boldMatch[0].length);
+    } else if (italicMatch) {
+      if (italicMatch.index > 0) {
+        parts.push(remaining.substring(0, italicMatch.index));
+      }
+      parts.push(
+        <em key={key++} className="italic text-slate-300">
+          {italicMatch[1]}
+        </em>
+      );
+      remaining = remaining.substring(italicMatch.index + italicMatch[0].length);
+    } else {
+      parts.push(remaining);
+      break;
+    }
+  }
+
+  return parts;
+}
+
 export default function BunkBotModal({ isOpen, onClose }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: `👋 Hey! I am **BunkBot**, your DeepSeek-powered AI attendance strategist.\n\nI have real-time access to your live attendance, 8:00 AM – 6:00 PM timetable, and full-semester duration.\n\nAsk me anything about your bunks or click one of the quick suggestions below!`
+      content: `Hey! I'm BunkBot, your AI attendance and bunk strategist.\n\nI have live access to your attendance targets, timetable blocks, and full-semester duration.\n\nAsk me anything like "Can I bunk today?" or tap one of the quick suggestions below!`
     }
   ]);
   const [input, setInput] = useState('');
@@ -62,7 +147,7 @@ export default function BunkBotModal({ isOpen, onClose }) {
       toast.error('BunkBot error: ' + (err.response?.data?.message || err.message));
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: '⚠️ I had trouble connecting to the AI brain. Please try asking again in a moment.'
+        content: "I had trouble connecting to the brain. Please try asking again in a moment!"
       }]);
     } finally {
       setLoading(false);
@@ -113,13 +198,13 @@ export default function BunkBotModal({ isOpen, onClose }) {
                 )}
 
                 <div
-                  className={`rounded-2xl px-3.5 py-2.5 max-w-[85%] whitespace-pre-wrap leading-relaxed shadow-sm ${
+                  className={`rounded-2xl px-3.5 py-2.5 max-w-[85%] shadow-sm ${
                     isUser
                       ? 'bg-blue-600 text-white font-medium rounded-br-none'
                       : 'glass-card border border-white/10 text-slate-200 rounded-bl-none'
                   }`}
                 >
-                  {m.content}
+                  {isUser ? m.content : <FormattedMessage text={m.content} />}
                 </div>
               </div>
             );
@@ -132,7 +217,7 @@ export default function BunkBotModal({ isOpen, onClose }) {
               </div>
               <div className="glass-card px-3.5 py-2 rounded-2xl border border-white/10 flex items-center gap-2">
                 <RefreshCw size={12} className="animate-spin text-blue-500" />
-                <span>BunkBot is calculating your attendance math…</span>
+                <span>BunkBot is analyzing your attendance math…</span>
               </div>
             </div>
           )}
@@ -166,7 +251,7 @@ export default function BunkBotModal({ isOpen, onClose }) {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask BunkBot: 'Will bunking now hurt in Month 6?'"
+            placeholder="Ask BunkBot: 'Can I bunk today?' or 'How are you?'"
             className="flex-1 bg-black/30 border border-white/10 rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-medium"
             disabled={loading}
           />
