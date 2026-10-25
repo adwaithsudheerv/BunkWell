@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { CheckCircle2, ShieldCheck, Award, KeyRound, User, Mail, Hash } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, User, Mail, Lock, Hash, GraduationCap, Eye, EyeOff, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -67,7 +67,6 @@ export default function RegisterPage() {
         email: form.email.toLowerCase().trim(),
         studentId: form.studentId.toUpperCase().trim()
       });
-      // Mark as newly registered so Onboarding Tour triggers automatically
       localStorage.removeItem('bunkwell_tour_done');
       toast.success('Account created successfully! Welcome to BunkClub 🎓');
       navigate('/dashboard');
@@ -80,248 +79,255 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="ig-auth-container">
-      <div className="ig-auth-wrapper">
-        {/* Main Sign Up Card */}
-        <div className="ig-card">
-          <div className="ig-brand-header">
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-              <img src="/favicon.png" alt="BunkClub" style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid rgba(245, 158, 11, 0.4)' }} />
+    <div className="min-h-screen flex items-center justify-center p-4 py-8 relative overflow-hidden bg-black text-slate-100 font-sans">
+      {/* Ambient glassmorphic lighting */}
+      <div
+        className="fixed inset-0 pointer-events-none -z-10"
+        style={{
+          background: `
+            radial-gradient(circle 650px at 15% 15%, rgba(245, 158, 11, 0.16), transparent 70%),
+            radial-gradient(circle 750px at 85% 85%, rgba(139, 92, 246, 0.18), transparent 70%),
+            radial-gradient(circle 500px at 50% 45%, rgba(239, 68, 68, 0.09), transparent 70%)
+          `
+        }}
+      />
+
+      {/* Decorative grid pattern */}
+      <div
+        className="fixed inset-0 pointer-events-none -z-20 opacity-20"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)',
+          backgroundSize: '32px 32px'
+        }}
+      />
+
+      <div className="w-full max-w-lg relative z-10 flex flex-col gap-4">
+        {/* Main Glassmorphic Card */}
+        <div className="w-full rounded-3xl p-7 sm:p-9 backdrop-blur-2xl bg-white/[0.035] border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.75)] relative overflow-hidden">
+          {/* Top highlight sheen */}
+          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+
+          {/* Logo & Brand Header */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-red-500/20 border border-amber-500/30 p-2 shadow-lg shadow-orange-500/20 mb-3">
+              <img src="/favicon.png" alt="BunkClub" className="w-full h-full object-contain" />
             </div>
-            <h1 className="ig-logo-text" style={{ letterSpacing: '0.5px' }}>BunkClub</h1>
-            <p className="ig-signup-subtext">
-              Join the student club for smart attendance tracking, section timetable sync, and safe bunks.
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              Join BunkClub
+            </h1>
+            <p className="text-xs text-slate-400 mt-1 flex items-center justify-center gap-1">
+              <Sparkles size={12} className="text-amber-400" /> Smart Attendance, Section Timetable Sync & Bunk IQ
             </p>
           </div>
 
-          {/* Registration Form */}
-          <form onSubmit={handleRegister} className="ig-form">
+          {/* Form */}
+          <form onSubmit={handleRegister} className="space-y-3.5">
             {/* User ID / Username */}
-            <div className="ig-input-group">
-              <input
-                type="text"
-                id="reg-username"
-                placeholder=" "
-                className="ig-input"
-                value={form.username}
-                onChange={e => update('username', e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
-                required
-                autoComplete="username"
-              />
-              <label htmlFor="reg-username" className="ig-floating-label">
-                User ID / Username (e.g. adwaith_s)
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Choose User ID <span className="text-amber-400">*</span>
               </label>
+              <div className="relative flex items-center">
+                <div className="absolute left-3.5 text-slate-400 pointer-events-none">
+                  <User size={15} />
+                </div>
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={e => update('username', e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
+                  placeholder="e.g. adwaith_s"
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:bg-white/[0.08] transition-all"
+                  required
+                  autoComplete="username"
+                />
+              </div>
             </div>
 
-            {/* Email ID (for recovery) */}
-            <div className="ig-input-group">
-              <input
-                type="email"
-                id="reg-email"
-                placeholder=" "
-                className="ig-input"
-                value={form.email}
-                onChange={e => update('email', e.target.value)}
-                required
-                autoComplete="email"
-              />
-              <label htmlFor="reg-email" className="ig-floating-label">
-                Email ID (required for password/ID recovery)
+            {/* Email Address */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Email ID <span className="text-amber-400">*</span> (Used for OTP password/ID recovery)
               </label>
+              <div className="relative flex items-center">
+                <div className="absolute left-3.5 text-slate-400 pointer-events-none">
+                  <Mail size={15} />
+                </div>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={e => update('email', e.target.value)}
+                  placeholder="e.g. yourname@gmail.com"
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:bg-white/[0.08] transition-all"
+                  required
+                  autoComplete="email"
+                />
+              </div>
             </div>
 
             {/* Password */}
-            <div className="ig-input-group">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="reg-pass"
-                placeholder=" "
-                className="ig-input"
-                value={form.password}
-                onChange={e => update('password', e.target.value)}
-                required
-                minLength={6}
-                autoComplete="new-password"
-              />
-              <label htmlFor="reg-pass" className="ig-floating-label">
-                Password (min 6 characters)
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Password <span className="text-amber-400">*</span> (min 6 characters)
               </label>
-              {form.password.length > 0 && (
+              <div className="relative flex items-center">
+                <div className="absolute left-3.5 text-slate-400 pointer-events-none">
+                  <Lock size={15} />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={e => update('password', e.target.value)}
+                  placeholder="Create a secure password"
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-10 pr-11 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:bg-white/[0.08] transition-all"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                />
                 <button
                   type="button"
-                  className="ig-show-btn"
                   onClick={() => setShowPassword(p => !p)}
+                  className="absolute right-3.5 text-slate-400 hover:text-white transition-colors"
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
-              )}
+              </div>
             </div>
 
-            {/* Full Name */}
-            <div className="ig-input-group">
-              <input
-                type="text"
-                id="reg-name"
-                placeholder=" "
-                className="ig-input"
-                value={form.name}
-                onChange={e => update('name', e.target.value)}
-                required
-                autoComplete="name"
-              />
-              <label htmlFor="reg-name" className="ig-floating-label">
-                Full Legal Name
-              </label>
+            {/* Full Name & Student ID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Full Name <span className="text-amber-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={e => update('name', e.target.value)}
+                  placeholder="e.g. Adwaith S"
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:bg-white/[0.08] transition-all"
+                  required
+                  autoComplete="name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Roll No / Student ID <span className="text-amber-400">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 text-slate-400 pointer-events-none">
+                    <Hash size={14} />
+                  </div>
+                  <input
+                    type="text"
+                    value={form.studentId}
+                    onChange={e => update('studentId', e.target.value)}
+                    placeholder="e.g. 24MCA041"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-2xl pl-9 pr-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:bg-white/[0.08] transition-all uppercase"
+                    required
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Student ID / Roll Number */}
-            <div className="ig-input-group">
-              <input
-                type="text"
-                id="reg-id"
-                placeholder=" "
-                className="ig-input"
-                value={form.studentId}
-                onChange={e => update('studentId', e.target.value)}
-                required
-              />
-              <label htmlFor="reg-id" className="ig-floating-label">
-                Student Roll No / College ID
-              </label>
-            </div>
-
-            {/* Optional college info collapsible */}
-            <div style={{ marginTop: 4, marginBottom: 8 }}>
+            {/* Collapsible College Details */}
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={() => setMoreOptions(m => !m)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#6366f1',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  padding: '4px 0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4
-                }}
+                className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition-colors py-1"
               >
-                {moreOptions ? '− Hide College Details' : '+ Add College, Branch & Attendance Target (Optional)'}
+                {moreOptions ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {moreOptions ? 'Hide College & Target Details' : '+ Add College, Course & Attendance Target (Optional)'}
               </button>
             </div>
 
             {moreOptions && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 0' }}>
-                <div className="ig-input-group">
-                  <input
-                    type="text"
-                    id="reg-college"
-                    placeholder=" "
-                    className="ig-input"
-                    value={form.college}
-                    onChange={e => update('college', e.target.value)}
-                  />
-                  <label htmlFor="reg-college" className="ig-floating-label">
-                    College / University Name
-                  </label>
+              <div className="space-y-3 p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 animate-[fadeIn_0.2s_ease-out]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                      College / University
+                    </label>
+                    <input
+                      type="text"
+                      value={form.college}
+                      onChange={e => update('college', e.target.value)}
+                      placeholder="e.g. Amrita Mysore"
+                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                      Department / Course
+                    </label>
+                    <input
+                      type="text"
+                      value={form.department}
+                      onChange={e => update('department', e.target.value)}
+                      placeholder="e.g. MCA, CSE"
+                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 uppercase"
+                    />
+                  </div>
                 </div>
 
-                <div className="ig-input-group">
-                  <input
-                    type="text"
-                    id="reg-dept"
-                    placeholder=" "
-                    className="ig-input"
-                    value={form.department}
-                    onChange={e => update('department', e.target.value)}
-                  />
-                  <label htmlFor="reg-dept" className="ig-floating-label">
-                    Branch / Department (e.g. CSE)
-                  </label>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <div className="ig-input-group">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                      Semester
+                    </label>
                     <select
-                      id="reg-sem"
-                      className="ig-input"
                       value={form.semester}
                       onChange={e => update('semester', Number(e.target.value))}
-                      style={{ color: '#fff', background: '#121212' }}
+                      className="w-full bg-[#16171d] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
                     >
                       {[1,2,3,4,5,6,7,8].map(s => (
-                        <option key={s} value={s} style={{ background: '#1a1a1a', color: '#fff' }}>Semester {s}</option>
+                        <option key={s} value={s}>Semester {s}</option>
                       ))}
                     </select>
-                    <label htmlFor="reg-sem" className="ig-floating-label">Semester</label>
                   </div>
-
-                  <div className="ig-input-group">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                      Attendance Target %
+                    </label>
                     <input
                       type="number"
-                      id="reg-target"
-                      placeholder=" "
-                      className="ig-input"
                       value={form.attendanceTarget}
                       onChange={e => update('attendanceTarget', Number(e.target.value))}
                       min="50"
                       max="100"
+                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
                     />
-                    <label htmlFor="reg-target" className="ig-floating-label">
-                      Target % (default 80%)
-                    </label>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Terms notice */}
-            <p className="ig-disclaimer-text" style={{ marginTop: 12 }}>
-              By signing up, you agree to Bunkwell's Terms and Privacy Policy. Your Email ID is protected and used strictly for two-factor security and password recovery.
-            </p>
-
             {/* Submit Button */}
             <button
               type="submit"
-              className={`ig-primary-btn ${!isFormValid ? 'ig-btn-disabled' : ''}`}
               disabled={!isFormValid || loading}
+              className="w-full mt-2 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white font-semibold text-sm hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all shadow-xl shadow-orange-500/25 flex items-center justify-center gap-2"
             >
-              {loading ? 'Creating Account…' : 'Sign Up'}
+              {loading ? 'Creating Account…' : 'Create BunkClub Account'}
             </button>
           </form>
         </div>
 
-        {/* Secondary Box: "Have an account? Log in" */}
-        <div className="ig-secondary-card">
-          <p className="ig-secondary-text">
-            Have an account?{' '}
-            <Link to="/login" className="ig-link-bold">
+        {/* Secondary Glass Card: Log In Link */}
+        <div className="w-full rounded-2xl p-4 backdrop-blur-xl bg-white/[0.025] border border-white/10 text-center">
+          <p className="text-xs text-slate-400">
+            Already have an account?{' '}
+            <Link to="/login" className="text-amber-400 hover:text-amber-300 font-semibold transition-colors ml-1">
               Log in
             </Link>
           </p>
         </div>
 
-        {/* Security badge */}
-        <div style={{ textAlign: 'center', margin: '14px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#8e8e8e', fontSize: 12 }}>
-          <ShieldCheck size={14} style={{ color: '#10b981' }} />
-          <span>User ID + Password Auth with Verified Email Recovery</span>
-        </div>
-
-        {/* Footer */}
-        <div className="ig-footer">
-          <div className="ig-footer-links">
-            <span>About</span>
-            <span>Help</span>
-            <span>Security</span>
-            <span>Privacy</span>
-            <span>Terms</span>
-            <span>BunkClub Pro</span>
-          </div>
-          <div className="ig-footer-copy">
-            &copy; {new Date().getFullYear()} BUNKCLUB FROM STUDENT NETWORK
-          </div>
+        {/* Security badge footer */}
+        <div className="flex items-center justify-center gap-1.5 text-slate-500 text-xs">
+          <ShieldCheck size={14} className="text-emerald-400" />
+          <span>User ID + Password Auth with Verified Email OTP Recovery</span>
         </div>
       </div>
     </div>
