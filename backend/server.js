@@ -15,6 +15,7 @@ const attendanceRoutes = require('./routes/attendance');
 const notificationRoutes = require('./routes/notifications');
 const subjectRoutes = require('./routes/subjects');
 const analyticsRoutes = require('./routes/analytics');
+const bunkbotRoutes = require('./routes/bunkbot');
 
 const { sendMorningNotifications, sendEveningNotifications } = require('./services/notificationService');
 
@@ -50,6 +51,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/bunkbot', bunkbotRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'BunkClub', timestamp: new Date() }));
 

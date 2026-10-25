@@ -144,12 +144,18 @@ router.get('/me', require('../middleware/auth'), async (req, res) => {
   res.json({ user: req.user.toSafeObject() });
 });
 
-// 6. UPDATE PROFILE (Attendance Target, Password)
+// 6. UPDATE PROFILE (Attendance Target, Semester Months, Password)
 router.put('/profile', require('../middleware/auth'), async (req, res) => {
   try {
-    const { attendanceTarget, newPassword } = req.body;
+    const { attendanceTarget, newPassword, semesterMonths, monthsElapsed } = req.body;
     if (attendanceTarget !== undefined) {
       req.user.attendanceTarget = Number(attendanceTarget);
+    }
+    if (semesterMonths !== undefined) {
+      req.user.semesterMonths = Math.max(1, Math.min(12, Number(semesterMonths)));
+    }
+    if (monthsElapsed !== undefined) {
+      req.user.monthsElapsed = Math.max(0, Math.min(12, Number(monthsElapsed)));
     }
     if (newPassword && newPassword.length >= 4) {
       req.user.password = newPassword;

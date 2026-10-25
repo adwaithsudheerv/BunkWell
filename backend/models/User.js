@@ -12,6 +12,8 @@ const userSchema = new mongoose.Schema({
   semester: { type: Number, default: 1 },
   year: { type: Number, default: 1 },
   attendanceTarget: { type: Number, default: 80 },
+  semesterMonths: { type: Number, default: 6 },
+  monthsElapsed: { type: Number, default: 2 },
   pushSubscriptions: [{ type: Object }],
   notificationsEnabled: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },

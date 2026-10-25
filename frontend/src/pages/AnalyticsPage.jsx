@@ -3,9 +3,11 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
   Zap, Calendar, Clock, AlertTriangle, CheckCircle2, ShieldCheck,
-  ChevronRight, ArrowDownRight, Layers, Sliders, Sparkles, BookOpen
+  ChevronRight, ArrowDownRight, Layers, Sliders, Sparkles, BookOpen,
+  CalendarDays, TrendingUp, HelpCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import BunkBotModal from '../components/BunkBotModal';
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
@@ -13,6 +15,10 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [simSubjectId, setSimSubjectId] = useState('');
   const [simBunks, setSimBunks] = useState(1);
+  const [semesterMonths, setSemesterMonths] = useState(6);
+  const [monthsElapsed, setMonthsElapsed] = useState(2);
+  const [savingMonths, setSavingMonths] = useState(false);
+  const [bunkBotOpen, setBunkBotOpen] = useState(false);
   const target = user?.attendanceTarget || 80;
 
   const loadData = async () => {
@@ -20,6 +26,8 @@ export default function AnalyticsPage() {
     try {
       const res = await api.get('/analytics/bunk-ways');
       setBunkWays(res.data);
+      if (res.data?.semesterMonths) setSemesterMonths(res.data.semesterMonths);
+      if (res.data?.monthsElapsed !== undefined) setMonthsElapsed(res.data.monthsElapsed);
       if (res.data?.subjectCushions?.length > 0) {
         setSimSubjectId(res.data.subjectCushions[0]._id);
       }
@@ -35,11 +43,31 @@ export default function AnalyticsPage() {
     loadData();
   }, []);
 
+  const handleUpdateDuration = async (totalM, elapsedM) => {
+    setSemesterMonths(totalM);
+    setMonthsElapsed(elapsedM);
+    setSavingMonths(true);
+    try {
+      await api.put('/auth/profile', {
+        semesterMonths: totalM,
+        monthsElapsed: elapsedM
+      });
+      toast.success(`Semester updated: ${totalM} months total (${totalM - elapsedM} remaining)`);
+      loadData();
+    } catch (err) {
+      toast.error('Failed to update semester duration');
+    } finally {
+      setSavingMonths(false);
+    }
+  };
+
   const selectedSimSubject = bunkWays?.subjectCushions?.find(s => s._id === simSubjectId);
   const simTotal = (selectedSimSubject?.total || 0) + simBunks;
   const simAttended = selectedSimSubject?.attended || 0;
   const simProjectedPct = simTotal > 0 ? (simAttended / simTotal) * 100 : 100;
   const simIsSafe = simProjectedPct >= target;
+
+  const monthsRemaining = Math.max(0, semesterMonths - monthsElapsed);
 
   return (
     <div className="p-3 sm:p-5 lg:p-6 space-y-6 animate-[fadeIn_0.3s_ease-out]">
@@ -47,19 +75,29 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg sm:text-2xl font-black flex items-center gap-2">
-            <Zap size={22} className="text-blue-500" /> Bunk Strategies & Ways
+            <Zap size={22} className="text-blue-500" /> Bunk Strategies & Long-Term Forecast
           </h2>
           <p className="text-slate-500 text-xs mt-0.5">
-            Safe bunking routes while staying strictly above {target}% target
+            Real-time buffers & full-semester projection ({monthsRemaining} months remaining)
           </p>
         </div>
 
-        {bunkWays && (
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-xs font-bold text-blue-400">
-            <ShieldCheck size={16} />
-            <span>Total Buffer: {bunkWays.totalSafeBunksAcrossAll} Classes</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setBunkBotOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25 active:scale-95"
+          >
+            <Sparkles size={14} />
+            <span>Ask BunkBot AI</span>
+          </button>
+
+          {bunkWays && (
+            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-xs font-bold text-blue-400">
+              <ShieldCheck size={15} />
+              <span>Buffer: {bunkWays.totalSafeBunksAcrossAll} Classes</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -76,11 +114,129 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <>
-          {/* 1. HERO: SUBJECT BUNK CUSHION (How many can you bunk right now per subject) */}
+          {/* 1. SEMESTER DURATION & FULL-SEMESTER FORECAST */}
+          <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/10 space-y-4">
+            <div className="flex items-start justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="font-bold text-sm sm:text-base flex items-center gap-2">
+                  <CalendarDays size={18} className="text-blue-500" /> Full-Semester Long-Term Forecast
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Calculate if bunking now will cause issues at final exams in Month {semesterMonths}
+                </p>
+              </div>
+
+              {/* Semester duration controls */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-2xl border border-white/10 text-xs">
+                  <span className="text-slate-400 font-semibold text-[11px]">Duration:</span>
+                  {[4, 5, 6, 7].map(m => (
+                    <button
+                      key={m}
+                      onClick={() => handleUpdateDuration(m, monthsElapsed)}
+                      className={`px-2 py-0.5 rounded-lg font-bold text-[11px] transition-all ${
+                        semesterMonths === m
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {m}M
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-2xl border border-white/10 text-xs">
+                  <span className="text-slate-400 font-semibold text-[11px]">Elapsed:</span>
+                  {[1, 2, 3, 4].map(m => (
+                    <button
+                      key={m}
+                      onClick={() => handleUpdateDuration(semesterMonths, m)}
+                      className={`px-2 py-0.5 rounded-lg font-bold text-[11px] transition-all ${
+                        monthsElapsed === m
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {m}M
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Forecast Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/[0.02] text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th className="py-2.5 px-3">Subject</th>
+                    <th className="py-2.5 px-2 text-center">Weekly</th>
+                    <th className="py-2.5 px-2 text-center">Monthly</th>
+                    <th className="py-2.5 px-2 text-center">Future Classes</th>
+                    <th className="py-2.5 px-2 text-center">Total Semester</th>
+                    <th className="py-2.5 px-3 text-center">Semester Bunk Budget</th>
+                    <th className="py-2.5 px-3 text-center">End-of-Semester Verdict</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-medium">
+                  {bunkWays.semesterForecast?.map(s => (
+                    <tr key={s._id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-2.5 px-3 font-bold text-white flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+                        <span className="truncate max-w-[130px]">{s.name}</span>
+                      </td>
+                      <td className="py-2.5 px-2 text-center text-slate-300 font-bold">{s.weeklyClasses}x/wk</td>
+                      <td className="py-2.5 px-2 text-center text-slate-400">{s.monthlyClasses}/mo</td>
+                      <td className="py-2.5 px-2 text-center font-bold text-blue-400">+{s.remainingClasses}</td>
+                      <td className="py-2.5 px-2 text-center text-white font-bold">{s.totalSemesterClasses}</td>
+                      <td className="py-2.5 px-3 text-center">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full font-black text-xs ${
+                            s.remainingBunksAllowed >= 3
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : s.remainingBunksAllowed > 0
+                              ? 'bg-blue-500/20 text-blue-400'
+                              : 'bg-red-500/20 text-red-400'
+                          }`}
+                        >
+                          {s.remainingBunksAllowed} Bunks Left
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <span
+                          className={`text-[11px] font-semibold ${
+                            s.safeToBunkNow ? 'text-emerald-400' : 'text-red-400'
+                          }`}
+                        >
+                          {s.safeToBunkNow ? '✅ Safe to bunk now' : '⚠️ Keep attending'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between text-xs">
+              <span className="text-slate-400">
+                Formula: ({semesterMonths} - {monthsElapsed} = <b>{monthsRemaining} months remaining</b>) $\times$ (4 weeks) $\times$ (Weekly frequency from timetable)
+              </span>
+              <button
+                type="button"
+                onClick={() => setBunkBotOpen(true)}
+                className="text-blue-400 hover:text-blue-300 font-bold inline-flex items-center gap-1"
+              >
+                <span>Ask BunkBot for Personalized Strategy</span>
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* 2. SUBJECT BUNK CUSHION (Immediate Safe Bunks) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <ShieldCheck size={14} className="text-emerald-400" /> Subject-wise Safe Bunk Cushion
+                <ShieldCheck size={14} className="text-emerald-400" /> Subject-wise Safe Bunk Cushion (Right Now)
               </h3>
               <span className="text-[11px] text-slate-500">Target: {target}%</span>
             </div>
@@ -125,7 +281,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* 2. FULL DAY BUNK SCENARIOS (Can I take a full day off on Mon..Sat?) */}
+          {/* 3. FULL DAY BUNK SCENARIOS (Can I take a full day off on Mon..Sat?) */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
               <Calendar size={14} className="text-blue-500" /> Full Day Off Scenarios (Long Weekend Finder)
@@ -190,7 +346,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* 3. MORNING SLEEP-IN PLAN (Skip Period 1 at 8:00 AM) */}
+          {/* 4. MORNING SLEEP-IN PLAN (Skip Period 1 at 8:00 AM) */}
           {bunkWays.morningScenarios?.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -226,7 +382,7 @@ export default function AnalyticsPage() {
             </div>
           )}
 
-          {/* 4. INTERACTIVE WHAT-IF BUNK SIMULATOR */}
+          {/* 5. INTERACTIVE WHAT-IF BUNK SIMULATOR */}
           <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -305,6 +461,9 @@ export default function AnalyticsPage() {
           </div>
         </>
       )}
+
+      {/* BunkBot AI Modal */}
+      <BunkBotModal isOpen={bunkBotOpen} onClose={() => setBunkBotOpen(false)} />
     </div>
   );
 }

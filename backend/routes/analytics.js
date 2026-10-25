@@ -252,8 +252,57 @@ router.get('/bunk-ways', auth, async (req, res) => {
       });
     }
 
+    const semesterMonths = req.user.semesterMonths || 6;
+    const monthsElapsed = req.user.monthsElapsed || 2;
+    const monthsRemaining = Math.max(0, semesterMonths - monthsElapsed);
+
+    // Long-Term Semester Projections (e.g. 6-month semester, 4 months left)
+    const semesterForecast = subjectCushions.map(s => {
+      let weeklyCount = 0;
+      if (timetable && timetable.days) {
+        timetable.days.forEach(d => {
+          (d.periods || []).forEach(p => {
+            const pName = p.subjectName || p.subjectId?.name;
+            if (pName && pName.toLowerCase() === s.name.toLowerCase()) {
+              weeklyCount++;
+            }
+          });
+        });
+      }
+
+      const monthlyClasses = weeklyCount * 4;
+      const remainingClasses = monthlyClasses * monthsRemaining;
+      const totalSemesterClasses = s.total + remainingClasses;
+      const maxLifetimeBunks = Math.floor(totalSemesterClasses * (1 - (target / 100)));
+      const bunksUsedSoFar = Math.max(0, s.total - s.attended);
+      const remainingBunksAllowed = Math.max(0, maxLifetimeBunks - bunksUsedSoFar);
+
+      return {
+        _id: s._id,
+        name: s.name,
+        color: s.color,
+        weeklyClasses: weeklyCount,
+        monthlyClasses,
+        remainingClasses,
+        totalSemesterClasses,
+        bunksUsedSoFar,
+        maxLifetimeBunks,
+        remainingBunksAllowed,
+        safeToBunkNow: remainingBunksAllowed >= 1,
+        verdict: remainingBunksAllowed >= 3
+          ? `Safe! You have ${remainingBunksAllowed} bunks left for the semester.`
+          : remainingBunksAllowed > 0
+          ? `Caution: Only ${remainingBunksAllowed} bunks left for remaining months.`
+          : `Danger: Zero bunks left. You must attend all remaining classes.`
+      };
+    });
+
     res.json({
       target,
+      semesterMonths,
+      monthsElapsed,
+      monthsRemaining,
+      semesterForecast,
       subjectCushions,
       dayScenarios,
       morningScenarios,

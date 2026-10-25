@@ -8,6 +8,8 @@ import {
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import InstallPWAButton from './InstallPWAButton';
+import BunkBotModal from './BunkBotModal';
+import { Sparkles, Bot } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -45,6 +47,7 @@ export default function Layout() {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [bunkBotOpen, setBunkBotOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -201,6 +204,18 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Floating BunkBot AI Button */}
+      <button
+        onClick={() => setBunkBotOpen(true)}
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-xl shadow-blue-500/35 active:scale-95 transition-all hover:scale-105 border border-blue-400/30"
+        title="Ask BunkBot AI"
+      >
+        <Sparkles size={15} />
+        <span>Ask BunkBot AI</span>
+      </button>
+
+      <BunkBotModal isOpen={bunkBotOpen} onClose={() => setBunkBotOpen(false)} />
     </div>
   );
 }
