@@ -60,6 +60,7 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save();
+    try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
 
     const token = createToken(user._id);
     res.status(201).json({ token, user: user.toSafeObject() });
@@ -132,6 +133,7 @@ router.post('/reset-password-direct', async (req, res) => {
 
     user.password = newPassword;
     await user.save();
+    try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
     const token = createToken(user._id);
     res.json({ message: 'Password updated successfully!', token, user: user.toSafeObject() });
   } catch (err) {

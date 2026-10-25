@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
-import { User, Bell, BellOff, Settings, Save, Shield, CheckCircle2, Lock, Sparkles, Download } from 'lucide-react';
+import { User, Bell, BellOff, Settings, Save, Shield, CheckCircle2, Lock, Sparkles, Download, Database, Cloud } from 'lucide-react';
 import { sendInstantTestNotification, requestNotificationPermissions, autoInitializeNotifications } from '../lib/nativeNotifications';
 import { CURRENT_APP_VERSION, CURRENT_VERSION_CODE, isVersionOutdated } from '../components/AppUpdateModal';
 
@@ -84,6 +84,31 @@ export default function ProfilePage() {
       toast.error(err.response?.data?.message || 'Failed to save settings');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleLockData = async () => {
+    try {
+      const res = await api.post('/backup/lock');
+      toast.success(res.data?.message || 'Database snapshot locked & saved! 🔒');
+    } catch (err) {
+      toast.error('Failed to lock data: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleExportBackup = async () => {
+    try {
+      const res = await api.get('/backup/export', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `bunkclub_backup_${Date.now()}.json`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Backup downloaded to your device! 💾');
+    } catch (err) {
+      toast.error('Failed to download backup: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -271,6 +296,43 @@ export default function ProfilePage() {
           >
             <Bell size={13} />
             {subscribing ? 'Sending...' : 'Send Test Notification'}
+          </button>
+        </div>
+      </div>
+
+      {/* Database Persistence & Backup Card */}
+      <div className="glass-card rounded-3xl p-6 border border-white/10 space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-sm text-white flex items-center gap-2">
+              <Database size={16} className="text-blue-500" /> Database Persistence & Cloud Lock
+            </h3>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              Your data is automatically locked and snapshotted. Even when the server or application updates to a new version, your user account, timetable, subjects, and attendance history remain completely preserved.
+            </p>
+          </div>
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border bg-blue-500/10 border-blue-500/30 text-blue-400 whitespace-nowrap flex items-center gap-1.5 shadow-sm">
+            <Cloud size={12} />
+            Auto-Sync Active
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          <button
+            onClick={handleLockData}
+            type="button"
+            className="px-4 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+          >
+            <Lock size={13} />
+            Lock & Snapshot Now
+          </button>
+          <button
+            onClick={handleExportBackup}
+            type="button"
+            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+          >
+            <Download size={13} />
+            Download Offline Backup (.json)
           </button>
         </div>
       </div>

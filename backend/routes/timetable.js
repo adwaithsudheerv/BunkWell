@@ -25,6 +25,7 @@ router.post('/', auth, async (req, res) => {
     await Timetable.updateMany({ userId: req.user._id }, { isActive: false });
     const timetable = new Timetable({ userId: req.user._id, ...req.body });
     await timetable.save();
+    try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
     res.status(201).json({ timetable });
   } catch (err) {
     res.status(500).json({ message: err.message });

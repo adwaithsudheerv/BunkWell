@@ -132,9 +132,17 @@ export default function BunkBotModal({ isOpen, onClose }) {
     setLoading(true);
 
     try {
+      const now = new Date();
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata';
+      const day = now.toLocaleDateString('en-US', { weekday: 'long' });
+      const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
       const res = await api.post('/bunkbot/chat', {
         message: text,
-        history: messages
+        history: messages,
+        day,
+        date,
+        timezone: tz,
       });
 
       const botReply = res.data.reply;

@@ -17,19 +17,30 @@ const STATUS_CONFIG = {
 
 function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
   const [status, setStatus] = useState(existingRecord?.status || 'not_marked');
-  const [isReplaced, setIsReplaced] = useState(Boolean(existingRecord?.substituteFaculty));
-  const [replacementInfo, setReplacementInfo] = useState(existingRecord?.substituteFaculty || '');
+  const [isReplaced, setIsReplaced] = useState(
+    Boolean(existingRecord?.replacementSubjectId || existingRecord?.substituteFaculty || existingRecord?.status === 'substitute')
+  );
+  const [replacementSubjectId, setReplacementSubjectId] = useState(
+    existingRecord?.replacementSubjectId?._id || existingRecord?.replacementSubjectId || ''
+  );
+  const [replacementAttendance, setReplacementAttendance] = useState(
+    existingRecord?.replacementAttendance || 'present'
+  );
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [facultyNote, setFacultyNote] = useState(existingRecord?.substituteFaculty || '');
   const [marking, setMarking] = useState(false);
 
   useEffect(() => {
     if (existingRecord) {
       setStatus(existingRecord.status);
-      setReplacementInfo(existingRecord.substituteFaculty || '');
-      setIsReplaced(Boolean(existingRecord.substituteFaculty) || existingRecord.status === 'substitute');
+      setFacultyNote(existingRecord.substituteFaculty || '');
+      setReplacementSubjectId(existingRecord.replacementSubjectId?._id || existingRecord.replacementSubjectId || '');
+      setReplacementAttendance(existingRecord.replacementAttendance || 'present');
+      setIsReplaced(Boolean(existingRecord.replacementSubjectId || existingRecord.substituteFaculty || existingRecord.status === 'substitute'));
     }
   }, [existingRecord]);
 
-  const mark = async (newStatus, customNote = '') => {
+  const mark = async (newStatus) => {
     setMarking(true);
     try {
       const subjectId = period.subjectId?._id || period.subjectId;
@@ -38,13 +49,48 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
         date,
         periodNumber: period.periodNumber,
         status: newStatus,
-        substituteFaculty: customNote || (newStatus === 'substitute' ? replacementInfo : ''),
       });
       setStatus(newStatus);
+      setIsReplaced(false);
       toast.success(`Period ${period.periodNumber} marked as ${STATUS_CONFIG[newStatus].label}`);
       if (onMark) onMark();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to record attendance');
+    } finally {
+      setMarking(false);
+    }
+  };
+
+  const handleOpenReplace = () => {
+    setIsReplaced(true);
+    if (!replacementSubjectId && subjects && subjects.length > 0) {
+      const currentSubId = period.subjectId?._id || period.subjectId;
+      const otherSub = subjects.find(s => (s._id || s.id) !== currentSubId);
+      if (otherSub) {
+        setReplacementSubjectId(otherSub._id || otherSub.id);
+      }
+    }
+  };
+
+  const saveReplacement = async () => {
+    setMarking(true);
+    try {
+      const subjectId = period.subjectId?._id || period.subjectId;
+      const res = await api.post('/attendance/mark', {
+        subjectId,
+        date,
+        periodNumber: period.periodNumber,
+        status: 'substitute',
+        replacementSubjectId,
+        newSubjectName: replacementSubjectId === 'new_subject' ? newSubjectName : '',
+        replacementAttendance,
+        substituteFaculty: facultyNote,
+      });
+      setStatus('substitute');
+      toast.success(res.data?.message || 'Replacement class & attendance saved! ✅');
+      if (onMark) onMark();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save replacement');
     } finally {
       setMarking(false);
     }
@@ -78,16 +124,23 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
         </div>
 
         {/* Current Status Pill */}
-        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${cfg.bg}`}>
-          {status === 'present' && <CheckCircle2 size={13} />}
-          {status === 'absent' && <XCircle size={13} />}
-          {status === 'substitute' && <RefreshCw size={13} />}
-          {status === 'cancelled' && <Ban size={13} />}
-          <span>{cfg.label}</span>
+        <div className="flex flex-col items-end">
+          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${cfg.bg}`}>
+            {status === 'present' && <CheckCircle2 size={13} />}
+            {status === 'absent' && <XCircle size={13} />}
+            {status === 'substitute' && <RefreshCw size={13} />}
+            {status === 'cancelled' && <Ban size={13} />}
+            <span>{cfg.label}</span>
+          </div>
+          {status === 'substitute' && existingRecord?.replacementSubjectName && (
+            <span className="text-[10px] text-blue-400 font-semibold mt-1">
+              → {existingRecord.replacementSubjectName} ({existingRecord.replacementAttendance === 'absent' ? 'Missed' : '+1 Counted'})
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Direct One-Tap Attendance Buttons */}
+      {/* Direct Attendance Buttons */}
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
         {/* Present */}
         <button
@@ -117,10 +170,7 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
 
         {/* Replaced */}
         <button
-          onClick={() => {
-            setIsReplaced(true);
-            if (status !== 'substitute') mark('substitute');
-          }}
+          onClick={handleOpenReplace}
           disabled={marking}
           className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold border transition-all active:scale-95 disabled:opacity-60 ${
             status === 'substitute'
@@ -145,29 +195,141 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
         </button>
       </div>
 
-      {/* If Replaced: provide simple replacement note or substitute details */}
+      {/* If period is cancelled, offer quick replacement link */}
+      {status === 'cancelled' && !isReplaced && (
+        <div className="mt-2.5 text-right">
+          <button
+            onClick={handleOpenReplace}
+            className="text-[11px] text-blue-400 hover:underline font-medium inline-flex items-center gap-1"
+          >
+            <RefreshCw size={11} /> Was this period taken by another subject?
+          </button>
+        </div>
+      )}
+
+      {/* Replacement Subject Selection & Attendance Attribution */}
       {isReplaced && (
-        <div className="mt-3 p-3 rounded-xl bg-black/20 border border-white/10 space-y-2 animate-[fadeIn_0.2s_ease-out]">
+        <div className="mt-3.5 p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 space-y-3 animate-[fadeIn_0.2s_ease-out]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-blue-400 flex items-center gap-1">
-              <RefreshCw size={12} /> Class Replacement Details:
+            <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+              <RefreshCw size={14} /> Class Replacement & Attendance
             </span>
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="e.g. Replaced by DBMS, or Prof. Kumar took class"
-              value={replacementInfo}
-              onChange={e => setReplacementInfo(e.target.value)}
-              className="flex-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs placeholder-slate-500 focus:outline-none focus:border-blue-500"
-            />
             <button
-              onClick={() => mark('substitute', replacementInfo)}
-              className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors"
+              type="button"
+              onClick={() => setIsReplaced(false)}
+              className="text-[11px] text-slate-400 hover:text-white"
             >
-              Save
+              Close
             </button>
           </div>
+
+          <p className="text-xs text-slate-300">
+            Select which subject took this class so attendance is counted for it:
+          </p>
+
+          {/* Replacement Subject Selector */}
+          <div>
+            <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+              Replacement Subject:
+            </label>
+            <select
+              value={replacementSubjectId}
+              onChange={e => {
+                setReplacementSubjectId(e.target.value);
+                if (e.target.value !== 'new_subject') setNewSubjectName('');
+              }}
+              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/15 text-xs text-white focus:outline-none focus:border-blue-500 font-medium"
+            >
+              <option value="" disabled>-- Select Replacement Subject --</option>
+              {subjects
+                .filter(s => (s._id || s.id) !== (period.subjectId?._id || period.subjectId))
+                .map(s => (
+                  <option key={s._id || s.id} value={s._id || s.id}>
+                    {s.name} {s.code ? `(${s.code})` : ''}
+                  </option>
+                ))}
+              <option value="same_subject">
+                Same Subject ({subjectName}) — Substitute Teacher
+              </option>
+              <option value="new_subject">
+                + Add / Type Other Subject Name...
+              </option>
+            </select>
+          </div>
+
+          {/* If typing a new subject */}
+          {replacementSubjectId === 'new_subject' && (
+            <div className="animate-[fadeIn_0.2s_ease-out]">
+              <label className="text-[10px] font-bold uppercase text-blue-400 block mb-1">
+                Enter Subject Name:
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. DBMS, Operating Systems, Computer Networks"
+                value={newSubjectName}
+                onChange={e => setNewSubjectName(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-black/60 border border-blue-500/40 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400"
+              />
+            </div>
+          )}
+
+          {/* Attendance status for replacement subject */}
+          {replacementSubjectId && replacementSubjectId !== 'same_subject' && (
+            <div>
+              <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                Did you attend this replacement class?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReplacementAttendance('present')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+                    replacementAttendance === 'present'
+                      ? 'bg-emerald-500 text-white border-emerald-400 shadow-md shadow-emerald-500/20'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <CheckCircle2 size={14} /> Attended (+1 Counted)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReplacementAttendance('absent')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+                    replacementAttendance === 'absent'
+                      ? 'bg-red-600 text-white border-red-500 shadow-md shadow-red-500/20'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <XCircle size={14} /> Missed / Bunked
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Optional Faculty Note */}
+          <div>
+            <label className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+              Teacher Name / Notes (Optional):
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Taken by Prof. Kumar or Extra Topic"
+              value={facultyNote}
+              onChange={e => setFacultyNote(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {/* Submit Save Button */}
+          <button
+            type="button"
+            onClick={saveReplacement}
+            disabled={marking || !replacementSubjectId || (replacementSubjectId === 'new_subject' && !newSubjectName.trim())}
+            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={marking ? 'animate-spin' : ''} />
+            {marking ? 'Saving...' : 'Save & Count Attendance for this Subject'}
+          </button>
         </div>
       )}
     </div>
@@ -259,12 +421,18 @@ export default function TodayPage() {
 
   const refetchRecords = async () => {
     try {
-      const res = await api.get(`/attendance?date=${dateStr}`);
+      const [attRes, subRes] = await Promise.all([
+        api.get(`/attendance?date=${dateStr}`),
+        api.get('/subjects'),
+      ]);
       const recMap = {};
-      (res.data.records || []).forEach(r => {
+      (attRes.data.records || []).forEach(r => {
         recMap[`${r.subjectId?._id || r.subjectId}-${r.periodNumber}`] = r;
       });
       setExistingRecords(recMap);
+      if (subRes.data?.subjects) {
+        setSubjects(subRes.data.subjects);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -315,9 +483,16 @@ export default function TodayPage() {
     const rec = existingRecords[key];
     if (rec && rec.status !== 'not_marked') {
       markedCount++;
-      if (['present', 'substitute', 'lab'].includes(rec.status)) attendedToday++;
+      if (['present', 'lab'].includes(rec.status)) attendedToday++;
       if (rec.status === 'absent') absentToday++;
-      if (rec.status === 'substitute') replacedToday++;
+      if (rec.status === 'substitute') {
+        replacedToday++;
+        if (rec.replacementAttendance !== 'absent') {
+          attendedToday++;
+        } else {
+          absentToday++;
+        }
+      }
     }
   });
 
@@ -530,9 +705,13 @@ export default function TodayPage() {
                       <p className="text-xs font-bold truncate">
                         P{period.periodNumber}: {period.subjectName || period.subjectId?.name || 'Class'}
                       </p>
-                      {rec?.substituteFaculty && (
+                      {rec?.replacementSubjectName ? (
+                        <p className="text-[10px] text-blue-400 font-bold">
+                          Replaced by {rec.replacementSubjectName} ({rec.replacementAttendance === 'absent' ? 'Missed' : '+1 Attended'})
+                        </p>
+                      ) : rec?.substituteFaculty ? (
                         <p className="text-[10px] text-blue-400">Replaced: {rec.substituteFaculty}</p>
-                      )}
+                      ) : null}
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
                       <button
@@ -572,24 +751,16 @@ export default function TodayPage() {
                         ✗
                       </button>
                       <button
-                        onClick={async () => {
-                          const subNote = prompt('Enter replacement details (e.g. Taken by DBMS or Faculty):', rec?.substituteFaculty || '');
-                          if (subNote !== null) {
-                            await api.post('/attendance/mark', {
-                              subjectId: period.subjectId?._id || period.subjectId,
-                              date: dateStr,
-                              periodNumber: period.periodNumber,
-                              status: 'substitute',
-                              substituteFaculty: subNote,
-                            });
-                            refetchRecords();
-                          }
+                        onClick={() => {
+                          setShowEveningModal(false);
+                          toast('Select replacement subject on the period card');
                         }}
                         className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                           curStatus === 'substitute'
                             ? 'bg-blue-600 text-white'
                             : 'bg-white/5 hover:bg-blue-600/20 text-slate-400 hover:text-blue-400'
                         }`}
+                        title="Configure Replacement"
                       >
                         🔄
                       </button>

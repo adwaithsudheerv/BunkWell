@@ -67,17 +67,17 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.2.1',
-    versionCode: 4,
+    latestVersion: '1.2.2',
+    versionCode: 5,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🚀 BunkClub v1.2.1 Update Available',
-    message: 'Fixed AI Timetable scanner: now separately opens Phone Files/Gallery or Camera. Tap to download!',
+    title: '🚀 BunkClub v1.2.2 Update Available',
+    message: 'New Update: Class replacement attendance tracking, dynamic BunkBot timetable calculations, and zero-loss database lock!',
     changelog: [
-      'AI Scanner: Choose from Files/Gallery now accesses internal storage and photos directly',
-      'AI Scanner: Open Camera launches live camera capture',
-      'Today Attendance: Monday real-time timezone sync',
-      'Android 15 Play Protect certified & ultra-compact 11MB build'
+      'Today Attendance: Replaced classes now attribute attendance directly to replacement subject',
+      'BunkBot AI: Exact timetable mathematical calculations for safe bunking',
+      'Database Lock & Cloud Persistence: User accounts, timetables, and attendance preserved across updates',
+      'AI Timetable Scanner: Separate phone files/gallery and camera access'
     ]
   });
 });
@@ -87,8 +87,8 @@ router.post('/broadcast-update', async (req, res) => {
   try {
     const users = await User.find({ 'pushSubscriptions.0': { $exists: true } });
     const payload = JSON.stringify({
-      title: '🚀 BunkClub v1.2.1 Update Available',
-      body: 'AI Timetable Scanner update: access your Files/Gallery or Camera separately. Tap to update now!',
+      title: '🚀 BunkClub v1.2.2 Update Available',
+      body: 'New update ready: Replaced class attendance tracking & timetable BunkBot calculations. Tap to update!',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: {

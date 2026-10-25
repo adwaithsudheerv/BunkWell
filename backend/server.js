@@ -16,6 +16,7 @@ const notificationRoutes = require('./routes/notifications');
 const subjectRoutes = require('./routes/subjects');
 const analyticsRoutes = require('./routes/analytics');
 const bunkbotRoutes = require('./routes/bunkbot');
+const backupRoutes = require('./routes/backup');
 
 const { sendMorningNotifications, sendEveningNotifications } = require('./services/notificationService');
 
@@ -53,6 +54,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/bunkbot', bunkbotRoutes);
+app.use('/api/backup', backupRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'BunkClub', timestamp: new Date() }));
 
@@ -124,6 +126,14 @@ async function connectDB() {
 const PORT = process.env.PORT || 5000;
 async function startServer() {
   await connectDB();
+  // Persistent data lock/unlock auto-recovery (Restores data seamlessly if empty/fresh container)
+  try {
+    const { unlockAndRestoreIfEmpty } = require('./services/dbPersistence');
+    await unlockAndRestoreIfEmpty();
+  } catch (restoreErr) {
+    console.error('Data restore notice:', restoreErr.message);
+  }
+
   app.listen(PORT, () => {
     console.log(`🚀 BunkClub backend running on port ${PORT}`);
   });
