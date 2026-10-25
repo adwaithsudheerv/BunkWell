@@ -11,6 +11,7 @@ export default function AITimetableScannerModal({ isOpen, onClose, onTimetableAp
   const [error, setError] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   if (!isOpen) return null;
 
@@ -167,38 +168,61 @@ export default function AITimetableScannerModal({ isOpen, onClose, onTimetableAp
         {/* Step 1: Image Capture / Upload Area */}
         {!scanResult && (
           <div className="mt-5 space-y-4">
+            {/* Input 1: Storage / Gallery file picker (NO capture attribute -> opens phone files/gallery) */}
             <input
               type="file"
-              accept="image/*"
-              capture="environment"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
             />
 
+            {/* Input 2: Dedicated Camera Capture (with capture="environment" -> opens live hardware camera) */}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              ref={cameraInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
             {!imagePreview ? (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-blue-500/30 hover:border-blue-500/60 rounded-3xl p-8 text-center cursor-pointer bg-blue-950/10 hover:bg-blue-950/20 transition-all flex flex-col items-center justify-center gap-3 group"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-                  <Camera size={32} />
+              <div className="border-2 border-dashed border-blue-500/30 rounded-3xl p-6 sm:p-8 text-center bg-blue-950/10 flex flex-col items-center justify-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <Sparkles size={32} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
-                    Take Photo or Upload Timetable Picture
+                  <p className="text-base font-bold text-white">
+                    Scan Timetable Schedule
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Supports camera capture, phone gallery photos, JPG, PNG & screenshots
+                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                    Choose an existing timetable screenshot from your phone files or take a live camera photo.
                   </p>
                 </div>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-slate-300">
-                    <Camera size={14} /> Open Camera
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-slate-300">
-                    <Upload size={14} /> Upload File
-                  </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-sm mt-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cameraInputRef.current?.click();
+                    }}
+                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs shadow-md shadow-blue-600/25 transition-all"
+                  >
+                    <Camera size={16} /> Open Camera
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-95 text-white font-bold text-xs border border-white/15 transition-all"
+                  >
+                    <Upload size={16} /> Choose from Files
+                  </button>
                 </div>
               </div>
             ) : (
@@ -220,13 +244,20 @@ export default function AITimetableScannerModal({ isOpen, onClose, onTimetableAp
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
-                    onClick={resetAll}
+                    onClick={() => cameraInputRef.current?.click()}
                     disabled={isScanning}
-                    className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                    className="px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
                   >
-                    Retake / Change Photo
+                    <Camera size={13} /> Retake
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isScanning}
+                    className="px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <Upload size={13} /> Choose File
                   </button>
                   <button
                     onClick={handleScan}

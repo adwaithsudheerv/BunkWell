@@ -67,16 +67,17 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.2.0',
-    versionCode: 3,
+    latestVersion: '1.2.1',
+    versionCode: 4,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🚀 BunkClub v1.2.0 Update Available',
-    message: 'Fixed Monday timezone bug on Today attendance screen. Tap to download the latest build!',
+    title: '🚀 BunkClub v1.2.1 Update Available',
+    message: 'Fixed AI Timetable scanner: now separately opens Phone Files/Gallery or Camera. Tap to download!',
     changelog: [
-      'Bug Fix: Real-time timezone sync for Today attendance (accurate Monday display)',
-      'Clean interface: all download buttons removed from mobile app',
-      'Google Play Protect certified Android 15 standard'
+      'AI Scanner: Choose from Files/Gallery now accesses internal storage and photos directly',
+      'AI Scanner: Open Camera launches live camera capture',
+      'Today Attendance: Monday real-time timezone sync',
+      'Android 15 Play Protect certified & ultra-compact 11MB build'
     ]
   });
 });
@@ -86,8 +87,8 @@ router.post('/broadcast-update', async (req, res) => {
   try {
     const users = await User.find({ 'pushSubscriptions.0': { $exists: true } });
     const payload = JSON.stringify({
-      title: '🚀 BunkClub v1.2.0 Update Available',
-      body: 'New update available! Fixed Today attendance day display. Tap to update your app now!',
+      title: '🚀 BunkClub v1.2.1 Update Available',
+      body: 'AI Timetable Scanner update: access your Files/Gallery or Camera separately. Tap to update now!',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: {
