@@ -3,9 +3,10 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
   CalendarDays, Plus, Save, Trash2, Clock, BookOpen, Users,
-  Copy, Check, LayoutGrid, List, Sparkles, X
+  Copy, Check, LayoutGrid, List, Sparkles, X, Camera
 } from 'lucide-react';
 import ShareTimetableModal from '../components/ShareTimetableModal';
+import AITimetableScannerModal from '../components/AITimetableScannerModal';
 import { Link } from 'react-router-dom';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -33,6 +34,7 @@ export default function TimetablePage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showScannerModal, setShowScannerModal] = useState(false);
   const [slotPickerModal, setSlotPickerModal] = useState(null); // { day, slotIndex }
 
   // Schedule map: { Monday: [10 slots], Tuesday: [10 slots], ... }
@@ -247,6 +249,13 @@ export default function TimetablePage() {
             </button>
           </div>
 
+          <button
+            onClick={() => setShowScannerModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600/20 to-indigo-600/20 hover:from-blue-600/30 hover:to-indigo-600/30 text-blue-300 text-xs font-bold border border-blue-500/30 transition-all shadow-sm active:scale-95"
+          >
+            <Camera size={15} className="text-blue-400" />
+            📸 AI Photo Scan
+          </button>
           <button
             onClick={() => setShowShareModal(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-semibold border border-blue-500/20 transition-all shadow-sm"
@@ -543,6 +552,16 @@ export default function TimetablePage() {
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         onImportSuccess={loadData}
+      />
+
+      {/* AI Timetable Photo Scanner Modal */}
+      <AITimetableScannerModal
+        isOpen={showScannerModal}
+        onClose={() => setShowScannerModal(false)}
+        onTimetableApplied={() => {
+          loadData();
+          toast.success('AI Timetable Applied Successfully! 🎉');
+        }}
       />
     </div>
   );

@@ -2,10 +2,6 @@
   "appId": "app.bunkclub.mobile",
   "appName": "BunkClub",
   "webDir": "dist",
-  "server": {
-    "url": "https://bunkwell.onrender.com",
-    "cleartext": true
-  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 1500,
