@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, CalendarDays, ClipboardCheck, BarChart3,
@@ -51,16 +51,10 @@ export default function Layout() {
   const SidebarContent = ({ onNavigate }) => (
     <div className="flex flex-col h-full">
       {/* Brand Logo */}
-      <div className="flex items-center justify-between px-5 py-6 border-b border-[color:var(--color-line)]">
-        <div className="flex items-center gap-3">
-          <img src="/favicon.png" alt="BunkClub" className="w-10 h-10 rounded-xl shadow-md shadow-orange-500/20 object-contain border border-amber-500/30" />
-          <div>
-            <h1 className="font-bold text-white text-base leading-tight tracking-wide">BunkClub</h1>
-            <p className="text-xs text-[color:var(--color-muted)] flex items-center gap-1">
-              <Sparkles size={11} className="text-amber-400" /> Smart Attendance
-            </p>
-          </div>
-        </div>
+      <div className="flex items-center justify-between px-5 py-5 border-b border-[color:var(--color-line)]">
+        <Link to="/dashboard" className="flex items-center">
+          <img src="/logo-white.png" alt="BunkClub" className="h-8 w-auto object-contain" />
+        </Link>
       </div>
 
       {/* PWA Install Banner in Sidebar */}
@@ -131,10 +125,9 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile topbar */}
         <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-[color:var(--color-line)] bg-[#0d0e12]/80 backdrop-blur-md sticky top-0 z-10">
-          <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="BunkClub" className="w-8 h-8 rounded-lg border border-amber-500/30 object-contain" />
-            <span className="font-bold text-white text-base tracking-wide">BunkClub</span>
-          </div>
+          <Link to="/dashboard" className="flex items-center">
+            <img src="/logo-white.png" alt="BunkClub" className="h-7 w-auto object-contain" />
+          </Link>
           <div className="flex items-center gap-2">
             <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
             <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-lg text-slate-300 hover:text-white">

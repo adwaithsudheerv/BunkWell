@@ -124,14 +124,11 @@ export default function LoginPage() {
 
           {/* Logo & Brand Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-red-500/20 border border-amber-500/30 p-2 shadow-lg shadow-orange-500/20 mb-3">
-              <img src="/favicon.png" alt="BunkClub" className="w-full h-full object-contain" />
+            <div className="flex justify-center mb-3">
+              <img src="/logo-white.png" alt="BunkClub" className="h-11 sm:h-12 w-auto object-contain filter drop-shadow-[0_4px_12px_rgba(1,47,251,0.25)]" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center justify-center gap-1.5">
-              BunkClub
-            </h1>
-            <p className="text-xs text-slate-400 mt-1 flex items-center justify-center gap-1">
-              <Sparkles size={12} className="text-amber-400" /> Smart Attendance & Safe Bunk Intelligence
+            <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5 font-medium">
+              <Sparkles size={13} className="text-amber-400" /> Smart Attendance & Safe Bunk Intelligence
             </p>
           </div>
 
