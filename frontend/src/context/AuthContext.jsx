@@ -50,8 +50,18 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  const forgotPassword = async (identifier, newPassword) => {
-    const res = await api.post('/auth/forgot-password', { identifier, newPassword });
+  const sendOTP = async (identifier) => {
+    const res = await api.post('/auth/send-otp', { identifier });
+    return res.data;
+  };
+
+  const verifyOTP = async (identifier, otp) => {
+    const res = await api.post('/auth/verify-otp', { identifier, otp });
+    return res.data;
+  };
+
+  const resetPasswordWithOTP = async (identifier, otp, newPassword) => {
+    const res = await api.post('/auth/reset-password-otp', { identifier, otp, newPassword });
     if (res.data.token) {
       localStorage.setItem('bunkwell_token', res.data.token);
       localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
@@ -72,7 +82,18 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, forgotPassword, logout, updateUser }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
+      register,
+      loginWithGoogle,
+      sendOTP,
+      verifyOTP,
+      resetPasswordWithOTP,
+      logout,
+      updateUser
+    }}>
       {children}
     </AuthContext.Provider>
   );

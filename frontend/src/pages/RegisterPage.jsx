@@ -2,18 +2,27 @@ import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import {
-  User, Mail, Lock, Eye, EyeOff, IdCard, Building2,
-  GraduationCap, Check, ShieldCheck, Sparkles,
-  BookOpen, ChevronRight, ChevronLeft, Award, CheckCircle2, X
-} from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Award } from 'lucide-react';
 
 export default function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    email: '',
+    name: '',
+    username: '',
+    password: '',
+    studentId: '',
+    college: '',
+    department: '',
+    semester: 1,
+    attendanceTarget: 80,
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showPass, setShowPass] = useState(false);
-  const [step, setStep] = useState(1);
+  const [moreOptions, setMoreOptions] = useState(false);
 
   // Google Modal
   const [showGoogleModal, setShowGoogleModal] = useState(false);
@@ -21,85 +30,39 @@ export default function RegisterPage() {
   const [googleName, setGoogleName] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    username: '',
-    password: '',
-    studentId: '',
-    college: '',
-    department: '',
-    semester: 1,
-    year: 1,
-    attendanceTarget: 80,
-  });
-
   const update = (key, val) => {
     setForm(f => {
-      const updated = { ...f, [key]: val };
-      // Auto-suggest username when email is typed (if username hasn't been manually set)
+      const next = { ...f, [key]: val };
+      // Auto-suggest username when email is typed
       if (key === 'email' && (!f.username || f.username === f.email.split('@')[0])) {
-        updated.username = val.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+        next.username = val.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
       }
-      return updated;
+      return next;
     });
   };
 
-  // Live password strength calculation
-  const passStrength = useMemo(() => {
-    const p = form.password;
-    if (!p) return { score: 0, label: 'Empty', color: '#64748b' };
-    let score = 0;
-    if (p.length >= 6) score++;
-    if (p.length >= 10) score++;
-    if (/[0-9]/.test(p)) score++;
-    if (/[A-Z]/.test(p) && /[^A-Za-z0-9]/.test(p)) score++;
+  const isFormValid =
+    form.email.trim().length > 3 &&
+    form.name.trim().length > 1 &&
+    form.password.length >= 6 &&
+    form.studentId.trim().length > 1;
 
-    switch (score) {
-      case 1:
-        return { score: 1, label: 'Weak', color: '#ef4444' };
-      case 2:
-        return { score: 2, label: 'Fair', color: '#f59e0b' };
-      case 3:
-        return { score: 3, label: 'Good', color: '#10b981' };
-      case 4:
-        return { score: 4, label: 'Strong & Secure', color: '#06b6d4' };
-      default:
-        return { score: 1, label: 'Weak', color: '#ef4444' };
-    }
-  }, [form.password]);
-
-  // ID verification format check
-  const isIdVerified = useMemo(() => {
-    const id = form.studentId.trim();
-    return id.length >= 3;
-  }, [form.studentId]);
-
-  const handleNextStep = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
+    if (!form.email.trim()) {
+      toast.error('Email address is required');
+      return;
+    }
     if (!form.name.trim()) {
-      toast.error('Please enter your full legal name');
+      toast.error('Full legal name is required');
       return;
     }
-    if (!form.email.trim() && !form.username.trim()) {
-      toast.error('Please enter your Email address or Username');
-      return;
-    }
-    if (!form.password) {
-      toast.error('Please enter a secure password');
+    if (!form.studentId.trim()) {
+      toast.error('Student Roll Number or ID is required');
       return;
     }
     if (form.password.length < 6) {
       toast.error('Password must be at least 6 characters');
-      return;
-    }
-    setStep(2);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.studentId.trim()) {
-      toast.error('Please enter your Student ID or Roll number');
       return;
     }
 
@@ -107,11 +70,11 @@ export default function RegisterPage() {
     try {
       await register({
         ...form,
-        username: (form.username || form.email.split('@')[0] || form.name.toLowerCase().replace(/\s+/g, '')).toLowerCase().trim(),
-        email: form.email.trim().toLowerCase(),
-        studentId: form.studentId.trim().toUpperCase()
+        email: form.email.toLowerCase().trim(),
+        username: (form.username || form.email.split('@')[0] || form.name.replace(/\s+/g, '')).toLowerCase().trim(),
+        studentId: form.studentId.toUpperCase().trim()
       });
-      toast.success('Registration verified & complete! 🎓');
+      toast.success('Welcome to Bunkwell! 🎓');
       navigate('/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Registration failed';
@@ -138,8 +101,7 @@ export default function RegisterPage() {
       toast.success('Account created with Google! 🎓');
       navigate('/dashboard');
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Google registration failed';
-      toast.error(msg);
+      toast.error(err.response?.data?.message || 'Google registration failed');
     } finally {
       setGoogleLoading(false);
       setShowGoogleModal(false);
@@ -147,456 +109,330 @@ export default function RegisterPage() {
   };
 
   return (
-    <section className="form-main">
-      <div className="form-content" style={{ maxWidth: '520px' }}>
-        <div className="circle-1"></div>
-        <div className="circle-2"></div>
-        <div className="circle-3"></div>
-
-        <div className="box" style={{ padding: '36px 36px 32px' }}>
-          {/* Header Brand */}
-          <div className="brand-icon-wrap" style={{ marginBottom: 12 }}>
-            <div className="brand-icon" style={{ width: 48, height: 48, borderRadius: 14 }}>
-              <GraduationCap size={24} />
-            </div>
+    <div className="ig-auth-container">
+      <div className="ig-auth-wrapper">
+        {/* Main Sign Up Card */}
+        <div className="ig-card">
+          <div className="ig-brand-header">
+            <h1 className="ig-logo-text">Bunkwell</h1>
+            <p className="ig-signup-subtext">
+              Sign up to track your timetable, period attendance, and smart bunk calculations.
+            </p>
           </div>
-
-          <h3 style={{ fontSize: 26, marginBottom: 4 }}>Student Registration</h3>
-          <p className="sub-text" style={{ marginBottom: 16 }}>
-            {step === 1 ? 'Step 1 of 2: Personal & Login Credentials' : 'Step 2 of 2: College ID Verification & Goals'}
-          </p>
 
           {/* Quick Sign up with Google */}
-          {step === 1 && (
-            <>
-              <button
-                type="button"
-                onClick={() => setShowGoogleModal(true)}
-                style={{
-                  width: '100%',
-                  height: 42,
-                  borderRadius: 30,
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  color: '#fff',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 10,
-                  cursor: 'pointer',
-                  marginBottom: 16,
-                  transition: 'background 0.2s',
-                }}
-              >
-                <svg width="17" height="17" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                Sign up with Google / Gmail
-              </button>
+          <button
+            type="button"
+            className="ig-alt-login-btn ig-google-btn-prominent"
+            onClick={() => setShowGoogleModal(true)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+            </svg>
+            <span>Log in with Google</span>
+          </button>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
-                <span style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Or enter your details
-                </span>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
-              </div>
-            </>
-          )}
-
-          {/* Stepper with descriptive headers */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50%',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  background: step === 1 ? 'linear-gradient(to right, var(--yellow), var(--red))' : '#10b981',
-                  color: '#fff',
-                  boxShadow: step === 1 ? '0 0 12px rgba(255, 120, 0, 0.4)' : 'none',
-                }}
-              >
-                {step > 1 ? <Check size={14} /> : '1'}
-              </div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: step === 1 ? '#fff' : '#94a3b8' }}>
-                Account
-              </span>
-            </div>
-
-            <div style={{ width: 40, height: 2, background: step === 2 ? '#10b981' : 'rgba(255,255,255,0.15)' }} />
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50%',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  background: step === 2 ? 'linear-gradient(to right, var(--yellow), var(--red))' : 'rgba(255,255,255,0.08)',
-                  color: '#fff',
-                  border: step === 2 ? 'none' : '1px solid rgba(255,255,255,0.2)',
-                  boxShadow: step === 2 ? '0 0 12px rgba(255, 120, 0, 0.4)' : 'none',
-                }}
-              >
-                2
-              </div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: step === 2 ? '#fff' : '#94a3b8' }}>
-                Verification
-              </span>
-            </div>
+          {/* OR Divider */}
+          <div className="ig-divider">
+            <div className="ig-divider-line"></div>
+            <span className="ig-divider-text">OR</span>
+            <div className="ig-divider-line"></div>
           </div>
 
-          <form onSubmit={step === 1 ? handleNextStep : handleSubmit}>
-            {step === 1 ? (
-              <div className="animate-in" style={{ display: 'grid', gap: 16 }}>
-                {/* Full Legal Name */}
-                <div className="input-box" style={{ marginBottom: 0 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    <User size={13} className="text-amber-400" /> Full Legal Name *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Adwaith Sudheer"
-                    className="input-control"
-                    value={form.name}
-                    onChange={e => update('name', e.target.value)}
-                    required
-                    autoComplete="name"
-                  />
-                </div>
+          {/* Registration Form */}
+          <form onSubmit={handleRegister} className="ig-form">
+            {/* Email */}
+            <div className="ig-input-group">
+              <input
+                type="email"
+                id="signup-email"
+                placeholder=" "
+                className="ig-input"
+                value={form.email}
+                onChange={e => update('email', e.target.value)}
+                required
+                autoComplete="email"
+              />
+              <label htmlFor="signup-email" className="ig-floating-label">
+                Mobile Number or Email
+              </label>
+            </div>
 
-                {/* College / Personal Email Address */}
-                <div className="input-box" style={{ marginBottom: 0 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    <Mail size={13} className="text-amber-400" /> Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="e.g. adwaith@amrita.edu or your@gmail.com"
-                    className="input-control"
-                    value={form.email}
-                    onChange={e => update('email', e.target.value)}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
+            {/* Full Name */}
+            <div className="ig-input-group">
+              <input
+                type="text"
+                id="signup-name"
+                placeholder=" "
+                className="ig-input"
+                value={form.name}
+                onChange={e => update('name', e.target.value)}
+                required
+                autoComplete="name"
+              />
+              <label htmlFor="signup-name" className="ig-floating-label">
+                Full Name
+              </label>
+            </div>
 
-                {/* Username Input (Auto-suggested from email) */}
-                <div className="input-box" style={{ marginBottom: 0 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    <User size={13} className="text-amber-400" /> Username
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. adwaith24"
-                    className="input-control"
-                    value={form.username}
-                    onChange={e => update('username', e.target.value.toLowerCase().trim())}
-                    autoComplete="username"
-                  />
-                </div>
+            {/* Student ID / Roll No with verified badge */}
+            <div className="ig-input-group">
+              <input
+                type="text"
+                id="signup-studentid"
+                placeholder=" "
+                className="ig-input"
+                value={form.studentId}
+                onChange={e => update('studentId', e.target.value.toUpperCase())}
+                required
+              />
+              <label htmlFor="signup-studentid" className="ig-floating-label">
+                Student Roll No / ID Card Number
+              </label>
+              {form.studentId.trim().length >= 3 && (
+                <span className="ig-verified-badge" title="Verified Format">
+                  <CheckCircle2 size={13} />
+                </span>
+              )}
+            </div>
 
-                {/* Password Input with Visibility Toggle */}
-                <div className="input-box" style={{ marginBottom: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <Lock size={13} className="text-amber-400" /> Password *
-                    </label>
-                    {form.password && (
-                      <span style={{ fontSize: 11, color: passStrength.color, fontWeight: 600 }}>
-                        {passStrength.label}
-                      </span>
-                    )}
-                  </div>
-                  <input
-                    type={showPass ? 'text' : 'password'}
-                    placeholder="At least 6 characters"
-                    className="input-control"
-                    value={form.password}
-                    onChange={e => update('password', e.target.value)}
-                    required
-                    minLength={6}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    className="pass-toggle-btn"
-                    onClick={() => setShowPass(p => !p)}
-                    aria-label={showPass ? 'Hide password' : 'Show password'}
-                  >
-                    {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
+            {/* Username */}
+            <div className="ig-input-group">
+              <input
+                type="text"
+                id="signup-username"
+                placeholder=" "
+                className="ig-input"
+                value={form.username}
+                onChange={e => update('username', e.target.value.toLowerCase().trim())}
+                autoComplete="username"
+              />
+              <label htmlFor="signup-username" className="ig-floating-label">
+                Username
+              </label>
+            </div>
 
-                {/* Password Strength Meter */}
-                {form.password && (
-                  <div style={{ marginTop: -6, marginBottom: 2 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 5 }}>
-                      {[1, 2, 3, 4].map(barIndex => (
-                        <div
-                          key={barIndex}
-                          style={{
-                            height: 4,
-                            borderRadius: 4,
-                            background: barIndex <= passStrength.score ? passStrength.color : 'rgba(255,255,255,0.1)',
-                            transition: 'all 0.3s ease',
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* Password */}
+            <div className="ig-input-group">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="signup-pass"
+                placeholder=" "
+                className="ig-input"
+                value={form.password}
+                onChange={e => update('password', e.target.value)}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+              <label htmlFor="signup-pass" className="ig-floating-label">
+                Password
+              </label>
+              {form.password.length > 0 && (
+                <button
+                  type="button"
+                  className="ig-show-btn"
+                  onClick={() => setShowPassword(p => !p)}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              )}
+            </div>
+
+            {/* Collapsible College & Department Options */}
+            {!moreOptions ? (
+              <button
+                type="button"
+                className="ig-more-toggle-btn"
+                onClick={() => setMoreOptions(true)}
+              >
+                + Add College, Semester & Attendance Target
+              </button>
             ) : (
-              <div className="animate-in" style={{ display: 'grid', gap: 16 }}>
-                {/* Student ID Verification Input with Live Badge */}
-                <div className="input-box" style={{ marginBottom: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <IdCard size={13} className="text-amber-400" /> Student Roll No / ID Card Number *
-                    </label>
-                    {isIdVerified && (
-                      <span style={{ fontSize: 10, color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 8px', borderRadius: 99, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <CheckCircle2 size={11} /> ID VERIFIED
-                      </span>
-                    )}
-                  </div>
+              <div className="ig-more-section animate-in">
+                <div className="ig-input-group">
                   <input
                     type="text"
-                    placeholder="e.g. MY.AC.P2MCA26001 or 21CS042"
-                    className="input-control"
-                    value={form.studentId}
-                    onChange={e => update('studentId', e.target.value.toUpperCase())}
-                    required
-                    autoFocus
+                    id="signup-college"
+                    placeholder=" "
+                    className="ig-input"
+                    value={form.college}
+                    onChange={e => update('college', e.target.value)}
                   />
+                  <label htmlFor="signup-college" className="ig-floating-label">
+                    College / University (e.g. Amrita)
+                  </label>
                 </div>
 
-                {/* College & Department in 2 columns */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div className="input-box" style={{ marginBottom: 0 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <Building2 size={12} className="text-amber-400" /> College / University
-                    </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  <div className="ig-input-group">
                     <input
                       type="text"
-                      placeholder="e.g. Amrita University"
-                      className="input-control"
-                      value={form.college}
-                      onChange={e => update('college', e.target.value)}
-                    />
-                  </div>
-                  <div className="input-box" style={{ marginBottom: 0 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <BookOpen size={12} className="text-amber-400" /> Department
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. CS / MCA"
-                      className="input-control"
+                      id="signup-dept"
+                      placeholder=" "
+                      className="ig-input"
                       value={form.department}
                       onChange={e => update('department', e.target.value.toUpperCase())}
                     />
-                  </div>
-                </div>
-
-                {/* Semester & Target Attendance Goal */}
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 14, alignItems: 'center' }}>
-                  <div className="input-box" style={{ marginBottom: 0 }}>
-                    <label style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Semester
+                    <label htmlFor="signup-dept" className="ig-floating-label">
+                      Department (e.g. CS)
                     </label>
+                  </div>
+
+                  <div className="ig-input-group">
                     <select
-                      className="input-control"
+                      className="ig-input"
                       value={form.semester}
                       onChange={e => update('semester', Number(e.target.value))}
-                      style={{ cursor: 'pointer', background: '#0a0a0a' }}
+                      style={{ cursor: 'pointer', paddingRight: 6 }}
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
-                        <option key={s} value={s} style={{ background: '#111', color: '#fff' }}>
+                        <option key={s} value={s} style={{ background: '#121212', color: '#fff' }}>
                           Semester {s}
                         </option>
                       ))}
                     </select>
                   </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Award size={12} className="text-amber-400" /> Min. Attendance Goal
-                      </span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b' }}>
-                        {form.attendanceTarget}%
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={60}
-                      max={95}
-                      step={5}
-                      value={form.attendanceTarget}
-                      onChange={e => update('attendanceTarget', Number(e.target.value))}
-                      style={{ width: '100%', accentColor: '#f59e0b', cursor: 'pointer' }}
-                    />
-                  </div>
                 </div>
 
-                {/* Live Student Card Preview Badge */}
-                {form.name && (
-                  <div
-                    style={{
-                      padding: '12px 14px',
-                      borderRadius: 14,
-                      background: 'linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(239,68,68,0.06) 100%)',
-                      border: '1px solid rgba(245,158,11,0.25)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginTop: 4,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 10,
-                          background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                          display: 'grid',
-                          placeItems: 'center',
-                          color: '#fff',
-                          fontWeight: 700,
-                          fontSize: 14,
-                        }}
-                      >
-                        {form.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.2 }}>
-                          {form.name}
-                        </p>
-                        <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>
-                          {form.studentId ? `ID: ${form.studentId}` : 'ID Verification Pending'} • {form.department || 'Student'}
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: 11, color: '#10b981', background: 'rgba(16,185,129,0.2)', padding: '2px 8px', borderRadius: 99, fontWeight: 600 }}>
-                      Goal: {form.attendanceTarget}%
-                    </span>
+                <div className="ig-target-box">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#a8a8a8', marginBottom: 4 }}>
+                    <span>Attendance Target</span>
+                    <strong style={{ color: '#0095f6' }}>{form.attendanceTarget}%</strong>
                   </div>
-                )}
+                  <input
+                    type="range"
+                    min={60}
+                    max={95}
+                    step={5}
+                    value={form.attendanceTarget}
+                    onChange={e => update('attendanceTarget', Number(e.target.value))}
+                    style={{ width: '100%', accentColor: '#0095f6', cursor: 'pointer' }}
+                  />
+                </div>
               </div>
             )}
 
-            {/* Navigation buttons */}
-            <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-              {step === 2 && (
-                <button
-                  type="button"
-                  className="btn-back"
-                  onClick={() => setStep(1)}
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
-                >
-                  <ChevronLeft size={16} /> Back
-                </button>
-              )}
-              <button
-                type="submit"
-                className="btn-auth"
-                disabled={loading}
-                style={{ flex: step === 2 ? 1.5 : 1 }}
-              >
-                {loading ? (
-                  <>
-                    <span style={{ width: 16, height: 16, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block' }} className="spin" />
-                    Creating Account…
-                  </>
-                ) : step === 1 ? (
-                  <>
-                    Continue to ID Verification <ChevronRight size={16} />
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={16} /> Complete Registration
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+            {/* Instagram Terms Text */}
+            <p className="ig-terms-text">
+              People who use our service may have uploaded your contact information to Bunkwell.{' '}
+              <span className="ig-link-subtle">Learn More</span>
+            </p>
+            <p className="ig-terms-text" style={{ marginTop: 8 }}>
+              By signing up, you agree to our <span className="ig-link-subtle">Terms</span>,{' '}
+              <span className="ig-link-subtle">Privacy Policy</span> and{' '}
+              <span className="ig-link-subtle">Cookies Policy</span>.
+            </p>
 
-          <p style={{ marginTop: 20 }}>
-            Already registered?{' '}
-            <Link to="/login" className="gradient-text">
-              Sign In
+            {/* Sign Up Button */}
+            <button
+              type="submit"
+              className={`ig-primary-btn ${!isFormValid ? 'ig-btn-disabled' : ''}`}
+              disabled={!isFormValid || loading}
+              style={{ marginTop: 12 }}
+            >
+              {loading ? 'Signing up…' : 'Sign up'}
+            </button>
+          </form>
+        </div>
+
+        {/* Secondary Box: "Have an account? Log in" */}
+        <div className="ig-secondary-card">
+          <p className="ig-secondary-text">
+            Have an account?{' '}
+            <Link to="/login" className="ig-link-bold">
+              Log in
             </Link>
           </p>
         </div>
+
+        {/* Footer */}
+        <div className="ig-footer">
+          <div className="ig-footer-links">
+            <span>About</span>
+            <span>Help</span>
+            <span>API</span>
+            <span>Privacy</span>
+            <span>Terms</span>
+            <span>Security</span>
+            <span>Locations</span>
+          </div>
+          <div className="ig-footer-copy">
+            &copy; {new Date().getFullYear()} BUNKWELL FROM STUDENT NETWORK
+          </div>
+        </div>
       </div>
 
-      {/* Google Sign Up Modal */}
+      {/* Google Modal */}
       {showGoogleModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
-          <div className="box animate-in" style={{ width: '100%', maxWidth: '420px', padding: '28px 28px 24px', background: '#0d1117', border: '1px solid rgba(255,255,255,0.15)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                <h4 style={{ color: '#fff', fontSize: 17, margin: 0 }}>Sign up with Google</h4>
-              </div>
-              <button onClick={() => setShowGoogleModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
-                <X size={18} />
-              </button>
+        <div className="ig-modal-overlay">
+          <div className="ig-modal-box">
+            <div style={{ textAlign: 'center', marginBottom: 18 }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" style={{ margin: '0 auto 8px' }}>
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+              <h3 style={{ fontSize: 17, color: '#fff', margin: 0 }}>Continue with Google</h3>
+              <p style={{ fontSize: 12, color: '#8e8e8e', marginTop: 4 }}>
+                Enter your Gmail address to create your Bunkwell account:
+              </p>
             </div>
-            <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 18 }}>
-              Enter your Gmail address to instantly create your student profile:
-            </p>
-            <form onSubmit={handleGoogleSubmit}>
-              <div className="input-box" style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Gmail Address</label>
+
+            <form onSubmit={handleGoogleSubmit} className="ig-form">
+              <div className="ig-input-group">
                 <input
                   type="email"
-                  placeholder="yourname@gmail.com"
-                  className="input-control"
+                  id="google-reg-email"
+                  placeholder=" "
+                  className="ig-input"
                   value={googleEmail}
                   onChange={e => setGoogleEmail(e.target.value)}
                   required
                   autoFocus
                 />
+                <label htmlFor="google-reg-email" className="ig-floating-label">
+                  Gmail Address
+                </label>
               </div>
-              <div className="input-box" style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Full Name (Optional)</label>
+
+              <div className="ig-input-group">
                 <input
                   type="text"
-                  placeholder="e.g. Adwaith Sudheer"
-                  className="input-control"
+                  id="google-reg-name"
+                  placeholder=" "
+                  className="ig-input"
                   value={googleName}
                   onChange={e => setGoogleName(e.target.value)}
                 />
+                <label htmlFor="google-reg-name" className="ig-floating-label">
+                  Full Name (Optional)
+                </label>
               </div>
-              <button type="submit" className="btn-auth" disabled={googleLoading} style={{ marginTop: 0 }}>
-                {googleLoading ? 'Creating profile…' : 'Continue to Dashboard'}
+
+              <button
+                type="submit"
+                className="ig-primary-btn"
+                disabled={googleLoading || !googleEmail.trim()}
+              >
+                {googleLoading ? 'Creating account…' : 'Sign up with Google'}
+              </button>
+
+              <button
+                type="button"
+                className="ig-cancel-btn"
+                onClick={() => setShowGoogleModal(false)}
+              >
+                Cancel
               </button>
             </form>
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

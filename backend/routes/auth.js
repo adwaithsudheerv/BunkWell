@@ -1,62 +1,68 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const OTP = require('../models/OTP');
+const { sendOTPEmail } = require('../services/emailService');
 const router = express.Router();
 
-// Helper to generate JWT
 const createToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET || 'bunkwell_prod_jwt_secret_key_2024', {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   });
 };
 
-// Register
+// Mask email helper (e.g., a***r@gmail.com)
+const maskEmail = (email) => {
+  if (!email || !email.includes('@')) return email;
+  const [name, domain] = email.split('@');
+  if (name.length <= 2) return `${name[0]}*@${domain}`;
+  return `${name[0]}${'*'.repeat(Math.max(1, name.length - 2))}${name.slice(-1)}@${domain}`;
+};
+
+// 1. REGISTER
 router.post('/register', async (req, res) => {
   try {
     let { username, email, password, name, studentId, college, department, semester, year, attendanceTarget } = req.body;
 
-    if (!name || !studentId) {
-      return res.status(400).json({ message: 'Full name and Student ID are required' });
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Full legal name is required' });
     }
-
-    if (!email && !username) {
-      return res.status(400).json({ message: 'Please provide an Email ID or Username' });
+    if (!email || !email.trim()) {
+      return res.status(400).json({ message: 'Email address is required' });
     }
-
     if (!password || password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
-    // Auto-generate username from email if omitted
-    if (!username && email) {
-      username = email.split('@')[0];
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanStudentId = (studentId || '').toUpperCase().trim();
+
+    // Auto-generate clean username if omitted
+    if (!username || !username.trim()) {
+      username = cleanEmail.split('@')[0].replace(/[^a-z0-9]/g, '');
     }
-    username = username.toLowerCase().trim();
+    const cleanUsername = username.toLowerCase().trim();
 
-    if (email) {
-      email = email.toLowerCase().trim();
+    // Check existing email
+    const existingEmail = await User.findOne({ email: cleanEmail });
+    if (existingEmail) {
+      return res.status(409).json({ message: 'An account with this Email already exists. Please Log In.' });
     }
 
-    // Check if user already exists by username or email
-    const query = [{ username }];
-    if (email) query.push({ email });
-
-    const exists = await User.findOne({ $or: query });
-    if (exists) {
-      if (email && exists.email === email) {
-        return res.status(409).json({ message: 'An account with this Email ID already exists. Please Sign In.' });
-      }
+    // Check existing username
+    const existingUser = await User.findOne({ username: cleanUsername });
+    if (existingUser) {
       return res.status(409).json({ message: 'This username is already taken. Please choose another.' });
     }
 
     const user = new User({
-      username,
-      email,
-      password,
       name: name.trim(),
-      studentId: studentId.trim().toUpperCase(),
-      college: college ? college.trim() : undefined,
-      department: department ? department.trim().toUpperCase() : undefined,
+      email: cleanEmail,
+      username: cleanUsername,
+      password,
+      studentId: cleanStudentId || `STU-${Math.floor(1000 + Math.random() * 9000)}`,
+      college: college ? college.trim() : 'College / University',
+      department: department ? department.trim().toUpperCase() : 'General',
       semester: semester ? Number(semester) : 1,
       year: year ? Number(year) : 1,
       attendanceTarget: attendanceTarget ? Number(attendanceTarget) : 80
@@ -72,20 +78,19 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login (Supports Username, Email ID, or Student ID)
+// 2. LOGIN (Username, Email, or Student Roll No)
 router.post('/login', async (req, res) => {
   try {
     const { username, email, identifier, password } = req.body;
     const loginKey = (identifier || username || email || '').trim();
 
     if (!loginKey) {
-      return res.status(400).json({ message: 'Please enter your Username or Email address' });
+      return res.status(400).json({ message: 'Phone number, username, or email is required' });
     }
     if (!password) {
-      return res.status(400).json({ message: 'Please enter your password' });
+      return res.status(400).json({ message: 'Password is required' });
     }
 
-    // Search case-insensitively across username, email, or studentId
     const user = await User.findOne({
       $or: [
         { username: loginKey.toLowerCase() },
@@ -95,17 +100,12 @@ router.post('/login', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(401).json({ message: 'No account found with this username/email. Check spelling or sign up.' });
-    }
-
-    // If user created via Google and has no password
-    if (!user.password && user.googleId) {
-      return res.status(401).json({ message: 'This account was created with Google. Please click "Continue with Google".' });
+      return res.status(401).json({ message: 'Sorry, your password or username was incorrect. Please double-check your credentials.' });
     }
 
     const match = await user.comparePassword(password);
     if (!match) {
-      return res.status(401).json({ message: 'Incorrect password. Try again or login with Gmail.' });
+      return res.status(401).json({ message: 'Sorry, your password was incorrect. Please double-check your password or reset it.' });
     }
 
     const token = createToken(user._id);
@@ -116,18 +116,158 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Google Sign-In / Login with Gmail
+// 3. SEND OTP (For Password Reset / Recovery)
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { identifier } = req.body;
+    if (!identifier || !identifier.trim()) {
+      return res.status(400).json({ message: 'Enter your email or username to receive a security code' });
+    }
+
+    const cleanId = identifier.trim().toLowerCase();
+    const user = await User.findOne({
+      $or: [
+        { username: cleanId },
+        { email: cleanId }
+      ]
+    });
+
+    if (!user || !user.email) {
+      return res.status(404).json({ message: 'No account found with that email or username. Check your info and try again.' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Remove any previous OTPs for this email
+    await OTP.deleteMany({ email: user.email });
+
+    // Store new OTP
+    await OTP.create({
+      email: user.email,
+      otp,
+      purpose: 'reset_password',
+      expiresAt
+    });
+
+    // Send email
+    const result = await sendOTPEmail(user.email, otp, 'reset_password');
+
+    res.json({
+      message: `Security code sent to ${maskEmail(user.email)}`,
+      email: user.email,
+      maskedEmail: maskEmail(user.email),
+      // In development or when SMTP is absent, return otp so testing is seamless
+      code: result.fallback ? otp : undefined
+    });
+  } catch (err) {
+    console.error('Send OTP error:', err);
+    res.status(500).json({ message: 'Failed to send security code: ' + err.message });
+  }
+});
+
+// 4. VERIFY OTP
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { email, identifier, otp } = req.body;
+    const cleanOtp = (otp || '').trim();
+
+    if (!cleanOtp) {
+      return res.status(400).json({ message: 'Please enter the 6-digit security code' });
+    }
+
+    let targetEmail = email ? email.toLowerCase().trim() : '';
+    if (!targetEmail && identifier) {
+      const user = await User.findOne({
+        $or: [
+          { username: identifier.trim().toLowerCase() },
+          { email: identifier.trim().toLowerCase() }
+        ]
+      });
+      if (user) targetEmail = user.email;
+    }
+
+    const record = await OTP.findOne({
+      email: targetEmail,
+      otp: cleanOtp,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (!record) {
+      return res.status(400).json({ message: 'That code isn’t valid. Please check your code or request a new one.' });
+    }
+
+    res.json({ valid: true, message: 'Code verified successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 5. RESET PASSWORD WITH OTP
+router.post('/reset-password-otp', async (req, res) => {
+  try {
+    const { email, identifier, otp, newPassword } = req.body;
+    const cleanOtp = (otp || '').trim();
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    let targetEmail = email ? email.toLowerCase().trim() : '';
+    if (!targetEmail && identifier) {
+      const user = await User.findOne({
+        $or: [
+          { username: identifier.trim().toLowerCase() },
+          { email: identifier.trim().toLowerCase() }
+        ]
+      });
+      if (user) targetEmail = user.email;
+    }
+
+    // Verify OTP record
+    const otpRecord = await OTP.findOne({
+      email: targetEmail,
+      otp: cleanOtp,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (!otpRecord) {
+      return res.status(400).json({ message: 'Invalid or expired verification code. Please request a new code.' });
+    }
+
+    const user = await User.findOne({ email: targetEmail });
+    if (!user) {
+      return res.status(404).json({ message: 'User account not found' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    // Consume OTP
+    await OTP.deleteMany({ email: targetEmail });
+
+    const token = createToken(user._id);
+    res.json({
+      message: 'Your password has been changed successfully!',
+      token,
+      user: user.toSafeObject()
+    });
+  } catch (err) {
+    console.error('Password reset error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 6. GOOGLE AUTH (Gmail One-Click Access)
 router.post('/google', async (req, res) => {
   try {
     const { email, name, googleId, avatar } = req.body;
-
     if (!email) {
-      return res.status(400).json({ message: 'Google authentication failed: Email missing' });
+      return res.status(400).json({ message: 'Email required for Google authentication' });
     }
 
     const cleanEmail = email.toLowerCase().trim();
-
-    // Find user by googleId or email
     let user = await User.findOne({
       $or: [
         ...(googleId ? [{ googleId }] : []),
@@ -136,16 +276,13 @@ router.post('/google', async (req, res) => {
     });
 
     if (user) {
-      // Link googleId or avatar if not yet linked
       if (!user.googleId && googleId) user.googleId = googleId;
       if (!user.avatar && avatar) user.avatar = avatar;
       await user.save();
     } else {
-      // First-time Google user: auto-create account
       const baseUsername = cleanEmail.split('@')[0].replace(/[^a-z0-9]/g, '');
       let username = baseUsername;
       let counter = 1;
-
       while (await User.findOne({ username })) {
         username = `${baseUsername}${counter++}`;
       }
@@ -159,57 +296,22 @@ router.post('/google', async (req, res) => {
         studentId: 'STU-' + Math.floor(1000 + Math.random() * 9000),
         attendanceTarget: 80,
       });
-
       await user.save();
     }
 
     const token = createToken(user._id);
-    res.json({ token, user: user.toSafeObject(), isNewUser: !user.college });
+    res.json({ token, user: user.toSafeObject() });
   } catch (err) {
-    console.error('Google Auth error:', err);
-    res.status(500).json({ message: 'Google sign-in error: ' + err.message });
+    res.status(500).json({ message: 'Google authentication failed: ' + err.message });
   }
 });
 
-// Forgot / Reset Password
-router.post('/forgot-password', async (req, res) => {
-  try {
-    const { identifier, newPassword } = req.body;
-    if (!identifier || !newPassword) {
-      return res.status(400).json({ message: 'Identifier and new password required' });
-    }
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: 'New password must be at least 6 characters' });
-    }
-
-    const cleanId = identifier.trim().toLowerCase();
-    const user = await User.findOne({
-      $or: [
-        { username: cleanId },
-        { email: cleanId }
-      ]
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: 'Account not found with this username or email' });
-    }
-
-    user.password = newPassword;
-    await user.save();
-
-    const token = createToken(user._id);
-    res.json({ message: 'Password reset successfully! Logged in.', token, user: user.toSafeObject() });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Get current user
+// 7. GET PROFILE (/me)
 router.get('/me', require('../middleware/auth'), async (req, res) => {
   res.json({ user: req.user.toSafeObject() });
 });
 
-// Update profile
+// 8. UPDATE PROFILE
 router.put('/profile', require('../middleware/auth'), async (req, res) => {
   try {
     const allowed = ['name', 'email', 'college', 'department', 'semester', 'year', 'attendanceTarget'];
