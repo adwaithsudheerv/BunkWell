@@ -5,9 +5,10 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
   TrendingUp, TrendingDown, BookOpen, CalendarDays, Award,
-  AlertTriangle, CheckCircle2, Clock, ChevronRight, Zap, Sparkles
+  AlertTriangle, CheckCircle2, Clock, ChevronRight, Zap, Sparkles, HelpCircle
 } from 'lucide-react';
 import { RadialBarChart, RadialBar, ResponsiveContainer, Tooltip } from 'recharts';
+import OnboardingModal from '../components/OnboardingModal';
 
 function StatCard({ label, value, sublabel, icon: Icon, color, trend }) {
   return (
@@ -67,16 +68,26 @@ export default function DashboardPage() {
   const [analytics, setAnalytics] = useState(null);
   const [todaySchedule, setTodaySchedule] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showTour, setShowTour] = useState(false);
   const target = user?.attendanceTarget || 80;
 
-  useEffect(() => {
-    Promise.all([
+  const loadData = () => {
+    return Promise.all([
       api.get('/analytics/overview'),
       api.get('/timetable/today'),
     ]).then(([analyticsRes, todayRes]) => {
       setAnalytics(analyticsRes.data);
       setTodaySchedule(todayRes.data);
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(console.error);
+  };
+
+  useEffect(() => {
+    loadData().finally(() => setLoading(false));
+
+    // Show onboarding tour automatically for new users
+    if (!localStorage.getItem('bunkwell_tour_done')) {
+      setShowTour(true);
+    }
   }, []);
 
   const handleSeedDemo = async () => {
@@ -114,17 +125,25 @@ export default function DashboardPage() {
   return (
     <div className="p-4 lg:p-6 space-y-6 animate-[fadeIn_0.3s_ease-out]">
       {/* Greeting */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl lg:text-2xl font-bold text-white">
             {greeting}, <span className="bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">{user?.name?.split(' ')[0]}</span> 👋
           </h2>
           <p className="text-slate-500 text-sm mt-0.5">{today} • {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
-        <Link to="/today" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-orange-500/25">
-          <Clock size={16} />
-          Today's Log
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowTour(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-amber-400 border border-amber-500/20 transition-all hover:border-amber-500/40"
+          >
+            <HelpCircle size={15} /> How Bunkwell Works
+          </button>
+          <Link to="/today" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-orange-500/25">
+            <Clock size={16} />
+            Today's Log
+          </Link>
+        </div>
       </div>
 
       {/* Overall percentage hero */}
@@ -245,6 +264,12 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {/* Onboarding Tour Modal */}
+      <OnboardingModal
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onDemoLoaded={loadData}
+      />
     </div>
   );
 }

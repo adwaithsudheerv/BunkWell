@@ -42,14 +42,6 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  const loginWithGoogle = async (googlePayload) => {
-    const res = await api.post('/auth/google', googlePayload);
-    localStorage.setItem('bunkwell_token', res.data.token);
-    localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
-    setUser(res.data.user);
-    return res.data;
-  };
-
   const sendOTP = async (identifier) => {
     const res = await api.post('/auth/send-otp', { identifier });
     return res.data;
@@ -87,7 +79,6 @@ export function AuthProvider({ children }) {
       loading,
       login,
       register,
-      loginWithGoogle,
       sendOTP,
       verifyOTP,
       resetPasswordWithOTP,
