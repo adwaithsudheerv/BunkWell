@@ -203,7 +203,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
                 value={importCode}
                 onChange={e => setImportCode(e.target.value.toUpperCase())}
                 placeholder="Enter Code (e.g. BC-4821 or AMR-MCA-A)"
-                className="flex-1 bg-[#18181b] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400 font-mono tracking-wider uppercase"
+                className="flex-1 bg-[#18181b] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono tracking-wider uppercase"
                 required
               />
               <button
@@ -221,7 +221,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
                   <div>
                     <h4 className="text-white font-bold text-sm">{preview.title}</h4>
                     <p className="text-xs text-slate-400">
-                      Shared by <strong className="text-amber-400">{preview.creatorName}</strong>
+                      Shared by <strong className="text-blue-400">{preview.creatorName}</strong>
                       {preview.college && ` • ${preview.college}`}
                     </p>
                   </div>
@@ -237,7 +237,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
                       key={i}
                       className="text-[11px] px-2 py-1 rounded-lg bg-black/50 border border-white/10 text-slate-300"
                     >
-                      {sub.name} {sub.faculty && `(${sub.faculty})`}
+                      {sub.name}
                     </span>
                   ))}
                 </div>
@@ -246,7 +246,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
                   <button
                     onClick={handleConfirmImport}
                     disabled={importing}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-xs hover:opacity-90 active:scale-95 transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs active:scale-95 transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5"
                   >
                     <Download size={14} />
                     {importing ? 'Cloning into Your Account…' : 'Fork & Import into My BunkClub'}

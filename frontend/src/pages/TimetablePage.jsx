@@ -1,231 +1,544 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
-import { CalendarDays, Plus, Save, Trash2, Clock, BookOpen, Users } from 'lucide-react';
+import {
+  CalendarDays, Plus, Save, Trash2, Clock, BookOpen, Users,
+  Copy, Check, LayoutGrid, List, Sparkles, X
+} from 'lucide-react';
 import ShareTimetableModal from '../components/ShareTimetableModal';
+import { Link } from 'react-router-dom';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DEFAULT_TIMES = [
-  { start: '09:00', end: '10:00' },
-  { start: '10:00', end: '11:00' },
-  { start: '11:00', end: '12:00' },
-  { start: '13:00', end: '14:00' },
-  { start: '14:00', end: '15:00' },
-  { start: '15:00', end: '16:00' },
+
+// 10 standard hourly blocks from 8:00 AM to 6:00 PM
+export const TIME_BLOCKS = [
+  { periodNumber: 1, startTime: '08:00', endTime: '09:00', label: '08:00 AM - 09:00 AM' },
+  { periodNumber: 2, startTime: '09:00', endTime: '10:00', label: '09:00 AM - 10:00 AM' },
+  { periodNumber: 3, startTime: '10:00', endTime: '11:00', label: '10:00 AM - 11:00 AM' },
+  { periodNumber: 4, startTime: '11:00', endTime: '12:00', label: '11:00 AM - 12:00 PM' },
+  { periodNumber: 5, startTime: '12:00', endTime: '13:00', label: '12:00 PM - 01:00 PM' },
+  { periodNumber: 6, startTime: '13:00', endTime: '14:00', label: '01:00 PM - 02:00 PM' },
+  { periodNumber: 7, startTime: '14:00', endTime: '15:00', label: '02:00 PM - 03:00 PM' },
+  { periodNumber: 8, startTime: '15:00', endTime: '16:00', label: '03:00 PM - 04:00 PM' },
+  { periodNumber: 9, startTime: '16:00', endTime: '17:00', label: '04:00 PM - 05:00 PM' },
+  { periodNumber: 10, startTime: '17:00', endTime: '18:00', label: '05:00 PM - 06:00 PM' },
 ];
 
 export default function TimetablePage() {
   const [subjects, setSubjects] = useState([]);
-  const [timetable, setTimetable] = useState(null);
   const [timetableId, setTimetableId] = useState(null);
+  const [semName, setSemName] = useState('Semester 1');
+  const [activeDay, setActiveDay] = useState('Monday');
+  const [viewMode, setViewMode] = useState('day'); // 'day' | 'grid'
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [semName, setSemName] = useState('Semester 1');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [slotPickerModal, setSlotPickerModal] = useState(null); // { day, slotIndex }
 
-  // days state: { Monday: [{periodNumber, subjectId, subjectName, startTime, endTime}], ... }
-  const [days, setDays] = useState(() => {
-    const d = {};
-    DAYS.forEach(day => { d[day] = []; });
-    return d;
+  // Schedule map: { Monday: [10 slots], Tuesday: [10 slots], ... }
+  const [schedule, setSchedule] = useState(() => {
+    const s = {};
+    DAYS.forEach(day => {
+      s[day] = TIME_BLOCKS.map(tb => ({
+        periodNumber: tb.periodNumber,
+        startTime: tb.startTime,
+        endTime: tb.endTime,
+        subjectId: '',
+        subjectName: '',
+        color: '',
+      }));
+    });
+    return s;
   });
 
-  const loadData = () => {
-    return Promise.all([api.get('/subjects'), api.get('/timetable')]).then(([subRes, ttRes]) => {
-      setSubjects(subRes.data.subjects);
+  const loadData = async () => {
+    try {
+      const [subRes, ttRes] = await Promise.all([api.get('/subjects'), api.get('/timetable')]);
+      const fetchedSubjects = subRes.data.subjects || [];
+      setSubjects(fetchedSubjects);
+
       if (ttRes.data.timetable) {
         const tt = ttRes.data.timetable;
         setTimetableId(tt._id);
         setSemName(tt.semesterName || 'Semester 1');
-        const d = {};
-        DAYS.forEach(day => { d[day] = []; });
-        tt.days.forEach(dayData => {
-          d[dayData.day] = dayData.periods.map(p => ({
-            periodNumber: p.periodNumber,
-            subjectId: p.subjectId?._id || p.subjectId || '',
-            subjectName: p.subjectName || p.subjectId?.name || '',
-            startTime: p.startTime || '',
-            endTime: p.endTime || '',
+
+        const newSched = {};
+        DAYS.forEach(day => {
+          // Initialize empty 10 slots
+          newSched[day] = TIME_BLOCKS.map(tb => ({
+            periodNumber: tb.periodNumber,
+            startTime: tb.startTime,
+            endTime: tb.endTime,
+            subjectId: '',
+            subjectName: '',
+            color: '',
           }));
+
+          const dayData = tt.days?.find(d => d.day === day);
+          if (dayData && dayData.periods) {
+            dayData.periods.forEach(p => {
+              // Match by startTime or periodNumber
+              const slotIdx = TIME_BLOCKS.findIndex(tb => tb.startTime === p.startTime) !== -1
+                ? TIME_BLOCKS.findIndex(tb => tb.startTime === p.startTime)
+                : (p.periodNumber - 1);
+
+              if (slotIdx >= 0 && slotIdx < 10) {
+                const subObj = fetchedSubjects.find(s => s._id === (p.subjectId?._id || p.subjectId));
+                newSched[day][slotIdx] = {
+                  periodNumber: TIME_BLOCKS[slotIdx].periodNumber,
+                  startTime: TIME_BLOCKS[slotIdx].startTime,
+                  endTime: TIME_BLOCKS[slotIdx].endTime,
+                  subjectId: subObj?._id || p.subjectId?._id || p.subjectId || '',
+                  subjectName: subObj?.name || p.subjectName || p.subjectId?.name || '',
+                  color: subObj?.color || '',
+                };
+              }
+            });
+          }
         });
-        setDays(d);
+        setSchedule(newSched);
       }
-    }).catch(console.error);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load timetable data');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadData().finally(() => setLoading(false));
+    loadData();
+    // Auto-select current day of week if Mon-Sat
+    const daysArr = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const cur = daysArr[new Date().getDay()];
+    if (DAYS.includes(cur)) setActiveDay(cur);
   }, []);
 
-  const addPeriod = (day) => {
-    setDays(prev => {
-      const periods = prev[day];
-      const num = periods.length + 1;
-      const timeDefaults = DEFAULT_TIMES[num - 1] || { start: '', end: '' };
-      return {
-        ...prev,
-        [day]: [...periods, { periodNumber: num, subjectId: '', subjectName: '', startTime: timeDefaults.start, endTime: timeDefaults.end }]
-      };
-    });
-  };
-
-  const removePeriod = (day, idx) => {
-    setDays(prev => ({
-      ...prev,
-      [day]: prev[day].filter((_, i) => i !== idx).map((p, i) => ({ ...p, periodNumber: i + 1 }))
-    }));
-  };
-
-  const updatePeriod = (day, idx, key, value) => {
-    setDays(prev => {
-      const periods = [...prev[day]];
-      periods[idx] = { ...periods[idx], [key]: value };
-      if (key === 'subjectId') {
-        const sub = subjects.find(s => s._id === value);
-        periods[idx].subjectName = sub?.name || '';
+  const handleAssignSubject = (day, slotIdx, subject) => {
+    setSchedule(prev => {
+      const nextDay = [...prev[day]];
+      if (subject) {
+        nextDay[slotIdx] = {
+          ...nextDay[slotIdx],
+          subjectId: subject._id,
+          subjectName: subject.name,
+          color: subject.color,
+        };
+      } else {
+        // Clear slot
+        nextDay[slotIdx] = {
+          ...nextDay[slotIdx],
+          subjectId: '',
+          subjectName: '',
+          color: '',
+        };
       }
-      return { ...prev, [day]: periods };
+      return { ...prev, [day]: nextDay };
     });
+    setSlotPickerModal(null);
   };
 
-  const save = async () => {
+  const handleCopyDay = (targetDay) => {
+    if (!window.confirm(`Copy all classes from ${activeDay} to ${targetDay}?`)) return;
+    setSchedule(prev => ({
+      ...prev,
+      [targetDay]: prev[activeDay].map(slot => ({ ...slot }))
+    }));
+    toast.success(`Schedule copied from ${activeDay} to ${targetDay}!`);
+  };
+
+  const handleClearDay = (day) => {
+    if (!window.confirm(`Clear all scheduled classes for ${day}?`)) return;
+    setSchedule(prev => ({
+      ...prev,
+      [day]: TIME_BLOCKS.map(tb => ({
+        periodNumber: tb.periodNumber,
+        startTime: tb.startTime,
+        endTime: tb.endTime,
+        subjectId: '',
+        subjectName: '',
+        color: '',
+      }))
+    }));
+    toast.success(`Cleared ${day}`);
+  };
+
+  const saveTimetable = async () => {
     setSaving(true);
     try {
+      const daysPayload = DAYS.map(day => {
+        const activePeriods = schedule[day]
+          .filter(slot => Boolean(slot.subjectId || slot.subjectName))
+          .map((slot, idx) => ({
+            periodNumber: idx + 1,
+            subjectId: slot.subjectId || undefined,
+            subjectName: slot.subjectName,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+          }));
+
+        return {
+          day,
+          periods: activePeriods,
+          isHoliday: activePeriods.length === 0,
+        };
+      });
+
       const payload = {
         semesterName: semName,
-        days: DAYS.filter(d => days[d].length > 0).map(day => ({
-          day,
-          periods: days[day].map(p => ({
-            periodNumber: p.periodNumber,
-            subjectId: p.subjectId || undefined,
-            subjectName: p.subjectName,
-            startTime: p.startTime,
-            endTime: p.endTime,
-          }))
-        }))
+        days: daysPayload,
       };
+
       if (timetableId) {
         await api.put(`/timetable/${timetableId}`, payload);
       } else {
         const res = await api.post('/timetable', payload);
         setTimetableId(res.data.timetable._id);
       }
-      toast.success('Timetable saved! ✅');
+      toast.success('Timetable saved successfully! 💾');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save');
+      toast.error(err.response?.data?.message || 'Failed to save timetable');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return (
-    <div className="p-6 space-y-4 animate-pulse">{[1,2,3].map(i => <div key={i} className="h-40 rounded-2xl shimmer" />)}</div>
-  );
+  if (loading) {
+    return (
+      <div className="p-6 space-y-4 animate-pulse">
+        <div className="h-20 rounded-2xl shimmer" />
+        <div className="h-64 rounded-2xl shimmer" />
+      </div>
+    );
+  }
+
+  const activePeriodsCount = schedule[activeDay]?.filter(s => s.subjectName).length || 0;
 
   return (
     <div className="p-4 lg:p-6 space-y-6 animate-[fadeIn_0.3s_ease-out]">
+      {/* Top Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl lg:text-2xl font-bold flex items-center gap-2">
-            <CalendarDays size={24} className="text-blue-500" /> Timetable
+            <CalendarDays size={24} className="text-blue-500" /> Weekly Timetable
           </h2>
-          <p className="text-slate-500 text-sm mt-0.5">Set up your weekly class schedule</p>
+          <p className="text-slate-500 text-sm mt-0.5">
+            8:00 AM – 6:00 PM hourly block schedule (Monday to Saturday)
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex bg-white/5 border border-white/10 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode('day')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === 'day' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <List size={14} /> Day Blocks
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <LayoutGrid size={14} /> Week Matrix
+            </button>
+          </div>
+
           <button
             onClick={() => setShowShareModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm font-semibold border border-blue-500/20 transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-semibold border border-blue-500/20 transition-all shadow-sm"
           >
-            <Users size={16} /> Section Sync
+            <Users size={15} /> Section Sync
           </button>
-          <button onClick={save} disabled={saving}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold hover:opacity-95 disabled:opacity-50 transition-all shadow-md shadow-blue-500/25">
+          <button
+            onClick={saveTimetable}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold disabled:opacity-50 transition-all shadow-md shadow-blue-500/25 active:scale-95"
+          >
             <Save size={16} /> {saving ? 'Saving...' : 'Save Timetable'}
           </button>
         </div>
       </div>
 
-      {/* Semester name */}
-      <div className="glass-card rounded-xl px-4 py-3 flex items-center gap-3">
+      {/* Semester Name input */}
+      <div className="glass-card rounded-xl px-4 py-2.5 flex items-center gap-3 border border-white/10">
         <BookOpen size={18} className="text-blue-500 flex-shrink-0" />
-        <input type="text" value={semName} onChange={e => setSemName(e.target.value)}
-          placeholder="Semester name (e.g. Semester 3 - 2024)"
-          className="flex-1 bg-transparent placeholder-slate-500 focus:outline-none text-sm" />
+        <input
+          type="text"
+          value={semName}
+          onChange={e => setSemName(e.target.value)}
+          placeholder="Semester name (e.g. Semester 3 - 2026)"
+          className="flex-1 bg-transparent placeholder-slate-500 focus:outline-none text-sm font-medium"
+        />
       </div>
 
       {subjects.length === 0 && (
-        <div className="glass-card rounded-xl p-4 border border-blue-500/30 text-blue-400 text-sm flex items-center gap-2">
-          ⚠️ No subjects found. Add subjects first to assign them to periods.
+        <div className="glass-card rounded-xl p-4 border border-blue-500/30 text-sm flex items-center justify-between gap-3">
+          <span className="text-slate-300">
+            ⚠️ You haven't added any subjects yet. Add subjects to assign them into your 8:00 AM – 6:00 PM blocks.
+          </span>
+          <Link
+            to="/subjects"
+            className="px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors whitespace-nowrap"
+          >
+            Add Subjects
+          </Link>
         </div>
       )}
 
-      {/* Day grid */}
-      <div className="space-y-4">
-        {DAYS.map(day => (
-          <div key={day} className="glass-card rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                {day}
-                <span className="text-slate-500 font-normal">({days[day].length} periods)</span>
-              </h3>
-              <button onClick={() => addPeriod(day)}
-                className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors font-semibold">
-                <Plus size={15} /> Add Period
+      {/* Day Mode (Single Day 8:00 AM to 6:00 PM Block Grid) */}
+      {viewMode === 'day' && (
+        <div className="space-y-4">
+          {/* Day selection tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {DAYS.map(day => {
+              const count = schedule[day]?.filter(s => s.subjectName).length || 0;
+              const isActive = activeDay === day;
+              return (
+                <button
+                  key={day}
+                  onClick={() => setActiveDay(day)}
+                  className={`flex-1 min-w-[100px] py-3 px-3 rounded-2xl border text-center transition-all ${
+                    isActive
+                      ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/25 scale-[1.02]'
+                      : 'glass-card border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                  }`}
+                >
+                  <p className="text-xs font-bold uppercase tracking-wider">{day.slice(0, 3)}</p>
+                  <p className={`text-[11px] mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                    {count} {count === 1 ? 'class' : 'classes'}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Day Action Bar */}
+          <div className="flex items-center justify-between px-1">
+            <span className="text-sm font-semibold text-slate-300">
+              {activeDay} Schedule ({activePeriodsCount} classes assigned)
+            </span>
+            <div className="flex items-center gap-2">
+              <select
+                onChange={e => {
+                  if (e.target.value) {
+                    handleCopyDay(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                defaultValue=""
+                className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-400 hover:text-white focus:outline-none"
+              >
+                <option value="" disabled>Copy to...</option>
+                {DAYS.filter(d => d !== activeDay).map(d => (
+                  <option key={d} value={d} className="bg-slate-900 text-white">{d}</option>
+                ))}
+              </select>
+              {activePeriodsCount > 0 && (
+                <button
+                  onClick={() => handleClearDay(activeDay)}
+                  className="px-2.5 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-500/10 border border-red-500/20 transition-colors"
+                >
+                  Clear Day
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 10 Hourly Blocks Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {schedule[activeDay]?.map((slot, idx) => {
+              const isAssigned = Boolean(slot.subjectName);
+              const timeLabel = TIME_BLOCKS[idx].label;
+
+              return (
+                <div
+                  key={idx}
+                  className={`glass-card rounded-2xl p-4 border transition-all ${
+                    isAssigned
+                      ? 'border-blue-500/30 hover:border-blue-500/60'
+                      : 'border-white/10 hover:border-white/20 border-dashed'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    {/* Time & Slot indicator */}
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                        {idx + 1}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                        <Clock size={13} className="text-blue-500" />
+                        <span>{timeLabel}</span>
+                      </div>
+                    </div>
+
+                    {/* Slot Actions */}
+                    {isAssigned && (
+                      <button
+                        onClick={() => handleAssignSubject(activeDay, idx, null)}
+                        title="Remove class"
+                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Slot Content */}
+                  <div className="mt-3">
+                    {isAssigned ? (
+                      <div
+                        onClick={() => setSlotPickerModal({ day: activeDay, slotIndex: idx })}
+                        className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className="w-3.5 h-3.5 rounded-full flex-shrink-0"
+                            style={{ background: slot.color || '#0047FF' }}
+                          />
+                          <p className="font-semibold text-sm truncate">{slot.subjectName}</p>
+                        </div>
+                        <span className="text-[11px] text-blue-400 font-medium ml-2">Change</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setSlotPickerModal({ day: activeDay, slotIndex: idx })}
+                        className="w-full py-3 px-4 rounded-xl border border-dashed border-white/15 hover:border-blue-500/50 hover:bg-blue-600/5 text-slate-400 hover:text-blue-400 text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+                      >
+                        <Plus size={15} />
+                        Add Class to {TIME_BLOCKS[idx].startTime} slot
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Week Matrix Mode (Desktop & Tablet Overview) */}
+      {viewMode === 'grid' && (
+        <div className="glass-card rounded-2xl overflow-hidden border border-white/10">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse min-w-[750px]">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th className="p-3 font-semibold text-slate-400 w-28">Time Slot</th>
+                  {DAYS.map(day => (
+                    <th key={day} className="p-3 font-bold text-center border-l border-white/10">
+                      {day}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {TIME_BLOCKS.map((tb, idx) => (
+                  <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="p-2.5 font-medium text-slate-400 whitespace-nowrap">
+                      {tb.startTime} - {tb.endTime}
+                    </td>
+                    {DAYS.map(day => {
+                      const slot = schedule[day]?.[idx];
+                      const isAssigned = Boolean(slot?.subjectName);
+
+                      return (
+                        <td
+                          key={day}
+                          onClick={() => setSlotPickerModal({ day, slotIndex: idx })}
+                          className="p-2 border-l border-white/10 text-center cursor-pointer hover:bg-blue-600/10 transition-colors"
+                        >
+                          {isAssigned ? (
+                            <div
+                              className="py-1.5 px-2 rounded-lg font-semibold truncate text-[11px] shadow-sm"
+                              style={{
+                                background: `${slot.color || '#0047FF'}25`,
+                                color: slot.color || '#60a5fa',
+                                border: `1px solid ${slot.color || '#0047FF'}50`
+                              }}
+                              title={slot.subjectName}
+                            >
+                              {slot.subjectName}
+                            </div>
+                          ) : (
+                            <div className="py-1.5 text-slate-600 hover:text-blue-400 flex items-center justify-center">
+                              <Plus size={13} />
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Save Button */}
+      <button
+        onClick={saveTimetable}
+        disabled={saving}
+        className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25 active:scale-[0.99] flex items-center justify-center gap-2"
+      >
+        <Save size={18} /> {saving ? 'Saving Timetable...' : 'Save Timetable Changes'}
+      </button>
+
+      {/* Slot Subject Picker Modal */}
+      {slotPickerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-sm glass-card rounded-2xl p-5 border border-white/10 animate-[slideUp_0.3s_ease-out]">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+              <div>
+                <h4 className="font-bold text-sm">Assign Class</h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {slotPickerModal.day} · {TIME_BLOCKS[slotPickerModal.slotIndex]?.label}
+                </p>
+              </div>
+              <button
+                onClick={() => setSlotPickerModal(null)}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"
+              >
+                <X size={16} />
               </button>
             </div>
 
-            {days[day].length === 0 ? (
-              <div className="px-5 py-4 text-slate-500 text-sm text-center">
-                No periods — <button onClick={() => addPeriod(day)} className="text-amber-400 hover:text-amber-300">Add one</button>
-              </div>
-            ) : (
-              <div className="p-4 space-y-3">
-                {days[day].map((period, idx) => (
-                  <div key={idx} className="flex items-center gap-3 flex-wrap">
-                    {/* Period number */}
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-xs font-bold text-[#818cf8] flex-shrink-0">
-                      {period.periodNumber}
-                    </div>
-
-                    {/* Subject */}
-                    <select
-                      value={period.subjectId}
-                      onChange={e => updatePeriod(day, idx, 'subjectId', e.target.value)}
-                      className="flex-1 min-w-[140px] px-3 py-2 rounded-lg bg-white/5 border border-[#2a2a4a] text-white focus:outline-none focus:border-amber-500 text-sm"
-                    >
-                      <option value="">Select Subject</option>
-                      {subjects.map(s => <option key={s._id} value={s._id}>{s.name}{s.code ? ` (${s.code})` : ''}</option>)}
-                    </select>
-
-                    {/* Time */}
-                    <div className="flex items-center gap-1.5">
-                      <Clock size={14} className="text-slate-500" />
-                      <input type="time" value={period.startTime} onChange={e => updatePeriod(day, idx, 'startTime', e.target.value)}
-                        className="w-28 px-2 py-2 rounded-lg bg-white/5 border border-[#2a2a4a] text-white focus:outline-none focus:border-amber-500 text-sm" />
-                      <span className="text-slate-500">–</span>
-                      <input type="time" value={period.endTime} onChange={e => updatePeriod(day, idx, 'endTime', e.target.value)}
-                        className="w-28 px-2 py-2 rounded-lg bg-white/5 border border-[#2a2a4a] text-white focus:outline-none focus:border-amber-500 text-sm" />
-                    </div>
-
-                    {/* Delete */}
-                    <button onClick={() => removePeriod(day, idx)} className="p-2 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors">
-                      <Trash2 size={15} />
-                    </button>
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {subjects.map(s => (
+                <button
+                  key={s._id}
+                  onClick={() => handleAssignSubject(slotPickerModal.day, slotPickerModal.slotIndex, s)}
+                  className="w-full p-3 rounded-xl bg-white/5 hover:bg-blue-600/20 border border-white/10 hover:border-blue-500/50 flex items-center gap-3 transition-all text-left"
+                >
+                  <div
+                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{ background: s.color || '#0047FF' }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold truncate">{s.name}</p>
+                    <span className="text-[10px] text-slate-400 capitalize">{s.type || 'theory'}</span>
                   </div>
-                ))}
-              </div>
-            )}
+                  <span className="text-xs text-blue-400 font-semibold">Select</span>
+                </button>
+              ))}
+
+              {/* Clear Option */}
+              <button
+                onClick={() => handleAssignSubject(slotPickerModal.day, slotPickerModal.slotIndex, null)}
+                className="w-full p-2.5 rounded-xl border border-dashed border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-semibold text-center mt-2 transition-colors"
+              >
+                Set as Free / Break (Empty)
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      <button onClick={save} disabled={saving}
-        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-50 transition-all shadow-md shadow-blue-500/25">
-        {saving ? 'Saving...' : '💾 Save Timetable'}
-      </button>
-
-      {/* Share & Fork Timetable Modal */}
+      {/* Share Timetable Modal */}
       <ShareTimetableModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}

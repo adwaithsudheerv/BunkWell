@@ -29,7 +29,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
       subtitle: "Smart Attendance & Safe Bunk Intelligence",
       badge: "Step 1 of 4",
       icon: Sparkles,
-      color: "#f59e0b",
+      color: "#0047FF",
       content: (
         <div className="space-y-4">
           <p className="text-slate-300 text-sm leading-relaxed">
@@ -37,7 +37,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
             <div className="p-3.5 rounded-xl bg-white/5 border border-white/10">
-              <span className="text-amber-400 font-bold text-sm block mb-1">🎯 Target Goal</span>
+              <span className="text-blue-400 font-bold text-sm block mb-1">🎯 Target Goal</span>
               <p className="text-xs text-slate-400">Set your minimum required attendance (e.g. 75% or 80%) to stay exam-eligible.</p>
             </div>
             <div className="p-3.5 rounded-xl bg-white/5 border border-white/10">
@@ -50,23 +50,23 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
     },
     {
       title: "Set Up Your Weekly Timetable",
-      subtitle: "Monday through Saturday Periods",
+      subtitle: "Monday through Saturday Periods (8 AM - 6 PM)",
       badge: "Step 2 of 4",
       icon: CalendarDays,
-      color: "#8b5cf6",
+      color: "#0047FF",
       content: (
         <div className="space-y-4">
           <p className="text-slate-300 text-sm leading-relaxed">
-            Add your subjects and weekly class periods once. BunkClub automatically generates your daily attendance board.
+            Add your subjects and weekly class periods. BunkClub automatically generates your daily attendance board.
           </p>
-          <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-slate-300 space-y-2">
-            <div className="flex items-center gap-2 text-purple-400 font-semibold">
+          <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-slate-300 space-y-2">
+            <div className="flex items-center gap-2 text-blue-400 font-semibold">
               <BookOpen size={16} /> What you can configure:
             </div>
             <ul className="list-disc pl-5 space-y-1 text-slate-400">
-              <li>Subject Code & Subject Name (e.g. CS301 - Data Structures)</li>
-              <li>Teacher Name & Classroom / Lab Room</li>
-              <li>Daily class timing & period order</li>
+              <li>8:00 AM – 6:00 PM standard hourly class blocks</li>
+              <li>Subject Name, Color Tag & Type (Theory / Lab)</li>
+              <li>Attendance calibration: Attended, Completed, and Leftover classes</li>
             </ul>
           </div>
         </div>
@@ -92,9 +92,9 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
               <span className="text-red-400 font-bold block mb-1">✗ Absent (Bunk)</span>
               <span className="text-slate-400">Skipped or missed the lecture.</span>
             </div>
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-              <span className="text-amber-400 font-bold block mb-1">🔄 Substitute</span>
-              <span className="text-slate-400">Different teacher took over.</span>
+            <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <span className="text-blue-400 font-bold block mb-1">🔄 Replaced</span>
+              <span className="text-slate-400">Class or teacher substituted.</span>
             </div>
             <div className="p-3 rounded-xl bg-slate-500/10 border border-slate-500/20">
               <span className="text-slate-300 font-bold block mb-1">⚪ Cancelled</span>
@@ -200,7 +200,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
             <button
               onClick={handleLoadDemo}
               disabled={seeding}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white font-semibold text-sm hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm active:scale-95 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
             >
               <Sparkles size={16} />
               {seeding ? 'Loading Demo Semester…' : 'Load 1-Click Demo Semester (Instant Data)'}
@@ -217,7 +217,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
                 key={i}
                 onClick={() => setStep(i)}
                 className={`h-2 rounded-full transition-all ${
-                  step === i ? 'w-6 bg-amber-400' : 'w-2 bg-white/20'
+                  step === i ? 'w-6 bg-blue-500' : 'w-2 bg-white/20'
                 }`}
               />
             ))}

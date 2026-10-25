@@ -26,6 +26,9 @@ router.get('/overview', auth, async (req, res) => {
         ? Math.ceil((target / 100 * eligible - s.attendedClasses) / (1 - target / 100))
         : 0;
 
+      const planned = s.totalPlannedClasses || 45;
+      const leftoverClasses = Math.max(0, planned - s.totalClasses);
+
       return {
         _id: s._id,
         name: s.name,
@@ -36,6 +39,8 @@ router.get('/overview', auth, async (req, res) => {
         totalClasses: s.totalClasses,
         attendedClasses: s.attendedClasses,
         cancelledClasses: s.cancelledClasses,
+        totalPlannedClasses: planned,
+        leftoverClasses,
         eligibleClasses: eligible,
         percentage,
         canBunk,
@@ -134,11 +139,11 @@ router.post('/seed-demo', auth, async (req, res) => {
     let subjects = await Subject.find({ userId, isActive: true });
     if (subjects.length === 0) {
       const demoSubjects = [
-        { userId, name: 'Data Structures & Algorithms', code: 'CS301', faculty: 'Dr. R. Sharma', color: '#3b82f6', type: 'theory', totalClasses: 32, attendedClasses: 28, cancelledClasses: 2 },
-        { userId, name: 'Operating Systems', code: 'CS302', faculty: 'Prof. K. Rao', color: '#10b981', type: 'theory', totalClasses: 28, attendedClasses: 24, cancelledClasses: 1 },
-        { userId, name: 'Database Management Systems', code: 'CS303', faculty: 'Dr. Anita Roy', color: '#ef4444', type: 'theory', totalClasses: 30, attendedClasses: 22, cancelledClasses: 0 },
-        { userId, name: 'Computer Networks', code: 'CS304', faculty: 'Prof. S. Patel', color: '#f59e0b', type: 'theory', totalClasses: 26, attendedClasses: 22, cancelledClasses: 1 },
-        { userId, name: 'AI & ML Laboratory', code: 'CS305P', faculty: 'Dr. V. Verma', color: '#8b5cf6', type: 'lab', totalClasses: 14, attendedClasses: 14, cancelledClasses: 0 },
+        { userId, name: 'Data Structures & Algorithms', color: '#0047FF', type: 'theory', totalClasses: 32, attendedClasses: 28, cancelledClasses: 2, totalPlannedClasses: 45 },
+        { userId, name: 'Operating Systems', color: '#10b981', type: 'theory', totalClasses: 28, attendedClasses: 24, cancelledClasses: 1, totalPlannedClasses: 45 },
+        { userId, name: 'Database Management Systems', color: '#ef4444', type: 'theory', totalClasses: 30, attendedClasses: 22, cancelledClasses: 0, totalPlannedClasses: 45 },
+        { userId, name: 'Computer Networks', color: '#3b82f6', type: 'theory', totalClasses: 26, attendedClasses: 22, cancelledClasses: 1, totalPlannedClasses: 45 },
+        { userId, name: 'AI & ML Laboratory', color: '#8b5cf6', type: 'lab', totalClasses: 14, attendedClasses: 14, cancelledClasses: 0, totalPlannedClasses: 20 },
       ];
       subjects = await Subject.insertMany(demoSubjects);
     }

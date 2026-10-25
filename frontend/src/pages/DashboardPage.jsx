@@ -35,17 +35,18 @@ function StatCard({ label, value, sublabel, icon: Icon, color, trend }) {
 function SubjectCard({ subject, target }) {
   const pct = subject.percentage;
   const status = pct >= target ? 'safe' : pct >= target - 10 ? 'warning' : 'danger';
-  const colors = { safe: '#10b981', warning: '#f59e0b', danger: '#ef4444' };
+  const colors = { safe: '#10b981', warning: '#3b82f6', danger: '#ef4444' };
   const color = colors[status];
+  const leftover = subject.leftoverClasses ?? Math.max(0, (subject.totalPlannedClasses || 45) - (subject.totalClasses || 0));
 
   return (
     <div className="glass-card rounded-xl p-4">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: subject.color || '#6366f1' }} />
+          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: subject.color || '#0047FF' }} />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{subject.name}</p>
-            {subject.code && <p className="text-xs text-slate-500">{subject.code}</p>}
+            <p className="text-sm font-semibold truncate">{subject.name}</p>
+            <span className="text-[10px] text-slate-500 capitalize">{subject.type || 'theory'}</span>
           </div>
         </div>
         <span className="text-lg font-bold ml-2 flex-shrink-0" style={{ color }}>{pct.toFixed(0)}%</span>
@@ -53,12 +54,12 @@ function SubjectCard({ subject, target }) {
       <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
         <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
       </div>
-      <div className="flex justify-between mt-2 text-xs text-slate-500">
-        <span>{subject.attendedClasses}/{subject.eligibleClasses} classes</span>
+      <div className="flex justify-between mt-2 text-xs text-slate-400">
+        <span>{subject.attendedClasses}/{subject.totalClasses} done · <b className="text-blue-400">{leftover} left</b></span>
         {subject.canBunk > 0 ? (
-          <span className="text-emerald-400">✓ Can bunk {subject.canBunk}</span>
+          <span className="text-emerald-400 font-semibold">✓ Can bunk {subject.canBunk}</span>
         ) : subject.needMore > 0 ? (
-          <span className="text-red-400">Need {subject.needMore} more</span>
+          <span className="text-red-400 font-semibold">Need {subject.needMore} more</span>
         ) : null}
       </div>
     </div>
