@@ -1,8 +1,9 @@
 services:
-  # Bunkwell Backend Web Service
+  # Bunkwell Backend Web Service (100% Free Tier)
   - type: web
     name: bunkwell-backend
     env: node
+    plan: free
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
