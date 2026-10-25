@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import InstallPWAButton from './InstallPWAButton';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -50,16 +51,21 @@ export default function Layout() {
   const SidebarContent = ({ onNavigate }) => (
     <div className="flex flex-col h-full">
       {/* Brand Logo */}
-      <div className="flex items-center gap-3 px-5 py-6 border-b border-[color:var(--color-line)]">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[color:var(--yellow,#f59e0b)] to-[color:var(--red,#ef4444)] flex items-center justify-center text-white shadow-md shadow-orange-500/30">
-          <GraduationCap size={20} />
+      <div className="flex items-center justify-between px-5 py-6 border-b border-[color:var(--color-line)]">
+        <div className="flex items-center gap-3">
+          <img src="/favicon.png" alt="BunkClub" className="w-10 h-10 rounded-xl shadow-md shadow-orange-500/20 object-contain border border-amber-500/30" />
+          <div>
+            <h1 className="font-bold text-white text-base leading-tight tracking-wide">BunkClub</h1>
+            <p className="text-xs text-[color:var(--color-muted)] flex items-center gap-1">
+              <Sparkles size={11} className="text-amber-400" /> Smart Attendance
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="font-bold text-white text-base leading-tight">Bunkwell</h1>
-          <p className="text-xs text-[color:var(--color-muted)] flex items-center gap-1">
-            <Sparkles size={11} className="text-amber-400" /> Smart Attendance
-          </p>
-        </div>
+      </div>
+
+      {/* PWA Install Banner in Sidebar */}
+      <div className="px-3 pt-3">
+        <InstallPWAButton className="w-full justify-center py-2" />
       </div>
 
       {/* Nav links */}
@@ -126,14 +132,15 @@ export default function Layout() {
         {/* Mobile topbar */}
         <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-[color:var(--color-line)] bg-[#0d0e12]/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-r from-amber-500 to-red-500 flex items-center justify-center text-white">
-              <GraduationCap size={15} />
-            </div>
-            <span className="font-bold text-white text-base">Bunkwell</span>
+            <img src="/favicon.png" alt="BunkClub" className="w-8 h-8 rounded-lg border border-amber-500/30 object-contain" />
+            <span className="font-bold text-white text-base tracking-wide">BunkClub</span>
           </div>
-          <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-lg text-slate-300 hover:text-white">
-            <Menu size={22} />
-          </button>
+          <div className="flex items-center gap-2">
+            <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
+            <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-lg text-slate-300 hover:text-white">
+              <Menu size={22} />
+            </button>
+          </div>
         </header>
 
         {/* Content outlet */}

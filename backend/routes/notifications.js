@@ -49,10 +49,10 @@ router.post('/test', auth, async (req, res) => {
       return res.status(400).json({ message: 'No push subscriptions found' });
     }
     const payload = JSON.stringify({
-      title: '🎓 Bunkwell Test',
+      title: '🎓 BunkClub Test',
       body: 'Push notifications are working! ✅',
       icon: '/icon-192.png',
-      badge: '/badge-72.png',
+      badge: '/icon-192.png',
     });
     for (const sub of user.pushSubscriptions) {
       try { await webpush.sendNotification(sub, payload); } catch (e) { /* ignore stale */ }

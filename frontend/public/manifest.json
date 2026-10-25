@@ -1,14 +1,31 @@
 {
-  "name": "Bunkwell",
-  "short_name": "Bunkwell",
-  "description": "Smart Attendance Tracker for Students",
+  "name": "BunkClub",
+  "short_name": "BunkClub",
+  "description": "Smart Attendance & Safe Bunk Intelligence for College Students",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
-  "background_color": "#0f0f1a",
-  "theme_color": "#6366f1",
+  "background_color": "#0d0e15",
+  "theme_color": "#0d0e15",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["education", "productivity", "utilities"]
 }

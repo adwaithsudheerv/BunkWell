@@ -69,7 +69,7 @@ export default function RegisterPage() {
       });
       // Mark as newly registered so Onboarding Tour triggers automatically
       localStorage.removeItem('bunkwell_tour_done');
-      toast.success('Account created successfully! Welcome to Bunkwell 🎓');
+      toast.success('Account created successfully! Welcome to BunkClub 🎓');
       navigate('/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Registration failed';
@@ -85,9 +85,12 @@ export default function RegisterPage() {
         {/* Main Sign Up Card */}
         <div className="ig-card">
           <div className="ig-brand-header">
-            <h1 className="ig-logo-text">Bunkwell</h1>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <img src="/favicon.png" alt="BunkClub" style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid rgba(245, 158, 11, 0.4)' }} />
+            </div>
+            <h1 className="ig-logo-text" style={{ letterSpacing: '0.5px' }}>BunkClub</h1>
             <p className="ig-signup-subtext">
-              Create your account with a secure User ID and Password. Track attendance, periods, and safe bunks.
+              Join the student club for smart attendance tracking, section timetable sync, and safe bunks.
             </p>
           </div>
 
@@ -314,10 +317,10 @@ export default function RegisterPage() {
             <span>Security</span>
             <span>Privacy</span>
             <span>Terms</span>
-            <span>Bunkwell Pro</span>
+            <span>BunkClub Pro</span>
           </div>
           <div className="ig-footer-copy">
-            &copy; {new Date().getFullYear()} BUNKWELL FROM STUDENT NETWORK
+            &copy; {new Date().getFullYear()} BUNKCLUB FROM STUDENT NETWORK
           </div>
         </div>
       </div>

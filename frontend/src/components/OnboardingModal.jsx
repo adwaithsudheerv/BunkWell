@@ -25,15 +25,15 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
 
   const slides = [
     {
-      title: "Welcome to Bunkwell",
-      subtitle: "Smart Attendance Tracking for College Students",
+      title: "Welcome to BunkClub",
+      subtitle: "Smart Attendance & Safe Bunk Intelligence",
       badge: "Step 1 of 4",
       icon: Sparkles,
       color: "#f59e0b",
       content: (
         <div className="space-y-4">
           <p className="text-slate-300 text-sm leading-relaxed">
-            Bunkwell eliminates the fear of low attendance, exam detention, and confusing college calculations.
+            BunkClub eliminates the fear of low attendance, exam detention, and confusing college calculations.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
             <div className="p-3.5 rounded-xl bg-white/5 border border-white/10">
@@ -57,7 +57,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
       content: (
         <div className="space-y-4">
           <p className="text-slate-300 text-sm leading-relaxed">
-            Add your subjects and weekly class periods once. Bunkwell automatically generates your daily attendance board.
+            Add your subjects and weekly class periods once. BunkClub automatically generates your daily attendance board.
           </p>
           <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-slate-300 space-y-2">
             <div className="flex items-center gap-2 text-purple-400 font-semibold">
@@ -113,7 +113,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
       content: (
         <div className="space-y-4">
           <p className="text-slate-300 text-sm leading-relaxed">
-            The heart of Bunkwell is mathematical clarity. For every subject, you immediately see:
+            The heart of BunkClub is mathematical clarity. For every subject, you immediately see:
           </p>
           <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
             <div>

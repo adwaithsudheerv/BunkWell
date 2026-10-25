@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
-import { CalendarDays, Plus, Save, Trash2, Clock, BookOpen } from 'lucide-react';
+import { CalendarDays, Plus, Save, Trash2, Clock, BookOpen, Users } from 'lucide-react';
+import ShareTimetableModal from '../components/ShareTimetableModal';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DEFAULT_TIMES = [
@@ -20,6 +21,7 @@ export default function TimetablePage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [semName, setSemName] = useState('Semester 1');
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // days state: { Monday: [{periodNumber, subjectId, subjectName, startTime, endTime}], ... }
   const [days, setDays] = useState(() => {
@@ -28,8 +30,8 @@ export default function TimetablePage() {
     return d;
   });
 
-  useEffect(() => {
-    Promise.all([api.get('/subjects'), api.get('/timetable')]).then(([subRes, ttRes]) => {
+  const loadData = () => {
+    return Promise.all([api.get('/subjects'), api.get('/timetable')]).then(([subRes, ttRes]) => {
       setSubjects(subRes.data.subjects);
       if (ttRes.data.timetable) {
         const tt = ttRes.data.timetable;
@@ -48,7 +50,11 @@ export default function TimetablePage() {
         });
         setDays(d);
       }
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(console.error);
+  };
+
+  useEffect(() => {
+    loadData().finally(() => setLoading(false));
   }, []);
 
   const addPeriod = (day) => {
@@ -125,10 +131,18 @@ export default function TimetablePage() {
           </h2>
           <p className="text-slate-500 text-sm mt-0.5">Set up your weekly class schedule</p>
         </div>
-        <button onClick={save} disabled={saving}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-orange-500/25">
-          <Save size={16} /> {saving ? 'Saving...' : 'Save Timetable'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowShareModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-sm font-semibold border border-purple-500/30 transition-all shadow"
+          >
+            <Users size={16} /> Section Sync / Share
+          </button>
+          <button onClick={save} disabled={saving}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-orange-500/25">
+            <Save size={16} /> {saving ? 'Saving...' : 'Save Timetable'}
+          </button>
+        </div>
       </div>
 
       {/* Semester name */}
@@ -210,6 +224,13 @@ export default function TimetablePage() {
         className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-orange-500/25">
         {saving ? 'Saving...' : '💾 Save Timetable'}
       </button>
+
+      {/* Share & Fork Timetable Modal */}
+      <ShareTimetableModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        onImportSuccess={loadData}
+      />
     </div>
   );
 }

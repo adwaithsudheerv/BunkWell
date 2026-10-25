@@ -98,10 +98,10 @@ async function sendEveningNotifications() {
       if (!body) body = 'All subjects are on track! Keep it up! 🎓';
 
       await sendPushToUser(user, {
-        title: `📊 Today's Bunkwell Summary`,
+        title: `📊 Today's BunkClub Summary`,
         body,
         icon: '/icon-192.png',
-        badge: '/badge-72.png',
+        badge: '/icon-192.png',
         data: { type: 'evening_summary', url: '/analytics' },
       });
     }

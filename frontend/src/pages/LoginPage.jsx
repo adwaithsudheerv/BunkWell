@@ -37,7 +37,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(identifier.trim(), password);
-      toast.success('Welcome back to Bunkwell! 🎓');
+      toast.success('Welcome back to BunkClub! 🎓');
       navigate('/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Sorry, your password or User ID was incorrect.';
@@ -104,8 +104,11 @@ export default function LoginPage() {
         <div className="ig-card">
           {/* Logo / Header */}
           <div className="ig-brand-header">
-            <h1 className="ig-logo-text">Bunkwell</h1>
-            <p className="ig-tagline">Smart Student Attendance System</p>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <img src="/favicon.png" alt="BunkClub" style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid rgba(245, 158, 11, 0.4)' }} />
+            </div>
+            <h1 className="ig-logo-text" style={{ letterSpacing: '0.5px' }}>BunkClub</h1>
+            <p className="ig-tagline">Smart Student Attendance & Bunk Intelligence</p>
           </div>
 
           {/* VIEW 1: USER ID & PASSWORD LOGIN */}
@@ -360,10 +363,10 @@ export default function LoginPage() {
             <span>Security</span>
             <span>Privacy</span>
             <span>Terms</span>
-            <span>Bunkwell Pro</span>
+            <span>BunkClub Pro</span>
           </div>
           <div className="ig-footer-copy">
-            &copy; {new Date().getFullYear()} BUNKWELL FROM STUDENT NETWORK
+            &copy; {new Date().getFullYear()} BUNKCLUB FROM STUDENT NETWORK
           </div>
         </div>
       </div>

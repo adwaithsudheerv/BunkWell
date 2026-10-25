@@ -5,10 +5,12 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
   TrendingUp, TrendingDown, BookOpen, CalendarDays, Award,
-  AlertTriangle, CheckCircle2, Clock, ChevronRight, Zap, Sparkles, HelpCircle
+  AlertTriangle, CheckCircle2, Clock, ChevronRight, Zap, Sparkles, HelpCircle, Users, Wallet
 } from 'lucide-react';
 import { RadialBarChart, RadialBar, ResponsiveContainer, Tooltip } from 'recharts';
 import OnboardingModal from '../components/OnboardingModal';
+import QuickBunkSimulator from '../components/QuickBunkSimulator';
+import ShareTimetableModal from '../components/ShareTimetableModal';
 
 function StatCard({ label, value, sublabel, icon: Icon, color, trend }) {
   return (
@@ -69,6 +71,7 @@ export default function DashboardPage() {
   const [todaySchedule, setTodaySchedule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showTour, setShowTour] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const target = user?.attendanceTarget || 80;
 
   const loadData = () => {
@@ -121,23 +124,30 @@ export default function DashboardPage() {
 
   const safe = analytics?.subjects?.filter(s => s.status === 'safe').length || 0;
   const danger = analytics?.subjects?.filter(s => s.status === 'danger').length || 0;
+  const totalBunkPasses = analytics?.subjects?.reduce((acc, s) => acc + (s.canBunk || 0), 0) || 0;
 
   return (
     <div className="p-4 lg:p-6 space-y-6 animate-[fadeIn_0.3s_ease-out]">
-      {/* Greeting */}
+      {/* Greeting & Quick Action Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl lg:text-2xl font-bold text-white">
+          <h2 className="text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
             {greeting}, <span className="bg-gradient-to-r from-amber-400 to-red-500 bg-clip-text text-transparent">{user?.name?.split(' ')[0]}</span> 👋
           </h2>
           <p className="text-slate-500 text-sm mt-0.5">{today} • {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setShowShareModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-xs font-semibold text-purple-300 border border-purple-500/30 transition-all shadow"
+          >
+            <Users size={15} /> Section Sync
+          </button>
           <button
             onClick={() => setShowTour(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-amber-400 border border-amber-500/20 transition-all hover:border-amber-500/40"
           >
-            <HelpCircle size={15} /> How Bunkwell Works
+            <HelpCircle size={15} /> BunkClub Guide
           </button>
           <Link to="/today" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 text-white text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-orange-500/25">
             <Clock size={16} />
@@ -187,10 +197,15 @@ export default function DashboardPage() {
       {/* Quick stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Subjects" value={analytics?.subjects?.length || 0} icon={BookOpen} color="#f59e0b" />
+        <StatCard label="BunkBank Passes" value={`${totalBunkPasses} Safe`} sublabel="Available skips" icon={Wallet} color="#10b981" />
         <StatCard label="Today's Periods" value={todaySchedule?.schedule?.periods?.length || 0} sublabel={today} icon={CalendarDays} color="#8b5cf6" />
-        <StatCard label="Safe Subjects" value={safe} icon={CheckCircle2} color="#10b981" />
-        <StatCard label="At Risk" value={danger} icon={AlertTriangle} color="#ef4444" />
+        <StatCard label="At Risk" value={danger} sublabel={danger > 0 ? 'Need recovery' : 'All safe'} icon={AlertTriangle} color="#ef4444" />
       </div>
+
+      {/* Out-of-the-Box Innovation: Quick Bunk Simulator */}
+      {analytics?.subjects && analytics.subjects.length > 0 && (
+        <QuickBunkSimulator subjects={analytics.subjects} target={target} />
+      )}
 
       {/* Today's schedule preview */}
       {todaySchedule?.schedule && (
@@ -264,11 +279,16 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-      {/* Onboarding Tour Modal */}
+      {/* Modals */}
       <OnboardingModal
         isOpen={showTour}
         onClose={() => setShowTour(false)}
         onDemoLoaded={loadData}
+      />
+      <ShareTimetableModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        onImportSuccess={loadData}
       />
     </div>
   );
