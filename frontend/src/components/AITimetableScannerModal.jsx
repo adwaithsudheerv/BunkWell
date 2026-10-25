@@ -14,19 +14,57 @@ export default function AITimetableScannerModal({ isOpen, onClose, onTimetableAp
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e) => {
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 1280;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setError('');
     setScanResult(null);
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-      setImageBase64(reader.result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedDataUrl = await compressImage(file);
+      setImagePreview(compressedDataUrl);
+      setImageBase64(compressedDataUrl);
+    } catch (err) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setImageBase64(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleScan = async () => {

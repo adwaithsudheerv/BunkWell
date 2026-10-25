@@ -12,6 +12,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import ProfilePage from './pages/ProfilePage';
 import TodayPage from './pages/TodayPage';
+import OfflineBanner from './components/OfflineBanner';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -51,6 +52,7 @@ export default function App() {
               success: { iconTheme: { primary: '#0047FF', secondary: '#ffffff' } },
             }}
           />
+          <OfflineBanner />
           <Routes>
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
