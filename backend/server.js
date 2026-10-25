@@ -6,6 +6,8 @@ const webpush = require('web-push');
 const cron = require('node-cron');
 const https = require('https');
 const http = require('http');
+const path = require('path');
+const fs = require('fs');
 
 const authRoutes = require('./routes/auth');
 const timetableRoutes = require('./routes/timetable');
@@ -73,14 +75,57 @@ cron.schedule('0 18 * * 1-6', () => {
   sendEveningNotifications();
 }, { timezone: 'Asia/Kolkata' });
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 BunkClub backend running on port ${PORT}`);
-});
+// Robust Database Connection (Supports Cloud MongoDB URI or Automatic Embedded Fallback)
+async function connectDB() {
+  const uri = process.env.MONGODB_URI;
 
-// Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bunkwell';
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  if (uri) {
+    try {
+      await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
+      console.log('✅ Connected to MongoDB via MONGODB_URI');
+      return;
+    } catch (err) {
+      console.warn('⚠️ Could not connect to configured MONGODB_URI (' + err.message + '). Falling back to embedded engine...');
+    }
+  }
+
+  // Automatic Embedded Persistent MongoDB (Runs on Render and Local without external setup)
+  try {
+    const { MongoMemoryServer } = require('mongodb-memory-server');
+
+    const dbDir = path.join(__dirname, '.db_data');
+    if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+
+    // Look for Windows offline cached binary if present on local Windows development
+    const winCached = path.join(__dirname, 'node_modules', '.cache', 'mongodb-memory-server', 'mongod-x64-win32-8.2.6.exe');
+    const binaryConfig = fs.existsSync(winCached) ? { systemBinary: winCached } : undefined;
+
+    console.log('⚡ Starting embedded MongoDB engine...');
+    const mongod = await MongoMemoryServer.create({
+      binary: binaryConfig,
+      instance: {
+        dbName: 'bunkwell',
+        dbPath: dbDir,
+      }
+    });
+
+    const embeddedUri = mongod.getUri() + 'bunkwell';
+    await mongoose.connect(embeddedUri, { serverSelectionTimeoutMS: 15000 });
+    console.log('✅ Connected to Persistent Embedded MongoDB at', embeddedUri);
+  } catch (embeddedErr) {
+    console.error('❌ Failed to start embedded MongoDB:', embeddedErr.message);
+  }
+}
+
+// Start Server AFTER Database is connected (prevents buffering timeout errors)
+const PORT = process.env.PORT || 5000;
+async function startServer() {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`🚀 BunkClub backend running on port ${PORT}`);
+  });
+}
+
+startServer();
+
+module.exports = app;
