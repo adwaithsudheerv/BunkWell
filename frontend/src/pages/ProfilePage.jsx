@@ -257,6 +257,35 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Creator Attribution Card */}
+      <div className="glass-card rounded-3xl p-5 border border-blue-500/30 bg-blue-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/30 flex-shrink-0">
+            <Sparkles size={22} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-extrabold text-white">Adwaith Sudheer</h4>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30">
+                Creator & Architect
+              </span>
+            </div>
+            <a
+              href="mailto:adwaithsudheer@gmail.com"
+              className="text-xs text-blue-300 hover:text-white underline mt-0.5 block transition-colors"
+            >
+              adwaithsudheer@gmail.com
+            </a>
+          </div>
+        </div>
+        <a
+          href="mailto:adwaithsudheer@gmail.com"
+          className="px-3.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-xs font-bold border border-blue-500/30 transition-all shrink-0"
+        >
+          Contact Creator
+        </a>
+      </div>
+
       {/* Save Button */}
       <button
         onClick={save}

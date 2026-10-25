@@ -114,6 +114,19 @@ export default function Layout() {
           <LogOut size={15} />
           <span>Sign Out</span>
         </button>
+
+        {/* Creator Attribution */}
+        <div className={`mt-2 pt-2 border-t ${isDark ? 'border-white/5' : 'border-black/5'} text-[10px] px-2 text-center`}>
+          <p className={isDark ? 'text-slate-400' : 'text-stone-600'}>
+            Architected by <span className="font-bold text-blue-500">Adwaith Sudheer</span>
+          </p>
+          <a
+            href="mailto:adwaithsudheer@gmail.com"
+            className="text-slate-500 hover:text-blue-400 truncate block mt-0.5 transition-colors"
+          >
+            adwaithsudheer@gmail.com
+          </a>
+        </div>
       </div>
     </div>
   );
