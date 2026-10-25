@@ -4,10 +4,17 @@ import toast from 'react-hot-toast';
 import {
   Zap, Calendar, Clock, AlertTriangle, CheckCircle2, ShieldCheck,
   ChevronRight, ArrowDownRight, Layers, Sliders, Sparkles, BookOpen,
-  CalendarDays, TrendingUp, HelpCircle
+  CalendarDays, TrendingUp, HelpCircle, Plus, Minus
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import BunkBotModal from '../components/BunkBotModal';
+
+const PRESETS = [
+  { label: '3M (Trimester)', total: 3 },
+  { label: '4M (Quarter)', total: 4 },
+  { label: '6M (Semester)', total: 6 },
+  { label: '12M (1-Year)', total: 12 },
+];
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
@@ -44,15 +51,17 @@ export default function AnalyticsPage() {
   }, []);
 
   const handleUpdateDuration = async (totalM, elapsedM) => {
-    setSemesterMonths(totalM);
-    setMonthsElapsed(elapsedM);
+    const validTotal = Math.max(1, Math.min(12, Number(totalM)));
+    const validElapsed = Math.max(0, Math.min(validTotal, Number(elapsedM)));
+    setSemesterMonths(validTotal);
+    setMonthsElapsed(validElapsed);
     setSavingMonths(true);
     try {
       await api.put('/auth/profile', {
-        semesterMonths: totalM,
-        monthsElapsed: elapsedM
+        semesterMonths: validTotal,
+        monthsElapsed: validElapsed
       });
-      toast.success(`Semester updated: ${totalM} months total (${totalM - elapsedM} remaining)`);
+      toast.success(`Academic cycle updated: ${validTotal} months total (${validTotal - validElapsed} remaining)`);
       loadData();
     } catch (err) {
       toast.error('Failed to update semester duration');
@@ -68,6 +77,8 @@ export default function AnalyticsPage() {
   const simIsSafe = simProjectedPct >= target;
 
   const monthsRemaining = Math.max(0, semesterMonths - monthsElapsed);
+  const weeksRemaining = monthsRemaining * 4;
+  const cycleName = semesterMonths <= 3 ? 'Trimester' : semesterMonths >= 9 ? 'Academic Year' : 'Semester';
 
   return (
     <div className="p-3 sm:p-5 lg:p-6 space-y-6 animate-[fadeIn_0.3s_ease-out]">
@@ -78,7 +89,7 @@ export default function AnalyticsPage() {
             <Zap size={22} className="text-blue-500" /> Bunk Strategies & Long-Term Forecast
           </h2>
           <p className="text-slate-500 text-xs mt-0.5">
-            Real-time buffers & full-semester projection ({monthsRemaining} months remaining)
+            Real-time buffers & {cycleName} projection ({monthsRemaining} months / {weeksRemaining} weeks remaining)
           </p>
         </div>
 
@@ -114,53 +125,99 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <>
-          {/* 1. SEMESTER DURATION & FULL-SEMESTER FORECAST */}
+          {/* 1. UNIVERSAL ACADEMIC CYCLE & SEMESTER DURATION CALCULATOR */}
           <div className="glass-card rounded-3xl p-5 sm:p-6 border border-white/10 space-y-4">
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div>
                 <h3 className="font-bold text-sm sm:text-base flex items-center gap-2">
-                  <CalendarDays size={18} className="text-blue-500" /> Full-Semester Long-Term Forecast
+                  <CalendarDays size={18} className="text-blue-500" /> Academic Cycle & Duration Calculator
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Calculate if bunking now will cause issues at final exams in Month {semesterMonths}
+                  Customizable for Trimesters (3M), Semesters (6M), or Full Years (12M)
                 </p>
               </div>
 
-              {/* Semester duration controls */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-2xl border border-white/10 text-xs">
-                  <span className="text-slate-400 font-semibold text-[11px]">Duration:</span>
-                  {[4, 5, 6, 7].map(m => (
-                    <button
-                      key={m}
-                      onClick={() => handleUpdateDuration(m, monthsElapsed)}
-                      className={`px-2 py-0.5 rounded-lg font-bold text-[11px] transition-all ${
-                        semesterMonths === m
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      {m}M
-                    </button>
-                  ))}
-                </div>
+              {/* Presets */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {PRESETS.map(p => (
+                  <button
+                    key={p.total}
+                    onClick={() => handleUpdateDuration(p.total, Math.min(monthsElapsed, p.total))}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                      semesterMonths === p.total
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-2xl border border-white/10 text-xs">
-                  <span className="text-slate-400 font-semibold text-[11px]">Elapsed:</span>
-                  {[1, 2, 3, 4].map(m => (
-                    <button
-                      key={m}
-                      onClick={() => handleUpdateDuration(semesterMonths, m)}
-                      className={`px-2 py-0.5 rounded-lg font-bold text-[11px] transition-all ${
-                        monthsElapsed === m
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      {m}M
-                    </button>
-                  ))}
+            {/* Steppers & Custom Duration Controls */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-black/20 border border-white/10">
+              {/* Stepper 1: Total Duration */}
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Total Cycle Duration (Months):
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleUpdateDuration(semesterMonths - 1, monthsElapsed)}
+                    disabled={semesterMonths <= 1}
+                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white flex items-center justify-center font-bold"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="text-base font-black text-white px-3 font-mono">
+                    {semesterMonths} Months
+                  </span>
+                  <button
+                    onClick={() => handleUpdateDuration(semesterMonths + 1, monthsElapsed)}
+                    disabled={semesterMonths >= 12}
+                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white flex items-center justify-center font-bold"
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
+              </div>
+
+              {/* Stepper 2: Months Completed */}
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Months Passed So Far:
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleUpdateDuration(semesterMonths, monthsElapsed - 1)}
+                    disabled={monthsElapsed <= 0}
+                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white flex items-center justify-center font-bold"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="text-base font-black text-blue-400 px-3 font-mono">
+                    {monthsElapsed} Months
+                  </span>
+                  <button
+                    onClick={() => handleUpdateDuration(semesterMonths, monthsElapsed + 1)}
+                    disabled={monthsElapsed >= semesterMonths}
+                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white flex items-center justify-center font-bold"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Calculation Summary Badge */}
+              <div className="flex flex-col justify-center">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Remaining Timeline:
+                </span>
+                <span className="text-sm font-extrabold text-emerald-400 flex items-center gap-1.5">
+                  <Clock size={15} />
+                  {monthsRemaining} Months ({weeksRemaining} Weeks) Left
+                </span>
               </div>
             </div>
 
@@ -172,10 +229,10 @@ export default function AnalyticsPage() {
                     <th className="py-2.5 px-3">Subject</th>
                     <th className="py-2.5 px-2 text-center">Weekly</th>
                     <th className="py-2.5 px-2 text-center">Monthly</th>
-                    <th className="py-2.5 px-2 text-center">Future Classes</th>
-                    <th className="py-2.5 px-2 text-center">Total Semester</th>
-                    <th className="py-2.5 px-3 text-center">Semester Bunk Budget</th>
-                    <th className="py-2.5 px-3 text-center">End-of-Semester Verdict</th>
+                    <th className="py-2.5 px-2 text-center">Upcoming Classes</th>
+                    <th className="py-2.5 px-2 text-center">Lifetime Total</th>
+                    <th className="py-2.5 px-3 text-center">{cycleName} Bunk Budget</th>
+                    <th className="py-2.5 px-3 text-center">End-of-{cycleName} Verdict</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 font-medium">
@@ -217,9 +274,9 @@ export default function AnalyticsPage() {
               </table>
             </div>
 
-            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between text-xs">
+            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between text-xs flex-wrap gap-2">
               <span className="text-slate-400">
-                Formula: ({semesterMonths} - {monthsElapsed} = <b>{monthsRemaining} months remaining</b>) $\times$ (4 weeks) $\times$ (Weekly frequency from timetable)
+                Formula: ({semesterMonths} - {monthsElapsed} = <b>{monthsRemaining} months remaining</b>) $\times$ 4 weeks $\times$ weekly frequency
               </span>
               <button
                 type="button"
