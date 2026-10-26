@@ -3,16 +3,154 @@ const auth = require('../middleware/auth');
 const Timetable = require('../models/Timetable');
 const Subject = require('../models/Subject');
 const SharedTimetable = require('../models/SharedTimetable');
+const AttendanceRecord = require('../models/AttendanceRecord');
 const router = express.Router();
 
 const DEFAULT_PERIODS = 6;
+
+// Helper: Auto-sync timetable with Subjects, Attendance Records, and Admin SharedTimetable
+async function syncTimetableToAttendanceAndShare(userId, timetable, user) {
+  try {
+    const palette = ['#0047FF', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#6366f1'];
+
+    // 1. Ensure all subjects from timetable exist in user's Subject collection
+    const existingSubjects = await Subject.find({ userId });
+    const subMap = new Map();
+    existingSubjects.forEach(s => subMap.set(s.name.trim().toLowerCase(), s));
+
+    let colorIdx = existingSubjects.length;
+
+    for (const dayObj of (timetable.days || [])) {
+      for (const p of (dayObj.periods || [])) {
+        const subName = (p.subjectName || '').trim();
+        if (!subName) continue;
+        const key = subName.toLowerCase();
+
+        let subDoc = subMap.get(key);
+        if (!subDoc) {
+          subDoc = new Subject({
+            userId,
+            name: subName,
+            color: p.color || palette[(colorIdx++) % palette.length],
+            type: subName.toLowerCase().includes('lab') ? 'lab' : 'theory',
+            targetPercentage: 75,
+            totalClasses: 0,
+            attendedClasses: 0
+          });
+          await subDoc.save();
+          subMap.set(key, subDoc);
+        }
+
+        if (!p.subjectId || String(p.subjectId) !== String(subDoc._id)) {
+          p.subjectId = subDoc._id;
+          p.color = subDoc.color;
+        }
+      }
+    }
+
+    // 2. Automatically generate unique full timetable share code if missing
+    if (!timetable.shareCode) {
+      let code = `BC-${Math.floor(1000 + Math.random() * 9000)}`;
+      while (await SharedTimetable.findOne({ shareCode: code })) {
+        code = `BC-${Math.floor(1000 + Math.random() * 9000)}`;
+      }
+      timetable.shareCode = code;
+    }
+
+    // Upsert into SharedTimetable so it is immediately stored & visible in AdminPanel
+    const subjectsSummary = Array.from(subMap.values()).map(s => ({
+      name: s.name,
+      code: s.code || '',
+      faculty: s.faculty || '',
+      color: s.color || '#0047FF',
+      type: s.type || 'theory'
+    }));
+
+    const daysSummary = (timetable.days || []).map(d => ({
+      day: d.day,
+      periods: (d.periods || []).map(p => ({
+        periodNumber: p.periodNumber,
+        subjectName: p.subjectName || 'Free Period',
+        startTime: p.startTime || '',
+        endTime: p.endTime || ''
+      }))
+    }));
+
+    await SharedTimetable.findOneAndUpdate(
+      { shareCode: timetable.shareCode },
+      {
+        shareCode: timetable.shareCode,
+        title: timetable.semesterName || 'MCA Section ' + (timetable.section || 'A'),
+        section: timetable.section || 'A',
+        department: 'Department of MCA',
+        college: 'Amrita Vishwa Vidyapeetham',
+        creatorName: user?.name || user?.username || 'Student',
+        creatorUserId: userId,
+        subjects: subjectsSummary,
+        days: daysSummary
+      },
+      { upsert: true, new: true }
+    );
+
+    await timetable.save();
+
+    // 3. Automatically sync Today's Attendance periods so user doesn't need to manually add them!
+    const todayStr = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' }).format(new Date());
+    const todaySched = timetable.days?.find(d => d.day === todayStr);
+
+    if (todaySched && todaySched.periods && todaySched.periods.length > 0) {
+      const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
+
+      for (const p of todaySched.periods) {
+        if (!p.subjectName || !p.subjectId) continue;
+
+        const existingRecord = await AttendanceRecord.findOne({
+          userId,
+          date: { $gte: startOfDay, $lte: endOfDay },
+          periodNumber: p.periodNumber
+        });
+
+        if (!existingRecord) {
+          const rec = new AttendanceRecord({
+            userId,
+            subjectId: p.subjectId,
+            periodNumber: p.periodNumber,
+            date: new Date(),
+            status: 'not_marked'
+          });
+          await rec.save();
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[SyncTimetable] Non-fatal auto-sync error:', err.message);
+  }
+}
 
 // Get active timetable
 router.get('/', auth, async (req, res) => {
   try {
     const timetable = await Timetable.findOne({ userId: req.user._id, isActive: true })
       .populate('days.periods.subjectId');
-    res.json({ timetable });
+
+    if (!timetable) return res.json({ timetable: null });
+
+    // Auto-sync if not synced yet
+    if (!timetable.shareCode) {
+      await syncTimetableToAttendanceAndShare(req.user._id, timetable, req.user);
+    }
+
+    const ttObj = timetable.toObject();
+
+    // If user has not clicked 'Generate Full Timetable Share Code' yet and is not Admin,
+    // keep code hidden from user but saved in AdminPanel!
+    if (!req.isAdmin && !timetable.isShareCodeRevealed) {
+      ttObj.isShareCodeRevealed = false;
+      ttObj.shareCode = null; // hidden for normal user
+    }
+
+    res.json({ timetable: ttObj });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -25,8 +163,19 @@ router.post('/', auth, async (req, res) => {
     await Timetable.updateMany({ userId: req.user._id }, { isActive: false });
     const timetable = new Timetable({ userId: req.user._id, ...req.body });
     await timetable.save();
+
+    // Automatically sync timetable into subjects, attendance & admin share vault
+    await syncTimetableToAttendanceAndShare(req.user._id, timetable, req.user);
+
     try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
-    res.status(201).json({ timetable });
+
+    const ttObj = timetable.toObject();
+    if (!req.isAdmin && !timetable.isShareCodeRevealed) {
+      ttObj.isShareCodeRevealed = false;
+      ttObj.shareCode = null;
+    }
+
+    res.status(201).json({ timetable: ttObj });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -40,10 +189,55 @@ router.put('/:id', auth, async (req, res) => {
       req.body,
       { new: true }
     ).populate('days.periods.subjectId');
+
     if (!timetable) return res.status(404).json({ message: 'Timetable not found' });
-    res.json({ timetable });
+
+    // Automatically sync timetable into subjects, attendance & admin share vault
+    await syncTimetableToAttendanceAndShare(req.user._id, timetable, req.user);
+
+    try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
+
+    const ttObj = timetable.toObject();
+    if (!req.isAdmin && !timetable.isShareCodeRevealed) {
+      ttObj.isShareCodeRevealed = false;
+      ttObj.shareCode = null;
+    }
+
+    res.json({ timetable: ttObj });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// 6. REVEAL / GENERATE FULL TIMETABLE SHARE CODE (User clicked generate)
+router.post('/reveal-code', auth, async (req, res) => {
+  try {
+    let timetable = await Timetable.findOne({ userId: req.user._id, isActive: true })
+      .populate('days.periods.subjectId');
+
+    if (!timetable) {
+      return res.status(404).json({ message: 'No active timetable found to generate share code.' });
+    }
+
+    timetable.isShareCodeRevealed = true;
+    if (!timetable.shareCode) {
+      timetable.shareCode = `BC-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+    await timetable.save();
+
+    await syncTimetableToAttendanceAndShare(req.user._id, timetable, req.user);
+
+    const shared = await SharedTimetable.findOne({ shareCode: timetable.shareCode });
+
+    res.json({
+      success: true,
+      shareCode: timetable.shareCode,
+      isShareCodeRevealed: true,
+      shared,
+      message: `Full Timetable Share Code ${timetable.shareCode} generated and revealed! 🎉`
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to reveal share code: ' + err.message });
   }
 });
 

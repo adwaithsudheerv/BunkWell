@@ -4,11 +4,11 @@ import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 // Current installed package version in build
-export const CURRENT_APP_VERSION = '1.2.5';
-export const CURRENT_VERSION_CODE = 8;
+export const CURRENT_APP_VERSION = '1.2.6';
+export const CURRENT_VERSION_CODE = 9;
 
-// Compares semantic versions (e.g., '1.0.0' vs '1.2.5')
-export function isVersionOutdated(currentVer, latestVer, currentCode = CURRENT_VERSION_CODE, latestCode = 8) {
+// Compares semantic versions (e.g., '1.0.0' vs '1.2.6')
+export function isVersionOutdated(currentVer, latestVer, currentCode = CURRENT_VERSION_CODE, latestCode = 9) {
   if (latestCode && currentCode && latestCode > currentCode) return true;
   if (!latestVer || !currentVer) return false;
 

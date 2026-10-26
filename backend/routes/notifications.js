@@ -67,18 +67,17 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.2.5',
-    versionCode: 8,
+    latestVersion: '1.2.6',
+    versionCode: 9,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🚀 BunkClub v1.2.5 Update Available',
-    message: 'New Update: Master Admin Vault & password recovery directory, pure Weekly Matrix schedule & official MCA Section A timetable (Code: BC-1139)!',
+    title: '🚀 BunkClub v1.2.6 Update Available',
+    message: 'New Update: Automatic timetable-to-attendance sync, on-demand share code generation, and specialized Admin user console!',
     changelog: [
-      'Master Admin: Hidden login portal and read-only password recovery vault for class admin',
-      'Weekly Timetable: Completely removed AI Scanner and day toggles; pure Weekly Matrix layout',
-      'Official Timetable (Code: BC-1139): 1-click import for all 15 MCA Section A subjects and full Monday-Saturday schedule',
-      'BunkBot AI: Exact Yes/No answers and breakdown of subjects you can and cannot bunk for today, tomorrow, and day after tomorrow',
-      'Today Attendance: Replaced classes count attendance directly toward replacement subject'
+      'Timetable: Auto-syncs subjects and today periods directly into attendance upon timetable add/save',
+      'Share Code: Auto-generated & saved in Admin Vault; revealed to student upon tapping "Generate Full Timetable Share Code"',
+      'Admin Interface: Dedicated, streamlined user details console with password recovery and timetable inspection',
+      'Official Timetable (Code: BC-1139): 1-click import for all 15 MCA Section A subjects and full Monday-Saturday schedule'
     ]
   });
 });
@@ -88,8 +87,8 @@ router.post('/broadcast-update', async (req, res) => {
   try {
     const users = await User.find({ 'pushSubscriptions.0': { $exists: true } });
     const payload = JSON.stringify({
-      title: '🚀 BunkClub v1.2.5 Update Available',
-      body: 'Master Admin Vault & password recovery directory ready. Tap to update!',
+      title: '🚀 BunkClub v1.2.6 Update Available',
+      body: 'Timetable auto-sync & dedicated Admin User Console ready. Tap to update!',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: {

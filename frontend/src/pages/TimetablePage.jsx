@@ -3,7 +3,7 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
   CalendarDays, Plus, Save, Clock, BookOpen, Users,
-  Check, LayoutGrid, X
+  Check, LayoutGrid, X, Share2, Copy, FileText, Sparkles
 } from 'lucide-react';
 import ShareTimetableModal from '../components/ShareTimetableModal';
 import { scheduleScheduleReminders } from '../lib/nativeNotifications';
@@ -30,6 +30,11 @@ export default function TimetablePage() {
   const [timetableId, setTimetableId] = useState(null);
   const [semName, setSemName] = useState('MCA Semester 1');
   const [section, setSection] = useState('A');
+  const [shareCode, setShareCode] = useState('');
+  const [isShareCodeRevealed, setIsShareCodeRevealed] = useState(false);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedText, setCopiedText] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -62,6 +67,8 @@ export default function TimetablePage() {
         setTimetableId(tt._id);
         setSemName(tt.semesterName || 'MCA Semester 1');
         setSection(tt.section || 'A');
+        setShareCode(tt.shareCode || '');
+        setIsShareCodeRevealed(Boolean(tt.isShareCodeRevealed && tt.shareCode));
 
         const newSched = {};
         DAYS.forEach(day => {
@@ -135,6 +142,51 @@ export default function TimetablePage() {
     setSlotPickerModal(null);
   };
 
+  const handleGenerateShareCode = async () => {
+    setGeneratingCode(true);
+    try {
+      const res = await api.post('/timetable/reveal-code');
+      setShareCode(res.data.shareCode);
+      setIsShareCodeRevealed(true);
+      toast.success(res.data.message || `Share Code ${res.data.shareCode} generated! 🎉`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to generate share code');
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
+
+  const handleCopyCode = () => {
+    if (!shareCode) return;
+    navigator.clipboard.writeText(shareCode);
+    setCopiedCode(true);
+    toast.success(`Share Code ${shareCode} copied! 📋`);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleCopyFullText = () => {
+    let text = `📅 BunkClub Class Timetable (Code: ${shareCode || 'BC-Active'})\n`;
+    text += `Section: ${section || 'A'}\n`;
+    text += `Timetable: ${semName || 'MCA Semester 1'}\n\n`;
+
+    DAYS.forEach(day => {
+      const daySlots = (schedule[day] || []).filter(s => s.subjectName);
+      if (daySlots.length > 0) {
+        text += `📍 ${day}:\n`;
+        daySlots.forEach(s => {
+          text += `  • P${s.periodNumber} (${s.startTime}): ${s.subjectName}\n`;
+        });
+        text += '\n';
+      }
+    });
+
+    text += `👉 Import this timetable directly in BunkClub using Code: ${shareCode || 'BC-Active'}`;
+    navigator.clipboard.writeText(text);
+    setCopiedText(true);
+    toast.success('Full timetable schedule copied! 📋');
+    setTimeout(() => setCopiedText(false), 2000);
+  };
+
   const saveTimetable = async () => {
     setSaving(true);
     try {
@@ -163,13 +215,21 @@ export default function TimetablePage() {
       };
 
       if (timetableId) {
-        await api.put(`/timetable/${timetableId}`, payload);
+        const res = await api.put(`/timetable/${timetableId}`, payload);
+        if (res.data.timetable?.shareCode) {
+          setShareCode(res.data.timetable.shareCode);
+          setIsShareCodeRevealed(Boolean(res.data.timetable.isShareCodeRevealed));
+        }
       } else {
         const res = await api.post('/timetable', payload);
         setTimetableId(res.data.timetable._id);
+        if (res.data.timetable?.shareCode) {
+          setShareCode(res.data.timetable.shareCode);
+          setIsShareCodeRevealed(Boolean(res.data.timetable.isShareCodeRevealed));
+        }
       }
       scheduleScheduleReminders(payload);
-      toast.success('Timetable saved successfully! 💾');
+      toast.success('Timetable saved & Today Attendance auto-updated! 💾');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save timetable');
     } finally {
@@ -247,6 +307,60 @@ export default function TimetablePage() {
               className="w-full bg-transparent placeholder-slate-500 focus:outline-none text-sm font-semibold"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Auto-sync & Full Timetable Share Code Generator */}
+      <div className="glass-card rounded-2xl p-4 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-blue-900/15 via-indigo-900/10 to-transparent">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+              <Share2 size={14} className="text-blue-400" /> Full Timetable Share Code
+            </span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              Auto-Synced with Attendance
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {isShareCodeRevealed && shareCode
+              ? `Share Code active: Section ${section || 'A'} timetable is live and ready to share.`
+              : `Saved in Admin Vault. Click below to reveal your shareable Section Timetable code for your classmates.`}
+          </p>
+        </div>
+
+        <div>
+          {isShareCodeRevealed && shareCode ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600/20 border border-blue-500/40 font-mono font-bold text-sm text-blue-300">
+                {shareCode}
+              </div>
+              <button
+                onClick={handleCopyCode}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors"
+                title="Copy Share Code"
+              >
+                {copiedCode ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                {copiedCode ? 'Copied' : 'Copy Code'}
+              </button>
+              <button
+                onClick={handleCopyFullText}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors"
+                title="Copy Full Timetable Schedule Text"
+              >
+                {copiedText ? <Check size={13} className="text-emerald-400" /> : <FileText size={13} />}
+                {copiedText ? 'Copied' : 'Copy Schedule'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleGenerateShareCode}
+              disabled={generatingCode}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50"
+            >
+              <Sparkles size={14} className={generatingCode ? 'animate-spin' : ''} />
+              {generatingCode ? 'Generating...' : 'Generate Full Timetable Share Code'}
+            </button>
+          )}
         </div>
       </div>
 

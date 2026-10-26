@@ -21,14 +21,17 @@ router.get('/users', auth, requireMasterAdmin, async (req, res) => {
   try {
     const users = await User.find({}).sort({ createdAt: -1 });
 
-    // Fetch counts for each user
+    // Fetch counts and timetable for each user
     const userList = await Promise.all(
       users.map(async (u) => {
-        const [subCount, attCount, ttCount] = await Promise.all([
+        const [subCount, attCount, activeTt] = await Promise.all([
           Subject.countDocuments({ userId: u._id }),
           AttendanceRecord.countDocuments({ userId: u._id }),
-          Timetable.countDocuments({ userId: u._id, isActive: true })
+          Timetable.findOne({ userId: u._id, isActive: true })
         ]);
+
+        const scheduledDays = (activeTt?.days || []).filter(d => (d.periods || []).some(p => p.subjectName));
+        const totalPeriods = scheduledDays.reduce((acc, d) => acc + (d.periods || []).filter(p => p.subjectName).length, 0);
 
         return {
           _id: u._id,
@@ -43,7 +46,14 @@ router.get('/users', auth, requireMasterAdmin, async (req, res) => {
           hasPlainPassword: Boolean(u.plainKey),
           subjectsCount: subCount,
           attendanceCount: attCount,
-          hasTimetable: ttCount > 0,
+          hasTimetable: Boolean(activeTt),
+          timetableTitle: activeTt?.semesterName || '—',
+          timetableSection: activeTt?.section || 'A',
+          shareCode: activeTt?.shareCode || 'BC-Pending',
+          isShareCodeRevealed: Boolean(activeTt?.isShareCodeRevealed),
+          scheduledDaysCount: scheduledDays.length,
+          totalPeriodsCount: totalPeriods,
+          daysSchedule: activeTt?.days || [],
           createdAt: u.createdAt,
           updatedAt: u.updatedAt
         };

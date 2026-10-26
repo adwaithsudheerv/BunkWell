@@ -19,6 +19,8 @@ const timetableSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   semesterName: { type: String, default: 'Semester 1' },
   section: { type: String, default: 'A' },
+  shareCode: { type: String, uppercase: true, trim: true },
+  isShareCodeRevealed: { type: Boolean, default: false },
   semesterNumber: { type: Number, default: 1 },
   academicYear: { type: String },
   startDate: { type: Date },
