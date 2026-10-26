@@ -160,10 +160,10 @@ export default function AdminPanelPage() {
             <table className="w-full text-left text-xs border-collapse min-w-[800px]">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider">
-                  <th className="p-3.5 font-semibold">User</th>
+                  <th className="p-3.5 font-semibold">User & Database ID</th>
                   <th className="p-3.5 font-semibold">Email & College</th>
                   <th className="p-3.5 font-semibold">Password (Recovery)</th>
-                  <th className="p-3.5 font-semibold">Timetable & Share Code</th>
+                  <th className="p-3.5 font-semibold">Timetable Details & Share Code</th>
                   <th className="p-3.5 font-semibold">Registered</th>
                 </tr>
               </thead>
@@ -181,15 +181,19 @@ export default function AdminPanelPage() {
 
                     return (
                       <tr key={u._id} className="hover:bg-slate-800/30 transition-colors">
-                        {/* User Identity */}
+                        {/* User Identity & ID */}
                         <td className="p-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/25 flex items-center justify-center font-bold text-xs uppercase flex-shrink-0">
+                          <div className="flex items-start gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/25 flex items-center justify-center font-bold text-xs uppercase flex-shrink-0 mt-0.5">
                               {u.username?.[0] || 'U'}
                             </div>
                             <div className="min-w-0 font-sans">
                               <p className="font-bold text-slate-100 text-xs truncate">{u.name}</p>
-                              <p className="text-[11px] text-blue-400 font-mono mt-0.5">@{u.username}</p>
+                              <p className="text-[11px] text-blue-400 font-mono">@{u.username}</p>
+                              <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-500 font-mono">
+                                <span>ID:</span>
+                                <span className="text-slate-400 select-all">{u._id}</span>
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -226,7 +230,7 @@ export default function AdminPanelPage() {
                           </div>
                         </td>
 
-                        {/* Timetable Share Code & Schedule */}
+                        {/* Timetable Details & Share Code */}
                         <td className="p-3.5 font-sans">
                           <div className="flex flex-col gap-1.5">
                             <div className="flex items-center gap-2">
@@ -244,14 +248,18 @@ export default function AdminPanelPage() {
                               )}
                             </div>
 
-                            {u.hasTimetable && (
+                            <p className="text-[11px] text-slate-400 truncate max-w-[200px]">
+                              {u.timetableTitle || 'Timetable'} · Sec {u.timetableSection || 'A'}
+                            </p>
+
+                            {u.hasTimetable ? (
                               <div className="flex items-center gap-1.5">
                                 <button
                                   onClick={() => setViewingTimetableUser(u)}
                                   className="text-[11px] font-semibold text-slate-300 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 transition-colors"
                                   title="View Full Timetable Schedule"
                                 >
-                                  <Calendar size={12} /> View Schedule
+                                  <Calendar size={12} /> View Schedule ({u.scheduledDaysCount}d)
                                 </button>
                                 <button
                                   onClick={() => copyUserTimetableText(u)}
@@ -261,6 +269,8 @@ export default function AdminPanelPage() {
                                   <Copy size={12} /> Copy Text
                                 </button>
                               </div>
+                            ) : (
+                              <span className="text-[11px] text-slate-600 italic">No timetable created yet</span>
                             )}
                           </div>
                         </td>

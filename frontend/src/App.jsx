@@ -27,13 +27,27 @@ function ProtectedRoute({ children }) {
       </div>
     </div>
   );
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  return children;
 }
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return user ? <Navigate to="/dashboard" replace /> : children;
+  if (!user) return children;
+  return user.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/dashboard" replace />;
+}
+
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return (
+    <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', background: '#05070a' }}>
+      <p style={{ color: '#38bdf8', fontSize: '0.9rem', fontFamily: 'monospace' }}>Authenticating Admin Channel...</p>
+    </div>
+  );
+  if (!user || user.role !== 'admin') return <Navigate to="/login" replace />;
+  return children;
 }
 
 export default function App() {
@@ -64,7 +78,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-            <Route path="/admin" element={<AdminPanelPage />} />
+            <Route path="/admin" element={<AdminRoute><AdminPanelPage /></AdminRoute>} />
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />

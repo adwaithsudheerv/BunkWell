@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
@@ -147,6 +147,9 @@ function SubjectCard({ subject, target, onUpdate }) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
   const [analytics, setAnalytics] = useState(null);
   const [todaySchedule, setTodaySchedule] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -67,16 +67,16 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.2.6',
-    versionCode: 9,
+    latestVersion: '1.2.7',
+    versionCode: 10,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🚀 BunkClub v1.2.6 Update Available',
-    message: 'New Update: Automatic timetable-to-attendance sync, on-demand share code generation, and specialized Admin user console!',
+    title: '🚀 BunkClub v1.2.7 Update Available',
+    message: 'New Update: Exclusive Master Admin Channel with user details, IDs, passwords & timetable inspection!',
     changelog: [
+      'Master Admin Channel: Completely separated interface dedicated strictly to user details, IDs, passwords, and timetable schedules',
       'Timetable: Auto-syncs subjects and today periods directly into attendance upon timetable add/save',
       'Share Code: Auto-generated & saved in Admin Vault; revealed to student upon tapping "Generate Full Timetable Share Code"',
-      'Admin Interface: Dedicated, streamlined user details console with password recovery and timetable inspection',
       'Official Timetable (Code: BC-1139): 1-click import for all 15 MCA Section A subjects and full Monday-Saturday schedule'
     ]
   });
@@ -87,8 +87,8 @@ router.post('/broadcast-update', async (req, res) => {
   try {
     const users = await User.find({ 'pushSubscriptions.0': { $exists: true } });
     const payload = JSON.stringify({
-      title: '🚀 BunkClub v1.2.6 Update Available',
-      body: 'Timetable auto-sync & dedicated Admin User Console ready. Tap to update!',
+      title: '🚀 BunkClub v1.2.7 Update Available',
+      body: 'Master Admin Channel & user directory ready. Tap to update!',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: {
