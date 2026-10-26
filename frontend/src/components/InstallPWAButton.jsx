@@ -136,7 +136,7 @@ export default function InstallPWAButton({ className = "" }) {
                 </div>
                 <div className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold flex-shrink-0">3</span>
-                  <span>Or click the browser menu (⋮) $\rightarrow$ <strong>"Install BunkClub..."</strong>.</span>
+                  <span>Or click the browser menu (⋮) → <strong>"Install BunkClub..."</strong>.</span>
                 </div>
               </div>
             )}

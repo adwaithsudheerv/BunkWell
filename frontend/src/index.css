@@ -1656,7 +1656,9 @@ html.light .modal-surface h4 {
 html.light .glass-card > p,
 html.light .glass-card > div > p,
 html.light .glass-card span.text-white:not([class*="bg-"]),
-html.light .modal-surface span.text-white:not([class*="bg-"]) {
+html.light .glass-card strong.text-white:not([class*="bg-"]),
+html.light .modal-surface span.text-white:not([class*="bg-"]),
+html.light .modal-surface strong.text-white:not([class*="bg-"]) {
   color: #0a0a0c !important;
 }
 

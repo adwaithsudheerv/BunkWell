@@ -385,14 +385,14 @@ export default function AnalyticsPage() {
                     </div>
 
                     {/* Impact preview */}
-                    <div className="space-y-1.5 mt-2.5 pt-2 border-t border-white/5 text-xs">
+                    <div className="space-y-1.5 mt-2.5 pt-2 border-t border-slate-200 dark:border-white/5 text-xs">
                       {d.impacts.map((imp, idx) => (
                         <div key={idx} className="flex items-center justify-between text-[11px]">
-                          <span className="text-slate-300 truncate max-w-[130px]">
+                          <span className="text-slate-700 dark:text-slate-300 truncate max-w-[140px] font-medium">
                             {imp.name} ({imp.classesCount} class)
                           </span>
-                          <span className={imp.isSafe ? 'text-slate-400' : 'text-red-400 font-bold'}>
-                            {imp.currentPct}% $\rightarrow$ <strong className={imp.isSafe ? 'text-white' : 'text-red-400'}>{imp.projectedPct}%</strong>
+                          <span className={imp.isSafe ? 'text-slate-600 dark:text-slate-400 font-medium' : 'text-red-500 font-bold'}>
+                            {imp.currentPct}% → <strong className={imp.isSafe ? 'text-slate-900 dark:text-emerald-400 font-bold' : 'text-red-500 font-bold'}>{imp.projectedPct}%</strong>
                           </span>
                         </div>
                       ))}
@@ -505,8 +505,8 @@ export default function AnalyticsPage() {
                 <div className="text-3xl font-black" style={{ color: simIsSafe ? '#10b981' : '#ef4444' }}>
                   {simProjectedPct.toFixed(1)}%
                 </div>
-                <p className="text-xs font-bold text-white">
-                  Current: {selectedSimSubject?.pct}% $\rightarrow$ After {simBunks} bunk{simBunks !== 1 ? 's' : ''}: {simProjectedPct.toFixed(1)}%
+                <p className="text-xs font-bold text-slate-800 dark:text-white">
+                  Current: {selectedSimSubject?.pct}% → After {simBunks} bunk{simBunks !== 1 ? 's' : ''}: {simProjectedPct.toFixed(1)}%
                 </p>
                 <p className="text-[11px] font-semibold text-slate-300">
                   {simIsSafe
