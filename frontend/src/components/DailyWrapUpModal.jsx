@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
+import { useTheme } from '../context/ThemeContext';
 import {
   CheckCircle2, XCircle, RefreshCw, X, Check,
   Zap, Clock, ShieldCheck, AlertTriangle, ArrowRight,
@@ -8,6 +9,7 @@ import {
 } from 'lucide-react';
 
 export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
+  const { isDark } = useTheme();
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState(null);
   const [subjects, setSubjects] = useState([]);
@@ -234,22 +236,32 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
-      <div className="w-full max-w-lg bg-[#0e1219] border border-slate-700/80 rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] animate-[slideUp_0.3s_ease-out]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
+      <div className={`w-full max-w-lg rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] animate-[slideUp_0.3s_ease-out] border transition-colors ${
+        isDark ? 'bg-[#0e1219] border-slate-700/80 text-white' : 'bg-white border-slate-200 text-slate-900 shadow-slate-300/60'
+      }`}>
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3.5 mb-3 border-b border-slate-800">
+        <div className={`flex items-center justify-between pb-3.5 mb-3 border-b ${
+          isDark ? 'border-slate-800' : 'border-slate-200'
+        }`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-blue-600/25 text-blue-400 border border-blue-500/40 flex items-center justify-center flex-shrink-0">
-              <Zap size={22} className="fill-blue-400" />
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+              isDark ? 'bg-blue-600/25 text-blue-400 border border-blue-500/40' : 'bg-blue-50 text-blue-600 border border-blue-200'
+            }`}>
+              <Zap size={22} className={isDark ? 'fill-blue-400' : 'fill-blue-600'} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-base sm:text-lg text-white tracking-tight">
+                <h3 className={`font-extrabold text-base sm:text-lg tracking-tight ${
+                  isDark ? 'text-white' : 'text-slate-900'
+                }`}>
                   Daily Attendance Reconciliation
                 </h3>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
+              <p className={`text-xs mt-0.5 ${
+                isDark ? 'text-slate-300' : 'text-slate-500'
+              }`}>
                 Were today's classes taken, cancelled, or replaced?
               </p>
             </div>
@@ -257,7 +269,9 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            className={`p-2 rounded-xl transition-colors ${
+              isDark ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+            }`}
           >
             <X size={18} />
           </button>
@@ -279,21 +293,27 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
             <button
               onClick={handleMarkHoliday}
               disabled={saving}
-              className="flex items-center justify-center gap-1.5 py-3 px-2 rounded-2xl bg-[#1b2234] hover:bg-[#25304a] active:scale-95 text-amber-300 border border-amber-500/50 font-extrabold text-xs shadow-md transition-all disabled:opacity-50"
+              className={`flex items-center justify-center gap-1.5 py-3 px-2 rounded-2xl active:scale-95 font-extrabold text-xs shadow-md transition-all disabled:opacity-50 border ${
+                isDark
+                  ? 'bg-[#1b2234] hover:bg-[#25304a] text-amber-300 border-amber-500/50'
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300'
+              }`}
             >
-              <Calendar size={16} className="text-amber-400" /> Today is Holiday
+              <Calendar size={16} className={isDark ? 'text-amber-400' : 'text-amber-600'} /> Today is Holiday
             </button>
           </div>
         )}
 
         {/* Holiday Active Celebratory Card */}
         {isHolidayToday && (
-          <div className="p-4 mb-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-between gap-3 animate-[fadeIn_0.2s_ease-out]">
+          <div className={`p-4 mb-3 rounded-2xl flex items-center justify-between gap-3 animate-[fadeIn_0.2s_ease-out] border ${
+            isDark ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' : 'bg-amber-50 border-amber-300 text-amber-900'
+          }`}>
             <div className="flex items-center gap-2.5">
               <div className="text-2xl">🎉</div>
               <div>
-                <p className="font-extrabold text-xs text-amber-300">Today Marked as College Holiday</p>
-                <p className="text-[11px] text-slate-300">Classes exempted with zero impact on attendance buffer.</p>
+                <p className="font-extrabold text-xs">Today Marked as College Holiday</p>
+                <p className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Classes exempted with zero impact on attendance buffer.</p>
               </div>
             </div>
             <button
@@ -308,14 +328,16 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         {/* Period Checklist */}
         <div className="flex-1 overflow-y-auto space-y-3 pr-1 py-1">
           {loading ? (
-            <div className="p-8 text-center text-slate-400 text-xs">
+            <div className={`p-8 text-center text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               Loading today's schedule...
             </div>
           ) : periods.length === 0 ? (
-            <div className="p-8 text-center rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-              <Calendar size={36} className="mx-auto text-blue-400 opacity-70" />
-              <p className="font-extrabold text-sm text-white">No Classes Scheduled Today!</p>
-              <p className="text-xs text-slate-300">
+            <div className={`p-8 text-center rounded-2xl border space-y-2 ${
+              isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+            }`}>
+              <Calendar size={36} className="mx-auto text-blue-500 opacity-80" />
+              <p className="font-extrabold text-sm">No Classes Scheduled Today!</p>
+              <p className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
                 According to your weekly timetable, today is a free day or holiday. Enjoy your time! 🎉
               </p>
             </div>
@@ -336,7 +358,11 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
               return (
                 <div
                   key={p.periodNumber}
-                  className="p-3.5 rounded-2xl bg-[#141924] border border-slate-700/80 hover:border-slate-600 transition-all space-y-3 shadow-md"
+                  className={`p-3.5 rounded-2xl border transition-all space-y-3 shadow-sm ${
+                    isDark
+                      ? 'bg-[#141924] border-slate-700/80 hover:border-slate-600'
+                      : 'bg-slate-50/90 border-slate-200 hover:border-slate-300'
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
@@ -344,8 +370,8 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                         P{p.periodNumber}
                       </span>
                       <div>
-                        <p className="font-black text-sm text-white">{p.subjectName}</p>
-                        <p className="text-[11px] text-slate-300 font-mono font-medium">
+                        <p className={`font-black text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.subjectName}</p>
+                        <p className={`text-[11px] font-mono font-medium ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
                           {p.startTime || '—'} - {p.endTime || '—'}
                         </p>
                       </div>
@@ -355,8 +381,12 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       <span
                         className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border ${
                           safeBunks > 0
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                            : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            ? isDark
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : isDark
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}
                       >
                         {safeBunks > 0 ? `${safeBunks} safe bunk(s)` : '0 safe bunks'}
@@ -374,10 +404,12 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       className={`py-2 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-1 active:scale-95 ${
                         isPresent
                           ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 border-2 border-emerald-400 ring-2 ring-emerald-500/20'
-                          : 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
+                          : isDark
+                            ? 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-xs'
                       }`}
                     >
-                      <Check size={14} className={isPresent ? 'text-white' : 'text-emerald-400'} /> Present
+                      <Check size={14} className={isPresent ? 'text-white' : 'text-emerald-500'} /> Present
                     </button>
 
                     {/* 2. Bunked */}
@@ -388,10 +420,12 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       className={`py-2 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-1 active:scale-95 ${
                         isBunked
                           ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/40 border-2 border-rose-400 ring-2 ring-rose-500/20'
-                          : 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
+                          : isDark
+                            ? 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-xs'
                       }`}
                     >
-                      <X size={14} className={isBunked ? 'text-white' : 'text-rose-400'} /> Bunked
+                      <X size={14} className={isBunked ? 'text-white' : 'text-rose-500'} /> Bunked
                     </button>
 
                     {/* 3. Replaced */}
@@ -402,10 +436,12 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       className={`py-2 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-1 active:scale-95 ${
                         isReplaced
                           ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40 border-2 border-blue-400 ring-2 ring-blue-500/20'
-                          : 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
+                          : isDark
+                            ? 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-xs'
                       }`}
                     >
-                      <RefreshCw size={13} className={isReplaced ? 'text-white' : 'text-blue-400'} /> Replaced
+                      <RefreshCw size={13} className={isReplaced ? 'text-white' : 'text-blue-500'} /> Replaced
                     </button>
 
                     {/* 4. Cancelled */}
@@ -416,17 +452,21 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       className={`py-2 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-1 active:scale-95 ${
                         isCancelled
                           ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/40 border-2 border-amber-400 ring-2 ring-amber-500/20'
-                          : 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
+                          : isDark
+                            ? 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-xs'
                       }`}
                     >
-                      <Slash size={13} className={isCancelled ? 'text-white' : 'text-amber-400'} /> Cancelled
+                      <Slash size={13} className={isCancelled ? 'text-white' : 'text-amber-500'} /> Cancelled
                     </button>
                   </div>
 
                   {/* Inline Replacement Selector (Only shown if Replaced is chosen) */}
                   {isReplaced && (
-                    <div className="p-3 rounded-xl bg-blue-600/15 border border-blue-500/40 space-y-2 mt-2 animate-[fadeIn_0.2s_ease-out]">
-                      <p className="text-xs font-extrabold text-blue-300">
+                    <div className={`p-3 rounded-xl border space-y-2 mt-2 animate-[fadeIn_0.2s_ease-out] ${
+                      isDark ? 'bg-blue-600/15 border-blue-500/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-900'
+                    }`}>
+                      <p className="text-xs font-extrabold">
                         Which subject took Period {p.periodNumber}?
                       </p>
                       <select
@@ -435,7 +475,9 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                           const val = e.target.value;
                           if (val) handleSaveReplacement(p, val);
                         }}
-                        className="w-full bg-[#0a0d14] border border-blue-500/60 rounded-xl p-2.5 text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className={`w-full rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-400 border ${
+                          isDark ? 'bg-[#0a0d14] border-blue-500/60 text-white' : 'bg-white border-blue-300 text-slate-900 shadow-xs'
+                        }`}
                       >
                         <option value="">-- Choose Replacement Subject --</option>
                         {subjects.filter(s => (s._id || s.id) !== subId).map(s => (
@@ -453,8 +495,12 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         </div>
 
         {/* Footer */}
-        <div className="pt-3.5 mt-2 border-t border-slate-800 flex items-center justify-between gap-3">
-          <p className="text-xs text-slate-300 font-medium">
+        <div className={`pt-3.5 mt-2 border-t flex items-center justify-between gap-3 ${
+          isDark ? 'border-slate-800' : 'border-slate-200'
+        }`}>
+          <p className={`text-xs font-medium ${
+            isDark ? 'text-slate-300' : 'text-slate-500'
+          }`}>
             Attendance auto-updates into your subject buffers.
           </p>
           <button
