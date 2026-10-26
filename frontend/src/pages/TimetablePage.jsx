@@ -3,10 +3,9 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
   CalendarDays, Plus, Save, Trash2, Clock, BookOpen, Users,
-  Copy, Check, LayoutGrid, List, Sparkles, X, Camera
+  Copy, Check, LayoutGrid, List, Sparkles, X
 } from 'lucide-react';
 import ShareTimetableModal from '../components/ShareTimetableModal';
-import AITimetableScannerModal from '../components/AITimetableScannerModal';
 import { scheduleScheduleReminders } from '../lib/nativeNotifications';
 import { Link } from 'react-router-dom';
 
@@ -30,12 +29,9 @@ export default function TimetablePage() {
   const [subjects, setSubjects] = useState([]);
   const [timetableId, setTimetableId] = useState(null);
   const [semName, setSemName] = useState('Semester 1');
-  const [activeDay, setActiveDay] = useState('Monday');
-  const [viewMode, setViewMode] = useState('day'); // 'day' | 'grid'
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [showScannerModal, setShowScannerModal] = useState(false);
   const [slotPickerModal, setSlotPickerModal] = useState(null); // { day, slotIndex }
 
   // Schedule map: { Monday: [10 slots], Tuesday: [10 slots], ... }
@@ -231,38 +227,11 @@ export default function TimetablePage() {
           </p>
         </div>
         <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto">
-          {/* View toggle */}
-          <div className="flex bg-white/5 border border-white/10 rounded-xl p-1">
-            <button
-              onClick={() => setViewMode('day')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'day' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <List size={14} /> Day
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <LayoutGrid size={14} /> Week
-            </button>
-          </div>
-
-          <button
-            onClick={() => setShowScannerModal(true)}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-blue-600/20 to-indigo-600/20 hover:from-blue-600/30 hover:to-indigo-600/30 text-blue-300 text-xs font-bold border border-blue-500/30 transition-all shadow-sm active:scale-95"
-          >
-            <Camera size={14} className="text-blue-400" />
-            AI Scan
-          </button>
           <button
             onClick={() => setShowShareModal(true)}
             className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-semibold border border-blue-500/20 transition-all shadow-sm"
           >
-            <Users size={14} /> Section
+            <Users size={14} /> Section Timetables
           </button>
           <button
             onClick={saveTimetable}
@@ -300,195 +269,70 @@ export default function TimetablePage() {
         </div>
       )}
 
-      {/* Day Mode (Single Day 8:00 AM to 6:00 PM Block Grid) */}
-      {viewMode === 'day' && (
-        <div className="space-y-4">
-          {/* Day selection tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {DAYS.map(day => {
-              const count = schedule[day]?.filter(s => s.subjectName).length || 0;
-              const isActive = activeDay === day;
-              return (
-                <button
-                  key={day}
-                  onClick={() => setActiveDay(day)}
-                  className={`flex-1 min-w-[100px] py-3 px-3 rounded-2xl border text-center transition-all ${
-                    isActive
-                      ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/25 scale-[1.02]'
-                      : 'glass-card border-white/10 text-slate-400 hover:text-white hover:border-white/20'
-                  }`}
-                >
-                  <p className="text-xs font-bold uppercase tracking-wider">{day.slice(0, 3)}</p>
-                  <p className={`text-[11px] mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
-                    {count} {count === 1 ? 'class' : 'classes'}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Active Day Action Bar */}
-          <div className="flex items-center justify-between px-1">
-            <span className="text-sm font-semibold text-slate-300">
-              {activeDay} Schedule ({activePeriodsCount} classes assigned)
-            </span>
-            <div className="flex items-center gap-2">
-              <select
-                onChange={e => {
-                  if (e.target.value) {
-                    handleCopyDay(e.target.value);
-                    e.target.value = '';
-                  }
-                }}
-                defaultValue=""
-                className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-400 hover:text-white focus:outline-none"
-              >
-                <option value="" disabled>Copy to...</option>
-                {DAYS.filter(d => d !== activeDay).map(d => (
-                  <option key={d} value={d} className="bg-slate-900 text-white">{d}</option>
+      {/* Weekly Schedule Grid Matrix */}
+      <div className="glass-card rounded-2xl overflow-hidden border border-white/10">
+        <div className="p-3.5 bg-white/5 border-b border-white/10 flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-300">
+            Weekly Schedule Matrix (Click any slot to assign or edit subject)
+          </span>
+          <span className="text-[11px] text-blue-400 font-medium">
+            Monday to Saturday
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse min-w-[750px]">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                <th className="p-3 font-semibold text-slate-400 w-28">Time Slot</th>
+                {DAYS.map(day => (
+                  <th key={day} className="p-3 font-bold text-center border-l border-white/10">
+                    {day}
+                  </th>
                 ))}
-              </select>
-              {activePeriodsCount > 0 && (
-                <button
-                  onClick={() => handleClearDay(activeDay)}
-                  className="px-2.5 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-500/10 border border-red-500/20 transition-colors"
-                >
-                  Clear Day
-                </button>
-              )}
-            </div>
-          </div>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {TIME_BLOCKS.map((tb, idx) => (
+                <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                  <td className="p-2.5 font-medium text-slate-400 whitespace-nowrap">
+                    {tb.startTime} - {tb.endTime}
+                  </td>
+                  {DAYS.map(day => {
+                    const slot = schedule[day]?.[idx];
+                    const isAssigned = Boolean(slot?.subjectName);
 
-          {/* 10 Hourly Blocks Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {schedule[activeDay]?.map((slot, idx) => {
-              const isAssigned = Boolean(slot.subjectName);
-              const timeLabel = TIME_BLOCKS[idx].label;
-
-              return (
-                <div
-                  key={idx}
-                  className={`glass-card rounded-2xl p-4 border transition-all ${
-                    isAssigned
-                      ? 'border-blue-500/30 hover:border-blue-500/60'
-                      : 'border-white/10 hover:border-white/20 border-dashed'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    {/* Time & Slot indicator */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 font-bold text-xs flex items-center justify-center flex-shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                        <Clock size={13} className="text-blue-500" />
-                        <span>{timeLabel}</span>
-                      </div>
-                    </div>
-
-                    {/* Slot Actions */}
-                    {isAssigned && (
-                      <button
-                        onClick={() => handleAssignSubject(activeDay, idx, null)}
-                        title="Remove class"
-                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors"
+                    return (
+                      <td
+                        key={day}
+                        onClick={() => setSlotPickerModal({ day, slotIndex: idx })}
+                        className="p-2 border-l border-white/10 text-center cursor-pointer hover:bg-blue-600/10 transition-colors"
                       >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Slot Content */}
-                  <div className="mt-3">
-                    {isAssigned ? (
-                      <div
-                        onClick={() => setSlotPickerModal({ day: activeDay, slotIndex: idx })}
-                        className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
+                        {isAssigned ? (
                           <div
-                            className="w-3.5 h-3.5 rounded-full flex-shrink-0"
-                            style={{ background: slot.color || '#0047FF' }}
-                          />
-                          <p className="font-semibold text-sm truncate">{slot.subjectName}</p>
-                        </div>
-                        <span className="text-[11px] text-blue-400 font-medium ml-2">Change</span>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setSlotPickerModal({ day: activeDay, slotIndex: idx })}
-                        className="w-full py-3 px-4 rounded-xl border border-dashed border-white/15 hover:border-blue-500/50 hover:bg-blue-600/5 text-slate-400 hover:text-blue-400 text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
-                      >
-                        <Plus size={15} />
-                        Add Class to {TIME_BLOCKS[idx].startTime} slot
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Week Matrix Mode (Desktop & Tablet Overview) */}
-      {viewMode === 'grid' && (
-        <div className="glass-card rounded-2xl overflow-hidden border border-white/10">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse min-w-[750px]">
-              <thead>
-                <tr className="border-b border-white/10 bg-white/5">
-                  <th className="p-3 font-semibold text-slate-400 w-28">Time Slot</th>
-                  {DAYS.map(day => (
-                    <th key={day} className="p-3 font-bold text-center border-l border-white/10">
-                      {day}
-                    </th>
-                  ))}
+                            className="py-1.5 px-2 rounded-lg font-semibold truncate text-[11px] shadow-sm"
+                            style={{
+                              background: `${slot.color || '#0047FF'}25`,
+                              color: slot.color || '#60a5fa',
+                              border: `1px solid ${slot.color || '#0047FF'}50`
+                            }}
+                            title={slot.subjectName}
+                          >
+                            {slot.subjectName}
+                          </div>
+                        ) : (
+                          <div className="py-1.5 text-slate-600 hover:text-blue-400 flex items-center justify-center">
+                            <Plus size={13} />
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {TIME_BLOCKS.map((tb, idx) => (
-                  <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="p-2.5 font-medium text-slate-400 whitespace-nowrap">
-                      {tb.startTime} - {tb.endTime}
-                    </td>
-                    {DAYS.map(day => {
-                      const slot = schedule[day]?.[idx];
-                      const isAssigned = Boolean(slot?.subjectName);
-
-                      return (
-                        <td
-                          key={day}
-                          onClick={() => setSlotPickerModal({ day, slotIndex: idx })}
-                          className="p-2 border-l border-white/10 text-center cursor-pointer hover:bg-blue-600/10 transition-colors"
-                        >
-                          {isAssigned ? (
-                            <div
-                              className="py-1.5 px-2 rounded-lg font-semibold truncate text-[11px] shadow-sm"
-                              style={{
-                                background: `${slot.color || '#0047FF'}25`,
-                                color: slot.color || '#60a5fa',
-                                border: `1px solid ${slot.color || '#0047FF'}50`
-                              }}
-                              title={slot.subjectName}
-                            >
-                              {slot.subjectName}
-                            </div>
-                          ) : (
-                            <div className="py-1.5 text-slate-600 hover:text-blue-400 flex items-center justify-center">
-                              <Plus size={13} />
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       {/* Save Button */}
       <button
@@ -554,16 +398,6 @@ export default function TimetablePage() {
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         onImportSuccess={loadData}
-      />
-
-      {/* AI Timetable Photo Scanner Modal */}
-      <AITimetableScannerModal
-        isOpen={showScannerModal}
-        onClose={() => setShowScannerModal(false)}
-        onTimetableApplied={() => {
-          loadData();
-          toast.success('AI Timetable Applied Successfully! 🎉');
-        }}
       />
     </div>
   );
