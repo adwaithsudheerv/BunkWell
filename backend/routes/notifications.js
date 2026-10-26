@@ -67,18 +67,18 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.3.2',
-    versionCode: 15,
+    latestVersion: '1.3.3',
+    versionCode: 16,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🚀 BunkClub v1.3.2 Release',
-    message: 'Real-time auto update notifications, full Day/Night mode support in Daily Reconciliation and Administration Vault!',
+    title: '⚡ BunkClub v1.3.3 Release',
+    message: 'Attendance Recovery Radar, point-wise catch-up roadmap, and 1-tap Lightning Point reconciliation!',
     changelog: [
-      'Real-Time Auto Update Notifier: Instant floating update banner on web & Android whenever a new version is released',
-      'Day Mode Administration Vault: High-contrast dual theme support with live Day/Night switch in the Admin Console',
-      'Daily Attendance Reconciliation: Theme-adaptive light/dark mode for period roll calls and holiday mode',
-      'Arrow & Number Contrast: Fixed literal rightarrow and brightened safe attendance percentages in Day Mode',
-      'Admin User Deletion: Master Admin can safely delete accounts with "Are you sure?" confirmation protection'
+      '⚡ Attendance Recovery Radar: Point-by-point action plan calculating exact consecutive classes needed to reach safe standing',
+      '⚡ 1-Tap Lightning Hub: Tap any subject point or pop-up notification to immediately open the Daily Attendance Reconciliation modal',
+      '🔒 Zero-Data Loss Guarantee: All user timetables, subject attendance, and accounts are permanently preserved across deploys',
+      '🎯 Zero Fake Bunks: Fresh accounts start with 100% clean attendance without simulated absences',
+      '🌓 Day/Night Theme Perfection: High-contrast dual theme support across admin panel and reconciliation modal'
     ]
   });
 });

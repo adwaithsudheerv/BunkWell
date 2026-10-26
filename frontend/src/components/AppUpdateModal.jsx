@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { Sparkles, RefreshCw, Download, X, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Sparkles, RefreshCw, Download, X, ChevronRight, CheckCircle2, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 // Current installed package version in build
-export const CURRENT_APP_VERSION = '1.3.2';
-export const CURRENT_VERSION_CODE = 15;
+export const CURRENT_APP_VERSION = '1.3.3';
+export const CURRENT_VERSION_CODE = 16;
 
 // Compares semantic versions (e.g., '1.0.0' vs '1.3.2')
 export function isVersionOutdated(currentVer, latestVer, currentCode = CURRENT_VERSION_CODE, latestCode = 15) {
@@ -86,7 +86,10 @@ export default function AppUpdateNotifier() {
           icon: '/icon-192.png',
           data: { url: downloadUrl }
         });
-        notif.onclick = () => window.open(downloadUrl, '_blank');
+        notif.onclick = () => {
+          window.focus();
+          window.dispatchEvent(new CustomEvent('open-daily-wrapup'));
+        };
       } catch (e) {}
     }
   };
@@ -126,9 +129,13 @@ export default function AppUpdateNotifier() {
     let listenerHandle;
     if (Capacitor.isNativePlatform()) {
       LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
-        if (action.notification.id === 8888 || action.notification.extra?.url) {
+        if (action.notification.extra?.action === 'wrapup' || action.notification.id === 7777) {
+          window.dispatchEvent(new CustomEvent('open-daily-wrapup'));
+        } else if (action.notification.id === 8888 || action.notification.extra?.url) {
           const downloadUrl = action.notification.extra?.url || 'https://bunkwell.onrender.com/BunkClub.apk';
           window.open(downloadUrl, '_system');
+        } else {
+          window.dispatchEvent(new CustomEvent('open-daily-wrapup'));
         }
       }).then(handle => {
         listenerHandle = handle;
@@ -223,8 +230,24 @@ export default function AppUpdateNotifier() {
           </div>
         )}
 
+        {/* Quick Link to Lightning Point Reconciliation */}
+        <div className="mt-2.5 pt-2.5 border-t border-blue-500/20">
+          <button
+            onClick={() => {
+              setDismissed(true);
+              window.dispatchEvent(new CustomEvent('open-daily-wrapup'));
+            }}
+            type="button"
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-95 text-white font-extrabold text-[11px] shadow-sm shadow-blue-500/25 transition-all border border-blue-400/30"
+            title="Open Daily Attendance Reconciliation to apply classes attended"
+          >
+            <Zap size={13} className="fill-white text-amber-300" />
+            <span>⚡ Open Lightning Point (Apply Attended Classes)</span>
+          </button>
+        </div>
+
         {/* Action Button */}
-        <div className="mt-3.5 flex items-center gap-2">
+        <div className="mt-3 flex items-center gap-2">
           <button
             onClick={handleApplyUpdate}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all"

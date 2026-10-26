@@ -55,6 +55,14 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [wrapUpOpen, setWrapUpOpen] = useState(false);
 
+  // Global listener: allows opening the lightning point (DailyWrapUpModal) from any component,
+  // notifications, popups, or deficit summary cards.
+  useEffect(() => {
+    const handleOpen = () => setWrapUpOpen(true);
+    window.addEventListener('open-daily-wrapup', handleOpen);
+    return () => window.removeEventListener('open-daily-wrapup', handleOpen);
+  }, []);
+
   // Evening 6:00 PM auto pop-up reconciliation check
   useEffect(() => {
     try {

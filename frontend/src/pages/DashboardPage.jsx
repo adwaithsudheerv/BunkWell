@@ -12,6 +12,7 @@ import { Capacitor } from '@capacitor/core';
 import OnboardingModal from '../components/OnboardingModal';
 import QuickBunkSimulator from '../components/QuickBunkSimulator';
 import ShareTimetableModal from '../components/ShareTimetableModal';
+import AttendanceRecoveryRadar, { openDailyWrapUp } from '../components/AttendanceRecoveryRadar';
 
 function SubjectCard({ subject, target, onUpdate }) {
   const [bunkExpanded, setBunkExpanded] = useState(false);
@@ -242,6 +243,32 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* 1-Tap Quick Attendance Reconcile Banner (Takes user directly to the Lightning Point) */}
+      <div
+        onClick={openDailyWrapUp}
+        className="cursor-pointer p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-600/15 via-indigo-600/15 to-blue-500/10 border border-blue-500/30 hover:border-blue-500/60 transition-all flex items-center justify-between gap-3 group shadow-sm active:scale-[0.99]"
+        title="Tap here to open the Lightning Point and apply today's attended classes"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-600/30 group-hover:scale-110 transition-transform flex-shrink-0">
+            <Zap size={18} className="fill-white text-amber-300" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm font-black tracking-tight flex items-center gap-2 truncate">
+              <span>⚡ Daily Reconciliation Hub (Lightning Point)</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">1-Tap Apply</span>
+            </p>
+            <p className="text-[11px] text-slate-400 truncate">
+              Tap here to instantly mark today's classes attended, bunked, or swapped.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 text-xs font-bold text-blue-400 group-hover:translate-x-1 transition-transform flex-shrink-0">
+          <span>Reconcile</span>
+          <ChevronRight size={14} />
+        </div>
+      </div>
+
       {/* Target & Overall Attendance Hero (Inspired by Reference Photo) */}
       <div className="glass-card rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 border border-white/10">
         <div className="flex items-center gap-5">
@@ -301,6 +328,14 @@ export default function DashboardPage() {
           <p className="text-2xl sm:text-3xl font-black text-blue-500 mt-1">{analytics?.totalCompleted ?? 0}</p>
         </div>
       </div>
+
+      {/* Point-wise Attendance Recovery Radar (Deficit Action Plan & Lightning Point trigger) */}
+      {analytics?.subjects && analytics.subjects.length > 0 && (
+        <AttendanceRecoveryRadar
+          subjects={analytics.subjects}
+          target={target}
+        />
+      )}
 
       {/* Quick Bunk Simulator */}
       {analytics?.subjects && analytics.subjects.length > 0 && (

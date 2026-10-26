@@ -3,9 +3,10 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
   Plus, Trash2, Edit3, X, Palette, GraduationCap, CheckCircle2,
-  XCircle, ChevronDown, ChevronUp, Calendar, Clock, Sparkles
+  XCircle, ChevronDown, ChevronUp, Calendar, Clock, Sparkles, Zap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import AttendanceRecoveryRadar, { openDailyWrapUp } from '../components/AttendanceRecoveryRadar';
 
 const COLORS = [
   '#0047FF', '#2563eb', '#06b6d4', '#10b981', '#8b5cf6',
@@ -254,12 +255,22 @@ export default function SubjectsPage() {
             {subjects.length} registered subject{subjects.length !== 1 ? 's' : ''} · Target: {target}%
           </p>
         </div>
-        <button
-          onClick={() => setModal('add')}
-          className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25 active:scale-95"
-        >
-          <Plus size={16} /> Add Subject
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={openDailyWrapUp}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25 active:scale-95"
+            title="Open Daily Attendance Reconciliation to apply classes attended"
+          >
+            <Zap size={15} className="fill-white text-amber-300" />
+            <span>⚡ Daily Wrap-Up</span>
+          </button>
+          <button
+            onClick={() => setModal('add')}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-all border border-white/10 active:scale-95"
+          >
+            <Plus size={16} /> Add Subject
+          </button>
+        </div>
       </div>
 
       {/* Top 3 Summary Stats (Matching Reference Photo) */}
@@ -278,6 +289,14 @@ export default function SubjectsPage() {
             <p className="text-2xl font-black text-blue-500 mt-1">{overview.totalCompleted ?? 0}</p>
           </div>
         </div>
+      )}
+
+      {/* Point-wise Attendance Recovery Radar (Deficit Action Plan & Lightning Point trigger) */}
+      {overview?.subjects && overview.subjects.length > 0 && (
+        <AttendanceRecoveryRadar
+          subjects={overview.subjects}
+          target={target}
+        />
       )}
 
       {loading ? (
