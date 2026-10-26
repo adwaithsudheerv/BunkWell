@@ -3,15 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
   LayoutDashboard, CalendarDays, ClipboardCheck, BarChart3,
-  BookOpen, User, LogOut, Menu, X, Sun, Moon
+  BookOpen, User, LogOut, Menu, X, Sun, Moon, Zap
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Capacitor } from '@capacitor/core';
 import InstallPWAButton from './InstallPWAButton';
-import BunkBotModal from './BunkBotModal';
+import DailyWrapUpModal from './DailyWrapUpModal';
 import AppUpdateModal from './AppUpdateModal';
-import { Sparkles, Bot } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -55,7 +54,25 @@ export default function Layout() {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [bunkBotOpen, setBunkBotOpen] = useState(false);
+  const [wrapUpOpen, setWrapUpOpen] = useState(false);
+
+  // Evening 6:00 PM auto pop-up reconciliation check
+  useEffect(() => {
+    try {
+      const now = new Date();
+      const hourKolkata = parseInt(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' }).format(now), 10);
+      const dateKey = now.toISOString().split('T')[0];
+      const hasDismissedToday = localStorage.getItem('wrapup_prompt_' + dateKey) === 'true';
+      const isAlreadyDone = localStorage.getItem('wrapup_done_' + dateKey) === 'true';
+
+      if (hourKolkata >= 18 && !hasDismissedToday && !isAlreadyDone) {
+        setWrapUpOpen(true);
+        localStorage.setItem('wrapup_prompt_' + dateKey, 'true');
+      }
+    } catch (e) {
+      console.warn('Auto wrap-up check error:', e);
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -274,14 +291,14 @@ export default function Layout() {
           <span>Today</span>
         </NavLink>
 
-        {/* Center Hero BunkBot AI Button */}
+        {/* Center Hero Daily Wrap-Up Button */}
         <button
           type="button"
-          onClick={() => setBunkBotOpen(true)}
+          onClick={() => setWrapUpOpen(true)}
           className="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/40 active:scale-90 transition-all border-2 border-[#090b0e] flex-shrink-0"
-          title="Ask BunkBot AI"
+          title="Daily Attendance Reconciliation"
         >
-          <Sparkles size={20} />
+          <Zap size={20} className="fill-white" />
         </button>
 
         <NavLink
@@ -309,17 +326,17 @@ export default function Layout() {
         </NavLink>
       </nav>
 
-      {/* Floating BunkBot AI Button (Desktop Only) */}
+      {/* Floating Daily Wrap-Up Button (Desktop Only) */}
       <button
-        onClick={() => setBunkBotOpen(true)}
+        onClick={() => setWrapUpOpen(true)}
         className="hidden lg:flex fixed bottom-6 right-6 z-40 items-center gap-2 px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-xl shadow-blue-500/35 active:scale-95 transition-all hover:scale-105 border border-blue-400/30"
-        title="Ask BunkBot AI"
+        title="1-Tap Attendance Reconcile"
       >
-        <Sparkles size={15} />
-        <span>Ask BunkBot AI</span>
+        <Zap size={15} className="fill-white" />
+        <span>Daily Wrap-Up</span>
       </button>
 
-      <BunkBotModal isOpen={bunkBotOpen} onClose={() => setBunkBotOpen(false)} />
+      <DailyWrapUpModal isOpen={wrapUpOpen} onClose={() => setWrapUpOpen(false)} />
       <AppUpdateModal />
     </div>
   );

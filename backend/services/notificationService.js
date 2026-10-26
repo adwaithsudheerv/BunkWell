@@ -21,31 +21,39 @@ async function sendPushToUser(user, payload) {
 
 async function sendMorningNotifications() {
   try {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const today = days[new Date().getDay()];
+    const now = new Date();
+    const kolkataDay = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' }).format(now);
     const users = await User.find({ notificationsEnabled: true });
 
     for (const user of users) {
       const timetable = await Timetable.findOne({ userId: user._id, isActive: true });
-      if (!timetable) continue;
-      const daySchedule = timetable.days.find(d => d.day === today);
-      const hasPeriods = daySchedule && daySchedule.periods && daySchedule.periods.length > 0;
+      const daySchedule = timetable ? timetable.days.find(d => d.day.toLowerCase() === kolkataDay.toLowerCase()) : null;
+      const periods = daySchedule && daySchedule.periods ? daySchedule.periods.filter(p => p.subjectName) : [];
+      const hasPeriods = periods.length > 0;
+
+      let body = '';
+      if (hasPeriods) {
+        const periodSummary = periods
+          .map(p => `${p.subjectName}${p.startTime ? ` (${p.startTime})` : ''}`)
+          .slice(0, 4)
+          .join(', ');
+        body = `You have ${periods.length} class(es) today: ${periodSummary}${periods.length > 4 ? '...' : ''}. Tap to view schedule.`;
+      } else {
+        body = `No classes scheduled for today (${kolkataDay}). Enjoy your day off! 🎉`;
+      }
 
       await sendPushToUser(user, {
-        title: `🌅 Good Morning, ${user.name.split(' ')[0]}!`,
-        body: hasPeriods
-          ? `You have ${daySchedule.periods.length} period(s) today. Do you have classes? Tap to mark.`
-          : `No classes scheduled for ${today}. Enjoy your day! 🎉`,
+        title: hasPeriods ? `🌅 Today's Classes (${kolkataDay})` : `🎉 No Classes Today!`,
+        body,
         icon: '/icon-192.png',
-        badge: '/badge-72.png',
-        data: { type: 'morning_check', url: '/attendance/today' },
+        badge: '/icon-192.png',
+        data: { type: 'morning_schedule', url: '/attendance/today' },
         actions: hasPeriods ? [
-          { action: 'yes', title: '✅ Yes, I have classes' },
-          { action: 'no', title: '❌ No classes today' }
+          { action: 'view_today', title: '📅 View Schedule' }
         ] : [],
       });
     }
-    console.log(`[CRON] Morning notifications sent to ${users.length} users`);
+    console.log(`[CRON] Morning 8:00 AM notifications sent to ${users.length} users`);
   } catch (err) {
     console.error('[CRON] Morning notification error:', err);
   }
@@ -70,42 +78,28 @@ async function sendPeriodEndNotifications(userId, periodNumber) {
 async function sendEveningNotifications() {
   try {
     const users = await User.find({ notificationsEnabled: true });
-    const target = 80;
+    const now = new Date();
+    const kolkataDay = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' }).format(now);
 
     for (const user of users) {
-      const subjects = await Subject.find({ userId: user._id, isActive: true });
-      const canBunkList = [];
-      const dangerList = [];
-
-      for (const s of subjects) {
-        const eligible = s.totalClasses - s.cancelledClasses;
-        const percentage = eligible > 0 ? (s.attendedClasses / eligible) * 100 : 100;
-        const userTarget = user.attendanceTarget || target;
-
-        if (percentage < userTarget) {
-          dangerList.push(`${s.name} (${percentage.toFixed(0)}%)`);
-        } else {
-          // Can they bunk next class?
-          const nextEligible = eligible + 1;
-          const ifAbsent = (s.attendedClasses / nextEligible) * 100;
-          if (ifAbsent >= userTarget) canBunkList.push(s.name);
-        }
-      }
-
-      let body = '';
-      if (canBunkList.length) body += `✅ Can bunk: ${canBunkList.slice(0, 3).join(', ')}. `;
-      if (dangerList.length) body += `⚠️ Low attendance: ${dangerList.slice(0, 3).join(', ')}.`;
-      if (!body) body = 'All subjects are on track! Keep it up! 🎓';
+      const timetable = await Timetable.findOne({ userId: user._id, isActive: true });
+      const daySchedule = timetable ? timetable.days.find(d => d.day.toLowerCase() === kolkataDay.toLowerCase()) : null;
+      const count = (daySchedule && daySchedule.periods) ? daySchedule.periods.filter(p => p.subjectName).length : 0;
 
       await sendPushToUser(user, {
-        title: `📊 Today's BunkClub Summary`,
-        body,
+        title: `⚡ Daily Wrap-Up: Were today's classes taken?`,
+        body: count > 0
+          ? `Reconcile today's ${count} class(es) in 1 tap: mark attended, cancelled, or swapped with other subjects.`
+          : `Did you have any extra or substitute classes today? Tap to record your attendance.`,
         icon: '/icon-192.png',
         badge: '/icon-192.png',
-        data: { type: 'evening_summary', url: '/analytics' },
+        data: { type: 'evening_reconciliation', openWrapUp: true, url: '/attendance/today' },
+        actions: [
+          { action: 'open_wrapup', title: '⚡ 1-Tap Reconcile' }
+        ],
       });
     }
-    console.log(`[CRON] Evening summaries sent to ${users.length} users`);
+    console.log(`[CRON] Evening 6:00 PM reconciliation notifications sent to ${users.length} users`);
   } catch (err) {
     console.error('[CRON] Evening notification error:', err);
   }

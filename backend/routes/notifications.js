@@ -67,17 +67,17 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.2.7',
-    versionCode: 10,
+    latestVersion: '1.2.8',
+    versionCode: 11,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🚀 BunkClub v1.2.7 Update Available',
-    message: 'New Update: Exclusive Master Admin Channel with user details, IDs, passwords & timetable inspection!',
+    title: '🚀 BunkClub v1.2.8 Update Available',
+    message: 'New Update: Automated 8:00 AM class reminders, 6:00 PM 1-tap evening reconciliation & daily wrap-up!',
     changelog: [
-      'Master Admin Channel: Completely separated interface dedicated strictly to user details, IDs, passwords, and timetable schedules',
-      'Timetable: Auto-syncs subjects and today periods directly into attendance upon timetable add/save',
-      'Share Code: Auto-generated & saved in Admin Vault; revealed to student upon tapping "Generate Full Timetable Share Code"',
-      'Official Timetable (Code: BC-1139): 1-click import for all 15 MCA Section A subjects and full Monday-Saturday schedule'
+      'Automated Morning 8:00 AM Notification: Informs you whether you have classes today with your complete daily schedule',
+      'Automated Evening 6:00 PM Reconciliation: 1-tap pop-up & notification to mark periods attended, cancelled, or swapped',
+      'Daily Wrap-Up Center Hero: Replaced experimental AI with deterministic 1-tap attendance reconciliation & safe-bunk buffer calculator',
+      'Offline Native Alarms: Android notifications scheduled reliably on device for 8:00 AM and 6:00 PM'
     ]
   });
 });
@@ -87,8 +87,8 @@ router.post('/broadcast-update', async (req, res) => {
   try {
     const users = await User.find({ 'pushSubscriptions.0': { $exists: true } });
     const payload = JSON.stringify({
-      title: '🚀 BunkClub v1.2.7 Update Available',
-      body: 'Master Admin Channel & user directory ready. Tap to update!',
+      title: '🚀 BunkClub v1.2.8 Update Available',
+      body: 'Automated 8:00 AM class schedule & 6:00 PM 1-tap daily reconciliation ready. Tap to update!',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: {

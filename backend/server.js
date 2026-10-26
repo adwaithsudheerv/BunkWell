@@ -72,13 +72,13 @@ setInterval(() => {
 }, 10 * 60 * 1000); // 10 minutes
 
 // CRON JOBS
-// Morning notification: 7:00 AM every day Mon-Sat
-cron.schedule('0 7 * * 1-6', () => {
+// Morning notification: 8:00 AM every day (Asia/Kolkata)
+cron.schedule('0 8 * * *', () => {
   sendMorningNotifications();
 }, { timezone: 'Asia/Kolkata' });
 
-// Evening summary: 6:00 PM every day Mon-Sat
-cron.schedule('0 18 * * 1-6', () => {
+// Evening reconciliation prompt: 6:00 PM every day (Asia/Kolkata)
+cron.schedule('0 18 * * *', () => {
   sendEveningNotifications();
 }, { timezone: 'Asia/Kolkata' });
 

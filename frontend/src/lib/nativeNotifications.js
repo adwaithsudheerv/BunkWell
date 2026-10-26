@@ -114,47 +114,84 @@ export async function scheduleScheduleReminders(timetable) {
 
     for (const d of timetable.days) {
       const dayNum = daysMap[d.day];
-      if (!dayNum || !d.periods || d.periods.length === 0) continue;
+      if (!dayNum) continue;
 
-      // 1. Morning 08:00 AM summary on this day of week
-      const subjectNames = d.periods.map(p => p.subjectName).filter(Boolean).slice(0, 3).join(', ');
-      notificationsToSchedule.push({
-        id: notifId++,
-        title: `🌅 Good Morning! Classes for ${d.day}`,
-        body: `You have ${d.periods.length} class(es) today (${subjectNames}...). Tap to check your bunk budget!`,
-        schedule: {
-          on: {
-            weekday: dayNum,
-            hour: 8,
-            minute: 0
-          },
-          allowWhileIdle: true
-        },
-        channelId: 'bunkclub_alerts'
-      });
+      const activePeriods = (d.periods || []).filter(p => p.subjectName);
+      const hasClasses = activePeriods.length > 0;
 
-      // 2. Schedule reminders 10 minutes before classes
-      for (const p of d.periods) {
-        if (!p.startTime) continue;
-        const [h, m] = p.startTime.split(':').map(Number);
-        if (isNaN(h) || isNaN(m)) continue;
-
-        let alertHour = h;
-        let alertMin = m - 10;
-        if (alertMin < 0) {
-          alertHour = Math.max(0, h - 1);
-          alertMin = 50;
-        }
-
+      // 1. Morning 08:00 AM notification on this day of week
+      if (hasClasses) {
+        const subjectNames = activePeriods.map(p => p.subjectName).filter(Boolean).slice(0, 3).join(', ');
         notificationsToSchedule.push({
           id: notifId++,
-          title: `⏰ Upcoming: ${p.subjectName || 'Class'} at ${p.startTime}`,
-          body: `Period ${p.periodNumber} is about to begin. Check your safe bunk cushion before skipping.`,
+          title: `🌅 Today's Classes (${d.day})`,
+          body: `You have ${activePeriods.length} class(es) today: ${subjectNames}. Tap to check your safe bunks!`,
           schedule: {
             on: {
               weekday: dayNum,
-              hour: alertHour,
-              minute: alertMin
+              hour: 8,
+              minute: 0
+            },
+            allowWhileIdle: true
+          },
+          channelId: 'bunkclub_alerts'
+        });
+
+        // 2. Evening 06:00 PM (18:00) 1-Tap Reconciliation notification
+        notificationsToSchedule.push({
+          id: notifId++,
+          title: `⚡ Daily Wrap-Up: Were classes taken today?`,
+          body: `1-Tap reconcile: Mark today's ${activePeriods.length} period(s) attended, cancelled, or swapped.`,
+          schedule: {
+            on: {
+              weekday: dayNum,
+              hour: 18,
+              minute: 0
+            },
+            allowWhileIdle: true
+          },
+          channelId: 'bunkclub_alerts'
+        });
+
+        // 3. Schedule reminders 10 minutes before classes
+        for (const p of activePeriods) {
+          if (!p.startTime) continue;
+          const [h, m] = p.startTime.split(':').map(Number);
+          if (isNaN(h) || isNaN(m)) continue;
+
+          let alertHour = h;
+          let alertMin = m - 10;
+          if (alertMin < 0) {
+            alertHour = Math.max(0, h - 1);
+            alertMin = 50;
+          }
+
+          notificationsToSchedule.push({
+            id: notifId++,
+            title: `⏰ Upcoming: ${p.subjectName || 'Class'} at ${p.startTime}`,
+            body: `Period ${p.periodNumber} is about to begin. Check your safe bunk cushion before skipping.`,
+            schedule: {
+              on: {
+                weekday: dayNum,
+                hour: alertHour,
+                minute: alertMin
+              },
+              allowWhileIdle: true
+            },
+            channelId: 'bunkclub_alerts'
+          });
+        }
+      } else {
+        // Free day morning alert
+        notificationsToSchedule.push({
+          id: notifId++,
+          title: `🎉 No Classes Today! (${d.day})`,
+          body: `No classes scheduled for today. Enjoy your day off!`,
+          schedule: {
+            on: {
+              weekday: dayNum,
+              hour: 8,
+              minute: 0
             },
             allowWhileIdle: true
           },

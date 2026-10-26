@@ -7,7 +7,7 @@ import {
   CalendarDays, TrendingUp, HelpCircle, Plus, Minus
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import BunkBotModal from '../components/BunkBotModal';
+import DailyWrapUpModal from '../components/DailyWrapUpModal';
 
 const PRESETS = [
   { label: '3M (Trimester)', total: 3 },
@@ -25,7 +25,7 @@ export default function AnalyticsPage() {
   const [semesterMonths, setSemesterMonths] = useState(6);
   const [monthsElapsed, setMonthsElapsed] = useState(2);
   const [savingMonths, setSavingMonths] = useState(false);
-  const [bunkBotOpen, setBunkBotOpen] = useState(false);
+  const [wrapUpOpen, setWrapUpOpen] = useState(false);
   const target = user?.attendanceTarget || 80;
 
   const loadData = async () => {
@@ -95,11 +95,11 @@ export default function AnalyticsPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setBunkBotOpen(true)}
+            onClick={() => setWrapUpOpen(true)}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25 active:scale-95"
           >
-            <Sparkles size={14} />
-            <span>Ask BunkBot AI</span>
+            <Zap size={14} className="fill-white" />
+            <span>Daily Wrap-Up</span>
           </button>
 
           {bunkWays && (
@@ -280,10 +280,10 @@ export default function AnalyticsPage() {
               </span>
               <button
                 type="button"
-                onClick={() => setBunkBotOpen(true)}
+                onClick={() => setWrapUpOpen(true)}
                 className="text-blue-400 hover:text-blue-300 font-bold inline-flex items-center gap-1"
               >
-                <span>Ask BunkBot for Personalized Strategy</span>
+                <span>Reconcile Today's Attendance</span>
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -519,8 +519,8 @@ export default function AnalyticsPage() {
         </>
       )}
 
-      {/* BunkBot AI Modal */}
-      <BunkBotModal isOpen={bunkBotOpen} onClose={() => setBunkBotOpen(false)} />
+      {/* Daily Attendance Reconciliation Modal */}
+      <DailyWrapUpModal isOpen={wrapUpOpen} onClose={() => setWrapUpOpen(false)} onRefresh={loadData} />
     </div>
   );
 }
