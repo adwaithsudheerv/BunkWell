@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
-  CalendarDays, Plus, Save, Trash2, Clock, BookOpen, Users,
-  Copy, Check, LayoutGrid, List, Sparkles, X
+  CalendarDays, Plus, Save, Clock, BookOpen, Users,
+  Check, LayoutGrid, X
 } from 'lucide-react';
 import ShareTimetableModal from '../components/ShareTimetableModal';
 import { scheduleScheduleReminders } from '../lib/nativeNotifications';
@@ -28,7 +28,8 @@ export const TIME_BLOCKS = [
 export default function TimetablePage() {
   const [subjects, setSubjects] = useState([]);
   const [timetableId, setTimetableId] = useState(null);
-  const [semName, setSemName] = useState('Semester 1');
+  const [semName, setSemName] = useState('MCA Semester 1');
+  const [section, setSection] = useState('A');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -59,7 +60,8 @@ export default function TimetablePage() {
       if (ttRes.data.timetable) {
         const tt = ttRes.data.timetable;
         setTimetableId(tt._id);
-        setSemName(tt.semesterName || 'Semester 1');
+        setSemName(tt.semesterName || 'MCA Semester 1');
+        setSection(tt.section || 'A');
 
         const newSched = {};
         DAYS.forEach(day => {
@@ -107,10 +109,6 @@ export default function TimetablePage() {
 
   useEffect(() => {
     loadData();
-    // Auto-select current day of week if Mon-Sat
-    const daysArr = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const cur = daysArr[new Date().getDay()];
-    if (DAYS.includes(cur)) setActiveDay(cur);
   }, []);
 
   const handleAssignSubject = (day, slotIdx, subject) => {
@@ -137,31 +135,6 @@ export default function TimetablePage() {
     setSlotPickerModal(null);
   };
 
-  const handleCopyDay = (targetDay) => {
-    if (!window.confirm(`Copy all classes from ${activeDay} to ${targetDay}?`)) return;
-    setSchedule(prev => ({
-      ...prev,
-      [targetDay]: prev[activeDay].map(slot => ({ ...slot }))
-    }));
-    toast.success(`Schedule copied from ${activeDay} to ${targetDay}!`);
-  };
-
-  const handleClearDay = (day) => {
-    if (!window.confirm(`Clear all scheduled classes for ${day}?`)) return;
-    setSchedule(prev => ({
-      ...prev,
-      [day]: TIME_BLOCKS.map(tb => ({
-        periodNumber: tb.periodNumber,
-        startTime: tb.startTime,
-        endTime: tb.endTime,
-        subjectId: '',
-        subjectName: '',
-        color: '',
-      }))
-    }));
-    toast.success(`Cleared ${day}`);
-  };
-
   const saveTimetable = async () => {
     setSaving(true);
     try {
@@ -185,6 +158,7 @@ export default function TimetablePage() {
 
       const payload = {
         semesterName: semName,
+        section,
         days: daysPayload,
       };
 
@@ -211,8 +185,6 @@ export default function TimetablePage() {
       </div>
     );
   }
-
-  const activePeriodsCount = schedule[activeDay]?.filter(s => s.subjectName).length || 0;
 
   return (
     <div className="p-4 lg:p-6 space-y-6 animate-[fadeIn_0.3s_ease-out]">
@@ -243,16 +215,39 @@ export default function TimetablePage() {
         </div>
       </div>
 
-      {/* Semester Name input */}
-      <div className="glass-card rounded-xl px-4 py-2.5 flex items-center gap-3 border border-white/10">
-        <BookOpen size={18} className="text-blue-500 flex-shrink-0" />
-        <input
-          type="text"
-          value={semName}
-          onChange={e => setSemName(e.target.value)}
-          placeholder="Semester name (e.g. Semester 3 - 2026)"
-          className="flex-1 bg-transparent placeholder-slate-500 focus:outline-none text-sm font-medium"
-        />
+      {/* Timetable Name & Section Inputs */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="sm:col-span-2 glass-card rounded-xl px-4 py-2.5 flex items-center gap-3 border border-white/10">
+          <BookOpen size={18} className="text-blue-500 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-0.5">
+              Timetable Name
+            </label>
+            <input
+              type="text"
+              value={semName}
+              onChange={e => setSemName(e.target.value)}
+              placeholder="Timetable name (e.g. MCA Semester 1)"
+              className="w-full bg-transparent placeholder-slate-500 focus:outline-none text-sm font-semibold"
+            />
+          </div>
+        </div>
+
+        <div className="glass-card rounded-xl px-4 py-2.5 flex items-center gap-3 border border-white/10">
+          <Users size={18} className="text-blue-500 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-0.5">
+              Section
+            </label>
+            <input
+              type="text"
+              value={section}
+              onChange={e => setSection(e.target.value)}
+              placeholder="Section (e.g. A, B, C)"
+              className="w-full bg-transparent placeholder-slate-500 focus:outline-none text-sm font-semibold"
+            />
+          </div>
+        </div>
       </div>
 
       {subjects.length === 0 && (
@@ -269,14 +264,14 @@ export default function TimetablePage() {
         </div>
       )}
 
-      {/* Weekly Schedule Grid Matrix */}
+      {/* Week-wise Timetable Matrix */}
       <div className="glass-card rounded-2xl overflow-hidden border border-white/10">
         <div className="p-3.5 bg-white/5 border-b border-white/10 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-300">
-            Weekly Schedule Matrix (Click any slot to assign or edit subject)
+            Week-wise Timetable (Click any slot to assign or edit subject)
           </span>
           <span className="text-[11px] text-blue-400 font-medium">
-            Monday to Saturday
+            Section {section || 'A'} · Monday to Saturday
           </span>
         </div>
         <div className="overflow-x-auto">

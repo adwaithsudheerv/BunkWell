@@ -18,6 +18,7 @@ const daySchema = new mongoose.Schema({
 const timetableSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   semesterName: { type: String, default: 'Semester 1' },
+  section: { type: String, default: 'A' },
   semesterNumber: { type: Number, default: 1 },
   academicYear: { type: String },
   startDate: { type: Date },

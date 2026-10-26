@@ -1,0 +1,1053 @@
+{
+  "version": "1.0",
+  "lockedAt": "2026-10-26T00:31:28.491Z",
+  "counts": {
+    "users": 3,
+    "subjects": 9,
+    "timetables": 2,
+    "attendanceRecords": 26
+  },
+  "data": {
+    "users": [
+      {
+        "_id": "6addb441b0694528fad4cf49",
+        "username": "adwaith",
+        "password": "$2a$12$WG7n8L.hzk09V0E9B/sdUeFRxhjKxuB.pQTTI2sDA5buuGCTElEnq",
+        "name": "Adwaith",
+        "studentId": "MY.AC.P2MCA26001",
+        "college": "Amrita Vishwa vidyapeedham",
+        "department": "CS",
+        "semester": 1,
+        "year": 1,
+        "attendanceTarget": 80,
+        "pushSubscriptions": [],
+        "notificationsEnabled": true,
+        "createdAt": "2026-10-25T07:48:17.857Z",
+        "updatedAt": "2026-10-25T07:48:18.397Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08ab1946f3ee2a89a703",
+        "username": "verify_1792936106970",
+        "password": "$2a$12$r0ruEG1j1m7Cfn1DfcjbMOe26zXRkH.HXWSFNE1TWiByJtMyzUE2.",
+        "name": "Priya Sharma",
+        "studentId": "STU-2371",
+        "college": "IIT Madras",
+        "department": "Computer Science",
+        "semester": 4,
+        "year": 2,
+        "attendanceTarget": 80,
+        "pushSubscriptions": [],
+        "notificationsEnabled": true,
+        "createdAt": "2026-10-25T13:48:27.462Z",
+        "updatedAt": "2026-10-25T13:48:27.810Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d3956970361b73d4ac",
+        "username": "verify_1792936147771",
+        "password": "$2a$12$fkOvPiFx/j3neq48KMog0e2apqsclnyI02ERil7fsaKkVjnR6wqBK",
+        "name": "Priya Sharma",
+        "studentId": "STU-6612",
+        "college": "IIT Madras",
+        "department": "Artificial Intelligence",
+        "semester": 4,
+        "year": 2,
+        "attendanceTarget": 85,
+        "pushSubscriptions": [],
+        "notificationsEnabled": true,
+        "createdAt": "2026-10-25T13:49:07.814Z",
+        "updatedAt": "2026-10-25T13:49:08.191Z",
+        "__v": 0
+      }
+    ],
+    "subjects": [
+      {
+        "_id": "6addb490b0694528fad4cf58",
+        "userId": "6addb441b0694528fad4cf49",
+        "name": "dsa",
+        "code": "cs201",
+        "faculty": "manohar",
+        "color": "#8b5cf6",
+        "type": "theory",
+        "totalClasses": 0,
+        "attendedClasses": 0,
+        "cancelledClasses": 0,
+        "isActive": true,
+        "createdAt": "2026-10-25T07:49:36.901Z",
+        "__v": 0
+      },
+      {
+        "_id": "6addb4abb0694528fad4cf5b",
+        "userId": "6addb441b0694528fad4cf49",
+        "name": "maths",
+        "code": "c221",
+        "faculty": "vijaylakshmi",
+        "color": "#06b6d4",
+        "type": "theory",
+        "totalClasses": 0,
+        "attendedClasses": 0,
+        "cancelledClasses": 0,
+        "isActive": true,
+        "createdAt": "2026-10-25T07:50:03.597Z",
+        "__v": 0
+      },
+      {
+        "_id": "6addb4c7b0694528fad4cf5e",
+        "userId": "6addb441b0694528fad4cf49",
+        "name": "dbms",
+        "code": "c5632",
+        "faculty": "pushpa",
+        "color": "#ec4899",
+        "type": "theory",
+        "totalClasses": 0,
+        "attendedClasses": 0,
+        "cancelledClasses": 0,
+        "isActive": true,
+        "createdAt": "2026-10-25T07:50:31.594Z",
+        "__v": 0
+      },
+      {
+        "_id": "6addb4e8b0694528fad4cf67",
+        "userId": "6addb441b0694528fad4cf49",
+        "name": "CI",
+        "code": "c754",
+        "faculty": "Priya",
+        "color": "#84cc16",
+        "type": "elective",
+        "totalClasses": 0,
+        "attendedClasses": 0,
+        "cancelledClasses": 0,
+        "isActive": true,
+        "createdAt": "2026-10-25T07:51:04.424Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4b4",
+        "userId": "6ade08d3956970361b73d4ac",
+        "name": "Data Structures & Algorithms",
+        "code": "CS301",
+        "faculty": "Dr. R. Sharma",
+        "color": "#3b82f6",
+        "type": "theory",
+        "totalClasses": 32,
+        "attendedClasses": 28,
+        "cancelledClasses": 2,
+        "isActive": true,
+        "createdAt": "2026-10-25T13:49:08.565Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4b5",
+        "userId": "6ade08d3956970361b73d4ac",
+        "name": "Operating Systems",
+        "code": "CS302",
+        "faculty": "Prof. K. Rao",
+        "color": "#10b981",
+        "type": "theory",
+        "totalClasses": 28,
+        "attendedClasses": 24,
+        "cancelledClasses": 1,
+        "isActive": true,
+        "createdAt": "2026-10-25T13:49:08.565Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4b6",
+        "userId": "6ade08d3956970361b73d4ac",
+        "name": "Database Management Systems",
+        "code": "CS303",
+        "faculty": "Dr. Anita Roy",
+        "color": "#ef4444",
+        "type": "theory",
+        "totalClasses": 30,
+        "attendedClasses": 22,
+        "cancelledClasses": 0,
+        "isActive": true,
+        "createdAt": "2026-10-25T13:49:08.566Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4b7",
+        "userId": "6ade08d3956970361b73d4ac",
+        "name": "Computer Networks",
+        "code": "CS304",
+        "faculty": "Prof. S. Patel",
+        "color": "#f59e0b",
+        "type": "theory",
+        "totalClasses": 26,
+        "attendedClasses": 22,
+        "cancelledClasses": 1,
+        "isActive": true,
+        "createdAt": "2026-10-25T13:49:08.566Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4b8",
+        "userId": "6ade08d3956970361b73d4ac",
+        "name": "AI & ML Laboratory",
+        "code": "CS305P",
+        "faculty": "Dr. V. Verma",
+        "color": "#8b5cf6",
+        "type": "lab",
+        "totalClasses": 15,
+        "attendedClasses": 15,
+        "cancelledClasses": 0,
+        "isActive": true,
+        "createdAt": "2026-10-25T13:49:08.566Z",
+        "__v": 0
+      }
+    ],
+    "timetables": [
+      {
+        "_id": "6addb5b9b0694528fad4cfaf",
+        "userId": "6addb441b0694528fad4cf49",
+        "semesterName": "Semester 1",
+        "semesterNumber": 1,
+        "defaultStartTime": "09:00",
+        "defaultPeriodDuration": 60,
+        "breakAfterPeriod": 3,
+        "breakDuration": 30,
+        "days": [
+          {
+            "day": "Monday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6addb4e8b0694528fad4cf67",
+                "subjectName": "CI",
+                "startTime": "09:00",
+                "endTime": "10:50",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfb1"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6addb4c7b0694528fad4cf5e",
+                "subjectName": "dbms",
+                "startTime": "10:50",
+                "endTime": "11:50",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfb2"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6addb490b0694528fad4cf58",
+                "subjectName": "dsa",
+                "startTime": "11:00",
+                "endTime": "12:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfb3"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6addb5b9b0694528fad4cfb0"
+          },
+          {
+            "day": "Tuesday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6addb490b0694528fad4cf58",
+                "subjectName": "dsa",
+                "startTime": "09:00",
+                "endTime": "10:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfb5"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6addb4abb0694528fad4cf5b",
+                "subjectName": "maths",
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfb6"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6addb4e8b0694528fad4cf67",
+                "subjectName": "CI",
+                "startTime": "11:00",
+                "endTime": "12:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfb7"
+              },
+              {
+                "periodNumber": 4,
+                "subjectId": "6addb4c7b0694528fad4cf5e",
+                "subjectName": "dbms",
+                "startTime": "13:00",
+                "endTime": "14:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfb8"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6addb5b9b0694528fad4cfb4"
+          },
+          {
+            "day": "Wednesday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6addb4abb0694528fad4cf5b",
+                "subjectName": "maths",
+                "startTime": "09:00",
+                "endTime": "10:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfba"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6addb4abb0694528fad4cf5b",
+                "subjectName": "maths",
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfbb"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6addb4e8b0694528fad4cf67",
+                "subjectName": "CI",
+                "startTime": "11:00",
+                "endTime": "12:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfbc"
+              },
+              {
+                "periodNumber": 4,
+                "subjectId": "6addb490b0694528fad4cf58",
+                "subjectName": "dsa",
+                "startTime": "13:00",
+                "endTime": "14:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfbd"
+              },
+              {
+                "periodNumber": 5,
+                "subjectId": "6addb4c7b0694528fad4cf5e",
+                "subjectName": "dbms",
+                "startTime": "14:00",
+                "endTime": "15:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfbe"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6addb5b9b0694528fad4cfb9"
+          },
+          {
+            "day": "Thursday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6addb4c7b0694528fad4cf5e",
+                "subjectName": "dbms",
+                "startTime": "09:00",
+                "endTime": "10:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfc0"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6addb4c7b0694528fad4cf5e",
+                "subjectName": "dbms",
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfc1"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6addb4abb0694528fad4cf5b",
+                "subjectName": "maths",
+                "startTime": "11:00",
+                "endTime": "12:00",
+                "isCustomTime": false,
+                "_id": "6addb5b9b0694528fad4cfc2"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6addb5b9b0694528fad4cfbf"
+          }
+        ],
+        "isActive": true,
+        "createdAt": "2026-10-25T07:54:33.331Z",
+        "updatedAt": "2026-10-25T07:54:33.342Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4bb",
+        "userId": "6ade08d3956970361b73d4ac",
+        "semesterName": "Semester 5 (2026)",
+        "semesterNumber": 1,
+        "defaultStartTime": "09:00",
+        "defaultPeriodDuration": 60,
+        "breakAfterPeriod": 3,
+        "breakDuration": 30,
+        "days": [
+          {
+            "day": "Monday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6ade08d4956970361b73d4b4",
+                "subjectName": "Data Structures & Algorithms",
+                "startTime": "09:00",
+                "endTime": "10:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4bd"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6ade08d4956970361b73d4b5",
+                "subjectName": "Operating Systems",
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4be"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6ade08d4956970361b73d4b6",
+                "subjectName": "Database Management Systems",
+                "startTime": "11:15",
+                "endTime": "12:15",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4bf"
+              },
+              {
+                "periodNumber": 4,
+                "subjectId": "6ade08d4956970361b73d4b7",
+                "subjectName": "Computer Networks",
+                "startTime": "13:00",
+                "endTime": "14:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4c0"
+              },
+              {
+                "periodNumber": 5,
+                "subjectId": "6ade08d4956970361b73d4b8",
+                "subjectName": "AI & ML Laboratory",
+                "startTime": "14:00",
+                "endTime": "15:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4c1"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6ade08d4956970361b73d4bc"
+          },
+          {
+            "day": "Tuesday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6ade08d4956970361b73d4b5",
+                "subjectName": "Operating Systems",
+                "startTime": "09:00",
+                "endTime": "10:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4c3"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6ade08d4956970361b73d4b6",
+                "subjectName": "Database Management Systems",
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4c4"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6ade08d4956970361b73d4b7",
+                "subjectName": "Computer Networks",
+                "startTime": "11:15",
+                "endTime": "12:15",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4c5"
+              },
+              {
+                "periodNumber": 4,
+                "subjectId": "6ade08d4956970361b73d4b8",
+                "subjectName": "AI & ML Laboratory",
+                "startTime": "13:00",
+                "endTime": "14:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4c6"
+              },
+              {
+                "periodNumber": 5,
+                "subjectId": "6ade08d4956970361b73d4b4",
+                "subjectName": "Data Structures & Algorithms",
+                "startTime": "14:00",
+                "endTime": "15:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4c7"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6ade08d4956970361b73d4c2"
+          },
+          {
+            "day": "Wednesday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6ade08d4956970361b73d4b6",
+                "subjectName": "Database Management Systems",
+                "startTime": "09:00",
+                "endTime": "10:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4c9"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6ade08d4956970361b73d4b7",
+                "subjectName": "Computer Networks",
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4ca"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6ade08d4956970361b73d4b8",
+                "subjectName": "AI & ML Laboratory",
+                "startTime": "11:15",
+                "endTime": "12:15",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4cb"
+              },
+              {
+                "periodNumber": 4,
+                "subjectId": "6ade08d4956970361b73d4b4",
+                "subjectName": "Data Structures & Algorithms",
+                "startTime": "13:00",
+                "endTime": "14:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4cc"
+              },
+              {
+                "periodNumber": 5,
+                "subjectId": "6ade08d4956970361b73d4b5",
+                "subjectName": "Operating Systems",
+                "startTime": "14:00",
+                "endTime": "15:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4cd"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6ade08d4956970361b73d4c8"
+          },
+          {
+            "day": "Thursday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6ade08d4956970361b73d4b7",
+                "subjectName": "Computer Networks",
+                "startTime": "09:00",
+                "endTime": "10:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4cf"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6ade08d4956970361b73d4b8",
+                "subjectName": "AI & ML Laboratory",
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4d0"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6ade08d4956970361b73d4b4",
+                "subjectName": "Data Structures & Algorithms",
+                "startTime": "11:15",
+                "endTime": "12:15",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4d1"
+              },
+              {
+                "periodNumber": 4,
+                "subjectId": "6ade08d4956970361b73d4b5",
+                "subjectName": "Operating Systems",
+                "startTime": "13:00",
+                "endTime": "14:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4d2"
+              },
+              {
+                "periodNumber": 5,
+                "subjectId": "6ade08d4956970361b73d4b6",
+                "subjectName": "Database Management Systems",
+                "startTime": "14:00",
+                "endTime": "15:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4d3"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6ade08d4956970361b73d4ce"
+          },
+          {
+            "day": "Friday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6ade08d4956970361b73d4b8",
+                "subjectName": "AI & ML Laboratory",
+                "startTime": "09:00",
+                "endTime": "10:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4d5"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6ade08d4956970361b73d4b4",
+                "subjectName": "Data Structures & Algorithms",
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4d6"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6ade08d4956970361b73d4b5",
+                "subjectName": "Operating Systems",
+                "startTime": "11:15",
+                "endTime": "12:15",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4d7"
+              },
+              {
+                "periodNumber": 4,
+                "subjectId": "6ade08d4956970361b73d4b6",
+                "subjectName": "Database Management Systems",
+                "startTime": "13:00",
+                "endTime": "14:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4d8"
+              },
+              {
+                "periodNumber": 5,
+                "subjectId": "6ade08d4956970361b73d4b7",
+                "subjectName": "Computer Networks",
+                "startTime": "14:00",
+                "endTime": "15:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4d9"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6ade08d4956970361b73d4d4"
+          },
+          {
+            "day": "Saturday",
+            "periods": [
+              {
+                "periodNumber": 1,
+                "subjectId": "6ade08d4956970361b73d4b4",
+                "subjectName": "Data Structures & Algorithms",
+                "startTime": "09:00",
+                "endTime": "10:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4db"
+              },
+              {
+                "periodNumber": 2,
+                "subjectId": "6ade08d4956970361b73d4b5",
+                "subjectName": "Operating Systems",
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4dc"
+              },
+              {
+                "periodNumber": 3,
+                "subjectId": "6ade08d4956970361b73d4b6",
+                "subjectName": "Database Management Systems",
+                "startTime": "11:15",
+                "endTime": "12:15",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4dd"
+              },
+              {
+                "periodNumber": 4,
+                "subjectId": "6ade08d4956970361b73d4b7",
+                "subjectName": "Computer Networks",
+                "startTime": "13:00",
+                "endTime": "14:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4de"
+              },
+              {
+                "periodNumber": 5,
+                "subjectId": "6ade08d4956970361b73d4b8",
+                "subjectName": "AI & ML Laboratory",
+                "startTime": "14:00",
+                "endTime": "15:00",
+                "isCustomTime": false,
+                "_id": "6ade08d4956970361b73d4df"
+              }
+            ],
+            "isHoliday": false,
+            "_id": "6ade08d4956970361b73d4da"
+          }
+        ],
+        "isActive": true,
+        "createdAt": "2026-10-25T13:49:08.582Z",
+        "updatedAt": "2026-10-25T13:49:08.588Z",
+        "__v": 0
+      }
+    ],
+    "attendanceRecords": [
+      {
+        "_id": "6ade08d4956970361b73d4e2",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b4",
+        "date": "2026-10-24T13:49:08.621Z",
+        "periodNumber": 1,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-24T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.621Z",
+        "updatedAt": "2026-10-25T13:49:08.621Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4e3",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b5",
+        "date": "2026-10-24T13:49:08.621Z",
+        "periodNumber": 2,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-24T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.622Z",
+        "updatedAt": "2026-10-25T13:49:08.622Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4e4",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b6",
+        "date": "2026-10-24T13:49:08.621Z",
+        "periodNumber": 3,
+        "status": "absent",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-24T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.622Z",
+        "updatedAt": "2026-10-25T13:49:08.622Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4e5",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b7",
+        "date": "2026-10-24T13:49:08.621Z",
+        "periodNumber": 4,
+        "status": "substitute",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-24T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.622Z",
+        "updatedAt": "2026-10-25T13:49:08.622Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4e6",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b8",
+        "date": "2026-10-24T13:49:08.621Z",
+        "periodNumber": 5,
+        "status": "present",
+        "substituteFaculty": "Prof. A. Kumar",
+        "markedAt": "2026-10-24T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.622Z",
+        "updatedAt": "2026-10-25T13:49:08.622Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4e7",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b4",
+        "date": "2026-10-23T13:49:08.621Z",
+        "periodNumber": 1,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-23T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.622Z",
+        "updatedAt": "2026-10-25T13:49:08.622Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4e8",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b5",
+        "date": "2026-10-23T13:49:08.621Z",
+        "periodNumber": 2,
+        "status": "absent",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-23T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.622Z",
+        "updatedAt": "2026-10-25T13:49:08.622Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4e9",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b6",
+        "date": "2026-10-23T13:49:08.621Z",
+        "periodNumber": 3,
+        "status": "substitute",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-23T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.622Z",
+        "updatedAt": "2026-10-25T13:49:08.622Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4ea",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b7",
+        "date": "2026-10-23T13:49:08.621Z",
+        "periodNumber": 4,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-23T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.622Z",
+        "updatedAt": "2026-10-25T13:49:08.622Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4eb",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b8",
+        "date": "2026-10-23T13:49:08.621Z",
+        "periodNumber": 5,
+        "status": "present",
+        "substituteFaculty": "Prof. A. Kumar",
+        "markedAt": "2026-10-23T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4ec",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b4",
+        "date": "2026-10-22T13:49:08.621Z",
+        "periodNumber": 1,
+        "status": "absent",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-22T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4ed",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b5",
+        "date": "2026-10-22T13:49:08.621Z",
+        "periodNumber": 2,
+        "status": "substitute",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-22T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4ee",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b6",
+        "date": "2026-10-22T13:49:08.621Z",
+        "periodNumber": 3,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-22T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4ef",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b7",
+        "date": "2026-10-22T13:49:08.621Z",
+        "periodNumber": 4,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-22T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f0",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b8",
+        "date": "2026-10-22T13:49:08.621Z",
+        "periodNumber": 5,
+        "status": "present",
+        "substituteFaculty": "Prof. A. Kumar",
+        "markedAt": "2026-10-22T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f1",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b4",
+        "date": "2026-10-21T13:49:08.621Z",
+        "periodNumber": 1,
+        "status": "substitute",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-21T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f2",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b5",
+        "date": "2026-10-21T13:49:08.621Z",
+        "periodNumber": 2,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-21T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f3",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b6",
+        "date": "2026-10-21T13:49:08.621Z",
+        "periodNumber": 3,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-21T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f4",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b7",
+        "date": "2026-10-21T13:49:08.621Z",
+        "periodNumber": 4,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-21T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f5",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b8",
+        "date": "2026-10-21T13:49:08.621Z",
+        "periodNumber": 5,
+        "status": "absent",
+        "substituteFaculty": "Prof. A. Kumar",
+        "markedAt": "2026-10-21T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f6",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b4",
+        "date": "2026-10-20T13:49:08.621Z",
+        "periodNumber": 1,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-20T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f7",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b5",
+        "date": "2026-10-20T13:49:08.621Z",
+        "periodNumber": 2,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-20T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f8",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b6",
+        "date": "2026-10-20T13:49:08.621Z",
+        "periodNumber": 3,
+        "status": "present",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-20T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4f9",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b7",
+        "date": "2026-10-20T13:49:08.621Z",
+        "periodNumber": 4,
+        "status": "absent",
+        "substituteFaculty": "",
+        "markedAt": "2026-10-20T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d4fa",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b8",
+        "date": "2026-10-20T13:49:08.621Z",
+        "periodNumber": 5,
+        "status": "substitute",
+        "substituteFaculty": "Prof. A. Kumar",
+        "markedAt": "2026-10-20T13:49:08.621Z",
+        "createdAt": "2026-10-25T13:49:08.623Z",
+        "updatedAt": "2026-10-25T13:49:08.623Z",
+        "__v": 0
+      },
+      {
+        "_id": "6ade08d4956970361b73d54e",
+        "userId": "6ade08d3956970361b73d4ac",
+        "subjectId": "6ade08d4956970361b73d4b8",
+        "date": "2026-10-25T00:00:00.000Z",
+        "periodNumber": 1,
+        "status": "present",
+        "createdAt": "2026-10-25T13:49:08.671Z",
+        "updatedAt": "2026-10-25T13:49:08.672Z",
+        "substituteFaculty": "",
+        "notes": "",
+        "markedAt": "2026-10-25T13:49:08.671Z",
+        "dayOfWeek": "Sunday",
+        "__v": 0
+      }
+    ]
+  }
+}
