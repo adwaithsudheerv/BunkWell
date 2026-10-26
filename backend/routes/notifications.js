@@ -67,17 +67,17 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.2.2',
-    versionCode: 5,
+    latestVersion: '1.2.3',
+    versionCode: 6,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🚀 BunkClub v1.2.2 Update Available',
-    message: 'New Update: Class replacement attendance tracking, dynamic BunkBot timetable calculations, and zero-loss database lock!',
+    title: '🚀 BunkClub v1.2.3 Update Available',
+    message: 'New Update: Official MCA Section A timetable (Code: BC-1139), streamlined weekly matrix, and direct BunkBot calculations!',
     changelog: [
-      'Today Attendance: Replaced classes now attribute attendance directly to replacement subject',
-      'BunkBot AI: Exact timetable mathematical calculations for safe bunking',
-      'Database Lock & Cloud Persistence: User accounts, timetables, and attendance preserved across updates',
-      'AI Timetable Scanner: Separate phone files/gallery and camera access'
+      'Official Timetable (Code: BC-1139): 1-click import for all 15 MCA Section A subjects and full Monday-Saturday schedule',
+      'Timetable: Streamlined directly to the full Weekly Schedule Matrix',
+      'BunkBot AI: Exact Yes/No answers and breakdown of subjects you can and cannot bunk for today, tomorrow, and day after tomorrow',
+      'Today Attendance: Replaced classes count attendance directly toward replacement subject'
     ]
   });
 });
@@ -87,8 +87,8 @@ router.post('/broadcast-update', async (req, res) => {
   try {
     const users = await User.find({ 'pushSubscriptions.0': { $exists: true } });
     const payload = JSON.stringify({
-      title: '🚀 BunkClub v1.2.2 Update Available',
-      body: 'New update ready: Replaced class attendance tracking & timetable BunkBot calculations. Tap to update!',
+      title: '🚀 BunkClub v1.2.3 Update Available',
+      body: 'Official MCA Section A timetable (BC-1139) & direct BunkBot calculations ready. Tap to update!',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: {

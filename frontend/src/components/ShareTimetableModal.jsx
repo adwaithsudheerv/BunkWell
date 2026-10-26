@@ -92,13 +92,13 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
     setTimeout(() => setCopiedText(false), 2500);
   };
 
-  const handleFetchPreview = async (e) => {
-    e.preventDefault();
-    if (!importCode.trim()) return;
-
+  const handleLoadCode = async (codeToLoad) => {
+    const code = (codeToLoad || importCode).trim();
+    if (!code) return;
+    setImportCode(code);
     setPreviewLoading(true);
     try {
-      const res = await api.get(`/timetable/shared/${importCode.trim()}`);
+      const res = await api.get(`/timetable/shared/${code}`);
       setPreview(res.data.shared);
       if (res.data.shared?.days?.length > 0) {
         setPreviewDay(res.data.shared.days[0].day);
@@ -110,6 +110,11 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
     } finally {
       setPreviewLoading(false);
     }
+  };
+
+  const handleFetchPreview = async (e) => {
+    if (e) e.preventDefault();
+    await handleLoadCode(importCode);
   };
 
   const handleConfirmImport = async () => {
@@ -318,7 +323,7 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
                 type="text"
                 value={importCode}
                 onChange={e => setImportCode(e.target.value.toUpperCase())}
-                placeholder="Enter Code (e.g. BC-4821 or AMR-MCA-A)"
+                placeholder="Enter Code (e.g. BC-1139)"
                 className="flex-1 bg-black/20 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono tracking-wider uppercase font-semibold"
                 required
               />
@@ -330,6 +335,19 @@ export default function ShareTimetableModal({ isOpen, onClose, onImportSuccess }
                 {previewLoading ? 'Finding…' : 'Load Preview'}
               </button>
             </form>
+
+            {/* Quick 1-Click Code Recommendation */}
+            <div className="flex items-center gap-2 text-xs flex-wrap">
+              <span className="text-slate-400 text-[11px]">Recommended Section Code:</span>
+              <button
+                type="button"
+                onClick={() => handleLoadCode('BC-1139')}
+                className="px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 font-mono font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5"
+              >
+                <span>BC-1139</span>
+                <span className="text-[10px] text-slate-400 font-sans font-normal">(MCA Section A)</span>
+              </button>
+            </div>
 
             {preview && (
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3.5 animate-[fadeIn_0.2s_ease-out]">

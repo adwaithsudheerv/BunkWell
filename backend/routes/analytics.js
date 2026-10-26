@@ -338,84 +338,18 @@ router.get('/weekly', auth, async (req, res) => {
   }
 });
 
-// Seed demo data for testing / presentation
+// Seed official MCA Section A Timetable (Code: BC-1139) & Analytics Data
 router.post('/seed-demo', auth, async (req, res) => {
   try {
-    const Timetable = require('../models/Timetable');
-    const userId = req.user._id;
+    const { seedUserMCATimetable } = require('../services/defaultTimetable');
+    const result = await seedUserMCATimetable(req.user._id);
 
-    // Check existing subjects
-    let subjects = await Subject.find({ userId, isActive: true });
-    if (subjects.length === 0) {
-      const demoSubjects = [
-        { userId, name: 'Data Structures & Algorithms', color: '#0047FF', type: 'theory', totalClasses: 32, attendedClasses: 28, cancelledClasses: 2, totalPlannedClasses: 45 },
-        { userId, name: 'Operating Systems', color: '#10b981', type: 'theory', totalClasses: 28, attendedClasses: 24, cancelledClasses: 1, totalPlannedClasses: 45 },
-        { userId, name: 'Database Management Systems', color: '#ef4444', type: 'theory', totalClasses: 30, attendedClasses: 22, cancelledClasses: 0, totalPlannedClasses: 45 },
-        { userId, name: 'Computer Networks', color: '#3b82f6', type: 'theory', totalClasses: 26, attendedClasses: 22, cancelledClasses: 1, totalPlannedClasses: 45 },
-        { userId, name: 'AI & ML Laboratory', color: '#8b5cf6', type: 'lab', totalClasses: 14, attendedClasses: 14, cancelledClasses: 0, totalPlannedClasses: 20 },
-      ];
-      subjects = await Subject.insertMany(demoSubjects);
-    }
-
-    // Create Mon-Sat timetable if none exists
-    let timetable = await Timetable.findOne({ userId, isActive: true });
-    if (!timetable && subjects.length > 0) {
-      const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const defaultTimes = [
-        { startTime: '09:00', endTime: '10:00' },
-        { startTime: '10:00', endTime: '11:00' },
-        { startTime: '11:15', endTime: '12:15' },
-        { startTime: '13:00', endTime: '14:00' },
-        { startTime: '14:00', endTime: '15:00' },
-      ];
-
-      const days = DAYS.map((day, dayIdx) => ({
-        day,
-        periods: defaultTimes.map((t, pIdx) => {
-          const sub = subjects[(dayIdx + pIdx) % subjects.length];
-          return {
-            periodNumber: pIdx + 1,
-            subjectId: sub._id,
-            subjectName: sub.name,
-            startTime: t.startTime,
-            endTime: t.endTime,
-          };
-        }),
-      }));
-
-      timetable = new Timetable({
-        userId,
-        semesterName: 'Semester 5 (2026)',
-        days,
-        isActive: true,
-      });
-      await timetable.save();
-    }
-
-    // Seed recent attendance records for the past 5 days
-    const recentCount = await AttendanceRecord.countDocuments({ userId });
-    if (recentCount === 0 && subjects.length > 0) {
-      const statuses = ['present', 'present', 'present', 'absent', 'substitute'];
-      const recordsToInsert = [];
-      for (let i = 1; i <= 5; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        subjects.forEach((sub, sIdx) => {
-          recordsToInsert.push({
-            userId,
-            subjectId: sub._id,
-            date: d,
-            periodNumber: sIdx + 1,
-            status: statuses[(i + sIdx) % statuses.length],
-            substituteFaculty: sIdx === 4 ? 'Prof. A. Kumar' : '',
-            markedAt: d,
-          });
-        });
-      }
-      await AttendanceRecord.insertMany(recordsToInsert);
-    }
-
-    res.json({ message: 'Demo data loaded successfully! Refresh to see analytics.' });
+    res.json({
+      message: 'Official MCA Section A timetable (Code: BC-1139) loaded successfully! 🎉',
+      timetable: result.timetable,
+      subjects: result.subjects,
+      recordsCount: result.count
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

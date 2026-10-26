@@ -148,7 +148,12 @@ router.post('/share', auth, async (req, res) => {
 router.get('/shared/:code', async (req, res) => {
   try {
     const code = req.params.code.toUpperCase().trim();
-    const shared = await SharedTimetable.findOne({ shareCode: code });
+    let shared = await SharedTimetable.findOne({ shareCode: code });
+    if (!shared && code === 'BC-1139') {
+      const { ensureSharedTimetableBC1139 } = require('../services/defaultTimetable');
+      await ensureSharedTimetableBC1139();
+      shared = await SharedTimetable.findOne({ shareCode: 'BC-1139' });
+    }
     if (!shared) {
       return res.status(404).json({ message: `No shared timetable found for code "${code}".` });
     }
@@ -162,7 +167,12 @@ router.get('/shared/:code', async (req, res) => {
 router.post('/import/:code', auth, async (req, res) => {
   try {
     const code = req.params.code.toUpperCase().trim();
-    const shared = await SharedTimetable.findOne({ shareCode: code });
+    let shared = await SharedTimetable.findOne({ shareCode: code });
+    if (!shared && code === 'BC-1139') {
+      const { ensureSharedTimetableBC1139 } = require('../services/defaultTimetable');
+      await ensureSharedTimetableBC1139();
+      shared = await SharedTimetable.findOne({ shareCode: 'BC-1139' });
+    }
     if (!shared) {
       return res.status(404).json({ message: `Shared timetable code "${code}" not found.` });
     }

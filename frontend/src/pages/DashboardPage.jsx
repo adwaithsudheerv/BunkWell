@@ -177,7 +177,7 @@ export default function DashboardPage() {
       setLoading(true);
       await api.post('/analytics/seed-demo');
       await loadData();
-      toast.success('Sample semester subjects loaded! 🎉');
+      toast.success('Official MCA Section A timetable (Code: BC-1139) loaded! 🎉');
     } catch (err) {
       toast.error('Failed to load demo data');
     } finally {

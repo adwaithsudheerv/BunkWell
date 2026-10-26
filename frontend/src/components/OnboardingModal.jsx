@@ -203,7 +203,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
               className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm active:scale-95 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
             >
               <Sparkles size={16} />
-              {seeding ? 'Loading Demo Semester…' : 'Load 1-Click Demo Semester (Instant Data)'}
+              {seeding ? 'Loading MCA Timetable…' : 'Load Official MCA Timetable (Code: BC-1139)'}
             </button>
           </div>
         )}
