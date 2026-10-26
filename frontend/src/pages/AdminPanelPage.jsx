@@ -4,7 +4,7 @@ import api from '../lib/api';
 import toast from 'react-hot-toast';
 import {
   Key, Search, Eye, EyeOff, Copy, Check,
-  LogOut, RefreshCw, Calendar, X, FileText, Lock, User
+  LogOut, RefreshCw, Calendar, X, FileText, Lock, User, Trash2, AlertTriangle
 } from 'lucide-react';
 
 export default function AdminPanelPage() {
@@ -15,6 +15,8 @@ export default function AdminPanelPage() {
   const [revealedPasswords, setRevealedPasswords] = useState({});
   const [copiedId, setCopiedId] = useState(null);
   const [viewingTimetableUser, setViewingTimetableUser] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadAdminData = async () => {
     setLoading(true);
@@ -75,6 +77,21 @@ export default function AdminPanelPage() {
     localStorage.removeItem('bunkwell_user');
     toast.success('Admin session ended');
     navigate('/login');
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
+    try {
+      const res = await api.delete(`/admin/users/${userToDelete._id}`);
+      toast.success(res.data.message || `User @${userToDelete.username} deleted successfully`);
+      setUserToDelete(null);
+      await loadAdminData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete user');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredUsers = users.filter(u => {
@@ -165,12 +182,13 @@ export default function AdminPanelPage() {
                   <th className="p-3.5 font-semibold">Password (Recovery)</th>
                   <th className="p-3.5 font-semibold">Timetable Details & Share Code</th>
                   <th className="p-3.5 font-semibold">Registered</th>
+                  <th className="p-3.5 font-semibold text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-slate-500 font-sans">
+                    <td colSpan={6} className="p-8 text-center text-slate-500 font-sans">
                       {loading ? 'Fetching directory...' : 'No users found matching query.'}
                     </td>
                   </tr>
@@ -279,6 +297,22 @@ export default function AdminPanelPage() {
                         <td className="p-3.5 text-slate-400 text-[11px] whitespace-nowrap font-mono">
                           {u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : '—'}
                         </td>
+
+                        {/* Actions: Delete User with Confirmation Modal */}
+                        <td className="p-3.5 text-center">
+                          {u.username !== 'adwaith.admin' && u.username !== 'admin' ? (
+                            <button
+                              onClick={() => setUserToDelete(u)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 transition-colors text-xs font-semibold"
+                              title={`Delete user @${u.username}`}
+                            >
+                              <Trash2 size={13} />
+                              <span className="hidden sm:inline">Delete</span>
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-slate-600 font-mono italic">Protected</span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })
@@ -355,6 +389,76 @@ export default function AdminPanelPage() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Modal (Extra "Are you sure?" step) */}
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-md bg-[#0b0e14] border border-red-900/40 rounded-2xl p-6 shadow-2xl shadow-red-950/30 animate-[slideUp_0.3s_ease-out] font-sans">
+            <div className="flex items-start gap-3.5 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 flex-shrink-0">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-white">
+                  Are you sure?
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  You are about to delete user <strong className="text-white font-mono">@{userToDelete.username}</strong> ({userToDelete.name}).
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-red-950/20 border border-red-900/30 rounded-xl p-3.5 mb-5 text-xs text-red-300/90 space-y-1.5 font-mono">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Database ID:</span>
+                <span className="text-slate-200 select-all">{userToDelete._id}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Registered Email:</span>
+                <span className="text-slate-200 truncate max-w-[180px]">{userToDelete.email}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Subjects to remove:</span>
+                <span className="text-red-400 font-bold">{userToDelete.subjectsCount || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Timetable & Logs:</span>
+                <span className="text-red-400 font-bold">{userToDelete.attendanceCount || 0} records</span>
+              </div>
+              <p className="text-[11px] text-red-400/80 pt-2 border-t border-red-900/30 font-sans">
+                ⚠️ All associated subjects, timetable schedules, and attendance history will be completely and permanently removed. This action cannot be reversed.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                onClick={() => setUserToDelete(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-white text-xs font-bold transition-all shadow-lg shadow-red-900/30 disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <RefreshCw size={13} className="animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={13} />
+                    <span>Yes, Delete User</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

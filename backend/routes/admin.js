@@ -97,4 +97,43 @@ router.get('/stats', auth, requireMasterAdmin, async (req, res) => {
   }
 });
 
+// 3. DELETE /api/admin/users/:userId
+// Delete a student user and all their associated records with safety checks
+router.delete('/users/:userId', auth, requireMasterAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userToDelete = await User.findById(userId);
+
+    if (!userToDelete) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Safety: Master Admin cannot be deleted
+    const protectedAdmins = ['admin', 'adwaith.admin', 'adwaithsudheer', 'admin@bunkclub.internal', 'adwaith'];
+    if (userToDelete.role === 'admin' || protectedAdmins.includes(userToDelete.username?.toLowerCase())) {
+      return res.status(400).json({ message: 'Cannot delete Master Admin account.' });
+    }
+
+    // Delete user and cascade clean their data
+    await Promise.all([
+      User.findByIdAndDelete(userId),
+      Subject.deleteMany({ userId }),
+      Timetable.deleteMany({ userId }),
+      AttendanceRecord.deleteMany({ userId })
+    ]);
+
+    // Update persistent snapshot
+    const { triggerAutoSnapshot } = require('../services/dbPersistence');
+    triggerAutoSnapshot();
+
+    res.json({
+      success: true,
+      message: `User @${userToDelete.username} and all associated records have been permanently deleted.`
+    });
+  } catch (err) {
+    console.error('Admin delete user error:', err);
+    res.status(500).json({ message: 'Failed to delete user: ' + err.message });
+  }
+});
+
 module.exports = router;

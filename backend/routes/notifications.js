@@ -67,13 +67,15 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.3.0',
-    versionCode: 13,
+    latestVersion: '1.3.1',
+    versionCode: 14,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🚀 BunkClub v1.3.0 Final Master Release',
-    message: 'Rock-solid update: High-contrast single-choice daily wrap-up, holiday toggle, smart seamless login & clean timetable interface!',
+    title: '🚀 BunkClub v1.3.1 Master Release',
+    message: 'Self-healing database engine, instant registration, admin user deletion with confirmation protection & mutual-exclusive attendance reconciler!',
     changelog: [
+      'Admin User Deletion: Master Admin can safely delete user accounts with full cascade cleanup and "Are you sure?" confirmation prompt',
+      'Database Self-Healing Engine: Zero buffering timeouts on container restarts with automatic lockfile recovery and persistent state restore',
       'Daily Attendance Reconciler: Strict single-choice mutually exclusive status selection (Present, Bunked, Replaced, Cancelled) with high-contrast UI',
       'Holiday Mode: 1-Tap toggle to mark today as a college holiday with zero penalty to attendance cushions',
       'Smart Seamless Login: Automatically detects existing usernames, pre-fills your account, and seamlessly redirects from registration',

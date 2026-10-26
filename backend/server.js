@@ -58,7 +58,13 @@ app.use('/api/bunkbot', bunkbotRoutes);
 app.use('/api/backup', backupRoutes);
 app.use('/api/admin', adminRoutes);
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'BunkClub', timestamp: new Date() }));
+app.get('/api/health', (req, res) => res.json({
+  status: 'ok',
+  service: 'BunkClub',
+  dbConnected: mongoose.connection.readyState === 1,
+  dbState: mongoose.connection.readyState,
+  timestamp: new Date()
+}));
 
 // 24/7 Keep-Alive Self-Pinger (Runs every 10 minutes to prevent Render sleep)
 const KEEP_ALIVE_URL = process.env.RENDER_EXTERNAL_URL || 'https://bunkwell-backend.onrender.com';
@@ -82,7 +88,7 @@ cron.schedule('0 18 * * *', () => {
   sendEveningNotifications();
 }, { timezone: 'Asia/Kolkata' });
 
-// Robust Database Connection (Supports Cloud MongoDB URI or Automatic Embedded Fallback)
+// Robust Self-Healing Database Connection
 async function connectDB() {
   const uri = process.env.MONGODB_URI;
 
@@ -96,38 +102,61 @@ async function connectDB() {
     }
   }
 
-  // Automatic Embedded Persistent MongoDB (Runs on Render and Local without external setup)
+  // Automatic Embedded MongoDB (Runs on Render and Local with self-healing lock recovery)
+  const { MongoMemoryServer } = require('mongodb-memory-server');
+  const dbDir = path.join(__dirname, '.db_data');
+  if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+
+  // 1. Proactively clean stale lock files left behind from killed containers
+  const lockFiles = ['mongod.lock', 'WiredTiger.lock', 'WiredTiger.turtle'];
+  for (const f of lockFiles) {
+    try {
+      const lockPath = path.join(dbDir, f);
+      if (fs.existsSync(lockPath)) fs.unlinkSync(lockPath);
+    } catch (e) {}
+  }
+
+  const winCached = path.join(__dirname, 'node_modules', '.cache', 'mongodb-memory-server', 'mongod-x64-win32-8.2.6.exe');
+  const binaryConfig = fs.existsSync(winCached) ? { systemBinary: winCached } : undefined;
+
+  let mongod;
   try {
-    const { MongoMemoryServer } = require('mongodb-memory-server');
-
-    const dbDir = path.join(__dirname, '.db_data');
-    if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
-
-    // Look for Windows offline cached binary if present on local Windows development
-    const winCached = path.join(__dirname, 'node_modules', '.cache', 'mongodb-memory-server', 'mongod-x64-win32-8.2.6.exe');
-    const binaryConfig = fs.existsSync(winCached) ? { systemBinary: winCached } : undefined;
-
-    console.log('⚡ Starting embedded MongoDB engine...');
-    const mongod = await MongoMemoryServer.create({
+    console.log('⚡ Starting embedded MongoDB engine (persistent)...');
+    mongod = await MongoMemoryServer.create({
       binary: binaryConfig,
       instance: {
         dbName: 'bunkwell',
         dbPath: dbDir,
       }
     });
-
-    const embeddedUri = mongod.getUri() + 'bunkwell';
-    await mongoose.connect(embeddedUri, { serverSelectionTimeoutMS: 15000 });
-    console.log('✅ Connected to Persistent Embedded MongoDB at', embeddedUri);
-  } catch (embeddedErr) {
-    console.error('❌ Failed to start embedded MongoDB:', embeddedErr.message);
+  } catch (err1) {
+    console.warn('⚠️ Persistent dbPath startup failed (' + err1.message + '). Trying clean in-memory instance...');
+    try {
+      // Remove corrupted directory
+      fs.rmSync(dbDir, { recursive: true, force: true });
+    } catch (e) {}
+    mongod = await MongoMemoryServer.create({
+      binary: binaryConfig,
+      instance: {
+        dbName: 'bunkwell',
+      }
+    });
   }
+
+  const embeddedUri = mongod.getUri() + 'bunkwell';
+  await mongoose.connect(embeddedUri, { serverSelectionTimeoutMS: 20000 });
+  console.log('✅ Connected to Embedded MongoDB at', embeddedUri, 'ReadyState:', mongoose.connection.readyState);
 }
 
 // Start Server AFTER Database is connected (prevents buffering timeout errors)
 const PORT = process.env.PORT || 5000;
 async function startServer() {
-  await connectDB();
+  try {
+    await connectDB();
+  } catch (dbErr) {
+    console.error('Fatal DB connection error:', dbErr);
+  }
+
   // Persistent data lock/unlock auto-recovery (Restores data seamlessly if empty/fresh container)
   try {
     const { unlockAndRestoreIfEmpty } = require('./services/dbPersistence');
@@ -139,7 +168,7 @@ async function startServer() {
   }
 
   app.listen(PORT, () => {
-    console.log(`🚀 BunkClub backend running on port ${PORT}`);
+    console.log(`🚀 BunkClub backend running on port ${PORT} (DB State: ${mongoose.connection.readyState})`);
   });
 }
 
