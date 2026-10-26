@@ -355,7 +355,7 @@ export default function AdminPanelPage() {
 
                         {/* Actions: Delete User with Confirmation Modal */}
                         <td className="p-3.5 text-center">
-                          {u.username !== 'adwaith.admin' && u.username !== 'admin' ? (
+                          {!['admin', 'master.admin', 'bunkclub.admin', 'superadmin'].includes(u.username) ? (
                             <button
                               onClick={() => setUserToDelete(u)}
                               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 border border-red-500/20 hover:border-red-500/40 transition-colors text-xs font-semibold"

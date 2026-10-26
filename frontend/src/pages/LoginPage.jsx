@@ -40,7 +40,7 @@ export default function LoginPage() {
   // Debounced check as the user types username
   useEffect(() => {
     const clean = username.trim().toLowerCase().replace(/\s+/g, '');
-    const adminAliases = ['admin', 'adwaith.admin', 'adwaithsudheer', 'admin@bunkclub.internal', 'adwaith'];
+    const adminAliases = ['admin', 'master.admin', 'bunkclub.admin', 'superadmin', 'admin@bunkclub.internal'];
     if (adminAliases.includes(clean)) {
       setMode('login');
       setStatusHint({ type: 'existing', message: `👑 Master Admin Channel identified. Enter admin credentials.` });
@@ -88,7 +88,7 @@ export default function LoginPage() {
         const res = await login(cleanUsername, password);
         localStorage.setItem('bunkclub_last_username', cleanUsername);
         if (res?.isAdmin || res?.user?.role === 'admin') {
-          toast.success('👑 Welcome Master Admin (Adwaith)!');
+          toast.success('👑 Welcome Master Admin!');
           navigate('/admin');
           return;
         }

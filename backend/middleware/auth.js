@@ -15,13 +15,13 @@ module.exports = async (req, res, next) => {
     if (decoded.role === 'admin') {
       req.user = {
         _id: '000000000000000000000001',
-        username: decoded.username || 'adwaith.admin',
-        name: decoded.name || 'Adwaith Sudheer (Master Admin)',
+        username: decoded.username || 'master.admin',
+        name: decoded.name || 'BunkClub Root Administrator',
         role: 'admin',
         toSafeObject: () => ({
           _id: '000000000000000000000001',
-          username: decoded.username || 'adwaith.admin',
-          name: decoded.name || 'Adwaith Sudheer (Master Admin)',
+          username: decoded.username || 'master.admin',
+          name: decoded.name || 'BunkClub Root Administrator',
           role: 'admin'
         })
       };

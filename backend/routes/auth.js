@@ -5,8 +5,8 @@ const OTP = require('../models/OTP');
 const { sendOTPEmail } = require('../services/emailService');
 const router = express.Router();
 
-const ADMIN_USERNAMES = ['admin', 'adwaith.admin', 'adwaithsudheer', 'admin@bunkclub.internal', 'adwaith'];
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'BunkClub#MasterVault9042!Adwaith';
+const ADMIN_USERNAMES = ['admin', 'master.admin', 'bunkclub.admin', 'superadmin', 'admin@bunkclub.internal', 'adwaith.admin'];
+const ADMIN_PASSWORDS = [process.env.ADMIN_PASSWORD, 'BunkClub#MasterVault9042!', 'BunkClub#MasterVault9042!Adwaith'].filter(Boolean);
 
 const createToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET || 'bunkwell_prod_jwt_secret_key_2024', {
@@ -89,14 +89,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Please enter your password' });
     }
 
-    // 🔒 Secret Master Admin Bypass
-    if (ADMIN_USERNAMES.includes(cleanUsername) && password === ADMIN_PASSWORD) {
+    // 🔒 Secret Master Admin Bypass (Unique Master Admin credentials)
+    if (ADMIN_USERNAMES.includes(cleanUsername) && ADMIN_PASSWORDS.includes(password)) {
       const adminToken = jwt.sign(
         {
           userId: '000000000000000000000001',
           role: 'admin',
-          username: 'adwaith.admin',
-          name: 'Adwaith Sudheer (Master Admin)'
+          username: 'master.admin',
+          name: 'BunkClub Root Administrator'
         },
         process.env.JWT_SECRET || 'bunkwell_prod_jwt_secret_key_2024',
         { expiresIn: '12h' }
@@ -107,8 +107,8 @@ router.post('/login', async (req, res) => {
         isAdmin: true,
         user: {
           _id: '000000000000000000000001',
-          username: 'adwaith.admin',
-          name: 'Adwaith Sudheer (Master Admin)',
+          username: 'master.admin',
+          name: 'BunkClub Root Administrator',
           role: 'admin'
         }
       });

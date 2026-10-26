@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Middleware: Strictly enforce Master Admin authorization
 function requireMasterAdmin(req, res, next) {
-  if (req.isAdmin || req.user?.role === 'admin' || req.user?.username === 'adwaith.admin' || req.user?.username === 'admin') {
+  if (req.isAdmin || req.user?.role === 'admin' || req.user?.username === 'master.admin' || req.user?.username === 'admin') {
     return next();
   }
   return res.status(403).json({ message: 'Access denied: Master Admin authorization required.' });
@@ -109,7 +109,7 @@ router.delete('/users/:userId', auth, requireMasterAdmin, async (req, res) => {
     }
 
     // Safety: Master Admin cannot be deleted
-    const protectedAdmins = ['admin', 'adwaith.admin', 'adwaithsudheer', 'admin@bunkclub.internal', 'adwaith'];
+    const protectedAdmins = ['admin', 'master.admin', 'bunkclub.admin', 'superadmin', 'admin@bunkclub.internal'];
     if (userToDelete.role === 'admin' || protectedAdmins.includes(userToDelete.username?.toLowerCase())) {
       return res.status(400).json({ message: 'Cannot delete Master Admin account.' });
     }
