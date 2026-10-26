@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
   LayoutDashboard, CalendarDays, ClipboardCheck, BarChart3,
-  BookOpen, User, LogOut, Menu, X, Sun, Moon, Zap
+  BookOpen, User, LogOut, Menu, X, Sun, Moon, Zap, GraduationCap
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -14,11 +14,10 @@ import AppUpdateModal from './AppUpdateModal';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/today', icon: ClipboardCheck, label: "Today's Class" },
+  { to: '/subjects', icon: GraduationCap, label: 'Subjects' },
   { to: '/timetable', icon: CalendarDays, label: 'Timetable' },
   { to: '/attendance', icon: BookOpen, label: 'Attendance Log' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics & Bunk' },
-  { to: '/subjects', icon: BookOpen, label: 'Subjects' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
 
@@ -280,15 +279,15 @@ export default function Layout() {
         </NavLink>
 
         <NavLink
-          to="/today"
+          to="/subjects"
           className={({ isActive }) =>
             `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
               isActive ? 'text-blue-500 scale-105' : 'hover:text-white'
             }`
           }
         >
-          <ClipboardCheck size={19} />
-          <span>Today</span>
+          <GraduationCap size={19} />
+          <span>Subjects</span>
         </NavLink>
 
         {/* Center Hero Daily Wrap-Up Button */}
