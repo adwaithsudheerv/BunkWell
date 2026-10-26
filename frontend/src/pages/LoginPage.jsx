@@ -23,7 +23,8 @@ export default function LoginPage() {
     const stateUser = location.state?.prefilledUsername;
     const stateNotice = location.state?.autoNotice;
     const queryUser = new URLSearchParams(location.search).get('username');
-    const rememberedUser = localStorage.getItem('bunkclub_last_username');
+    const rawRemembered = (localStorage.getItem('bunkclub_last_username') || '').trim();
+    const rememberedUser = (rawRemembered && rawRemembered !== 'undefined' && rawRemembered !== 'null') ? rawRemembered : '';
 
     const targetUser = stateUser || queryUser || rememberedUser;
     if (targetUser) {
@@ -139,8 +140,8 @@ export default function LoginPage() {
         }}
       />
 
-      {/* Glassmorphic Container */}
-      <div className="w-full max-w-[420px] backdrop-blur-3xl bg-white/[0.04] border border-white/10 rounded-3xl p-7 sm:p-9 shadow-[0_16px_50px_rgba(0,0,0,0.6)] relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+      {/* Glassmorphic Container with High Contrast & Sharp Border */}
+      <div className="w-full max-w-[420px] bg-[#0e1219] border border-slate-700/80 rounded-3xl p-7 sm:p-9 shadow-[0_16px_50px_rgba(0,0,0,0.8)] relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
         {/* Subtle glass highlight stripe */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -159,13 +160,13 @@ export default function LoginPage() {
           <h1 className="bunkclub-brand text-3xl font-extrabold tracking-tight text-white flex items-center justify-center">
             <span>Bunk</span><span className="text-blue-500">Club</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1.5 tracking-wide uppercase font-semibold">
+          <p className="text-xs text-slate-300 mt-1.5 tracking-wide uppercase font-semibold">
             {mode === 'login' ? 'Sign in with your username & password' : 'Create your 24/7 attendance tracker'}
           </p>
         </div>
 
         {/* Mode Toggle Tabs (Inkcrypt style) */}
-        <div className="grid grid-cols-2 p-1 rounded-2xl bg-white/5 border border-white/10 mb-5 text-xs font-bold">
+        <div className="grid grid-cols-2 p-1 rounded-2xl bg-[#141926] border border-slate-700 mb-5 text-xs font-bold">
           <button
             type="button"
             onClick={() => { setMode('login'); setStatusHint(null); }}
@@ -194,8 +195,8 @@ export default function LoginPage() {
         {statusHint && (
           <div className={`p-3 rounded-xl mb-4 text-xs font-semibold flex items-center gap-2 border ${
             statusHint.type === 'existing'
-              ? 'bg-blue-600/15 border-blue-500/30 text-blue-300'
-              : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+              ? 'bg-blue-600/20 border-blue-500/40 text-blue-300'
+              : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
           }`}>
             <Sparkles size={14} className="flex-shrink-0" />
             <span>{statusHint.message}</span>
@@ -206,11 +207,11 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Username */}
           <div>
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
               Username
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-slate-500 font-bold text-sm">@</span>
+              <span className="absolute left-3.5 text-slate-400 font-bold text-sm">@</span>
               <input
                 type="text"
                 autoCapitalize="none"
@@ -218,8 +219,7 @@ export default function LoginPage() {
                 placeholder="username"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                onBlur={handleUsernameBlur}
-                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm font-semibold focus:outline-none focus:border-blue-500 focus:bg-white/[0.07] transition-all"
+                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[#141926] border border-slate-700 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 required
               />
             </div>
@@ -228,24 +228,24 @@ export default function LoginPage() {
           {/* Password */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                 Password
               </label>
             </div>
             <div className="relative flex items-center">
-              <Lock size={16} className="absolute left-3.5 text-slate-500" />
+              <Lock size={16} className="absolute left-3.5 text-slate-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder={mode === 'login' ? 'Enter your password' : 'Choose a password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm font-semibold focus:outline-none focus:border-blue-500 focus:bg-white/[0.07] transition-all"
+                className="w-full pl-10 pr-10 py-3 rounded-2xl bg-[#141926] border border-slate-700 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 text-slate-500 hover:text-white transition-colors"
+                className="absolute right-3.5 text-slate-400 hover:text-white transition-colors"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -255,17 +255,17 @@ export default function LoginPage() {
           {/* Confirm Password (only on register) */}
           {mode === 'register' && (
             <div className="animate-[fadeIn_0.2s_ease-out]">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
                 Confirm Password
               </label>
               <div className="relative flex items-center">
-                <Lock size={16} className="absolute left-3.5 text-slate-500" />
+                <Lock size={16} className="absolute left-3.5 text-slate-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Re-enter your password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm font-semibold focus:outline-none focus:border-blue-500 focus:bg-white/[0.07] transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[#141926] border border-slate-700 text-white placeholder-slate-400 text-sm font-semibold focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   required
                 />
               </div>

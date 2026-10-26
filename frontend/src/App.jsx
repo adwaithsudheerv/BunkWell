@@ -34,7 +34,11 @@ function ProtectedRoute({ children }) {
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return (
+    <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', background: '#07090e' }}>
+      <div style={{ width: 40, height: 40, border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#0047FF', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    </div>
+  );
   if (!user) return children;
   return user.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/dashboard" replace />;
 }

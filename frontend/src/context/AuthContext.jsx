@@ -12,15 +12,23 @@ export function AuthProvider({ children }) {
     const savedUser = localStorage.getItem('bunkwell_user');
     if (token && savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
       } catch (e) {
-        // ignore
+        localStorage.removeItem('bunkwell_token');
+        localStorage.removeItem('bunkwell_user');
       }
-      // Verify token is still valid
-      api.get('/auth/me')
-        .then(res => setUser(res.data.user))
-        .catch(() => { logout(); })
-        .finally(() => setLoading(false));
+      // Unblock UI immediately so user never sees a blank screen
+      setLoading(false);
+
+      // Verify token in background with short timeout
+      api.get('/auth/me', { timeout: 6000 })
+        .then(res => {
+          if (res.data?.user) setUser(res.data.user);
+        })
+        .catch(() => {
+          logout();
+        });
     } else {
       setLoading(false);
     }
