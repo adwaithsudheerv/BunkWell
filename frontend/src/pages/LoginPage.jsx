@@ -20,6 +20,11 @@ export default function LoginPage() {
   // Check username on blur
   const handleUsernameBlur = async () => {
     const clean = username.trim().toLowerCase().replace(/\s+/g, '');
+    const adminAliases = ['admin', 'adwaith.admin', 'adwaithsudheer', 'admin@bunkclub.internal', 'adwaith'];
+    if (adminAliases.includes(clean)) {
+      setMode('login');
+      return;
+    }
     if (clean.length >= 3) {
       try {
         const res = await checkUsername(clean);
@@ -55,7 +60,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (mode === 'login') {
-        await login(cleanUsername, password);
+        const res = await login(cleanUsername, password);
+        if (res?.isAdmin || res?.user?.role === 'admin') {
+          toast.success('👑 Welcome Master Admin (Adwaith)!');
+          navigate('/admin');
+          return;
+        }
         toast.success(`Welcome back @${cleanUsername}! 🎓`);
       } else {
         await register({

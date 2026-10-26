@@ -13,6 +13,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import ProfilePage from './pages/ProfilePage';
 import TodayPage from './pages/TodayPage';
+import AdminPanelPage from './pages/AdminPanelPage';
 import OfflineBanner from './components/OfflineBanner';
 import { autoInitializeNotifications } from './lib/nativeNotifications';
 
@@ -63,6 +64,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+            <Route path="/admin" element={<AdminPanelPage />} />
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
