@@ -310,58 +310,40 @@ export default function TimetablePage() {
         </div>
       </div>
 
-      {/* Auto-sync & Full Timetable Share Code Generator */}
-      <div className="glass-card rounded-2xl p-4 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-blue-900/15 via-indigo-900/10 to-transparent">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-white flex items-center gap-1.5">
-              <Share2 size={14} className="text-blue-400" /> Full Timetable Share Code
-            </span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              Auto-Synced with Attendance
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            {isShareCodeRevealed && shareCode
-              ? `Share Code active: Section ${section || 'A'} timetable is live and ready to share.`
-              : `Saved in Admin Vault. Click below to reveal your shareable Section Timetable code for your classmates.`}
-          </p>
-        </div>
-
-        <div>
-          {isShareCodeRevealed && shareCode ? (
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600/20 border border-blue-500/40 font-mono font-bold text-sm text-blue-300">
-                {shareCode}
-              </div>
-              <button
-                onClick={handleCopyCode}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors"
-                title="Copy Share Code"
-              >
-                {copiedCode ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                {copiedCode ? 'Copied' : 'Copy Code'}
-              </button>
-              <button
-                onClick={handleCopyFullText}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors"
-                title="Copy Full Timetable Schedule Text"
-              >
-                {copiedText ? <Check size={13} className="text-emerald-400" /> : <FileText size={13} />}
-                {copiedText ? 'Copied' : 'Copy Schedule'}
-              </button>
+      {/* Full Timetable Share Code Generator */}
+      <div className="flex items-center justify-end">
+        {isShareCodeRevealed && shareCode ? (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600/20 border border-blue-500/40 font-mono font-bold text-sm text-blue-300">
+              {shareCode}
             </div>
-          ) : (
             <button
-              onClick={handleGenerateShareCode}
-              disabled={generatingCode}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50"
+              onClick={handleCopyCode}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors"
+              title="Copy Share Code"
             >
-              <Sparkles size={14} className={generatingCode ? 'animate-spin' : ''} />
-              {generatingCode ? 'Generating...' : 'Generate Full Timetable Share Code'}
+              {copiedCode ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              {copiedCode ? 'Copied' : 'Copy Code'}
             </button>
-          )}
-        </div>
+            <button
+              onClick={handleCopyFullText}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors"
+              title="Copy Full Timetable Schedule Text"
+            >
+              {copiedText ? <Check size={13} className="text-emerald-400" /> : <FileText size={13} />}
+              {copiedText ? 'Copied' : 'Copy Schedule'}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleGenerateShareCode}
+            disabled={generatingCode}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50"
+          >
+            <Sparkles size={14} className={generatingCode ? 'animate-spin' : ''} />
+            {generatingCode ? 'Generating...' : 'Generate Full Timetable Share Code'}
+          </button>
+        )}
       </div>
 
       {subjects.length === 0 && (

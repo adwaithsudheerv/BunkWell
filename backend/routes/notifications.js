@@ -67,17 +67,17 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.2.9',
-    versionCode: 12,
+    latestVersion: '1.3.0',
+    versionCode: 13,
     releaseDate: '2026-10-26',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🚀 BunkClub v1.2.9 Update Available',
-    message: 'New Update: Streamlined bottom navigation with direct Subjects tab & Center Daily Wrap-Up!',
+    title: '🚀 BunkClub v1.3.0 Final Master Release',
+    message: 'Rock-solid update: High-contrast single-choice daily wrap-up, holiday toggle, smart seamless login & clean timetable interface!',
     changelog: [
-      'Bottom Navigation: Replaced duplicate Today tab with direct Subjects tab for quick subject management',
-      'Center Daily Wrap-Up: 1-tap lightning button for instant attendance reconciliation & safe-bunk calculation',
-      'Automated Morning 8:00 AM Notification: Tells you whether you have classes today with your complete daily schedule',
-      'Automated Evening 6:00 PM Reconciliation: 1-tap pop-up & notification to mark periods attended, cancelled, or swapped'
+      'Daily Attendance Reconciler: Strict single-choice mutually exclusive status selection (Present, Bunked, Replaced, Cancelled) with high-contrast UI',
+      'Holiday Mode: 1-Tap toggle to mark today as a college holiday with zero penalty to attendance cushions',
+      'Smart Seamless Login: Automatically detects existing usernames, pre-fills your account, and seamlessly redirects from registration',
+      'Clean Schedule View: Simplified schedule sharing keeping only the Generate Full Timetable Share Code action button'
     ]
   });
 });
@@ -87,8 +87,8 @@ router.post('/broadcast-update', async (req, res) => {
   try {
     const users = await User.find({ 'pushSubscriptions.0': { $exists: true } });
     const payload = JSON.stringify({
-      title: '🚀 BunkClub v1.2.9 Update Available',
-      body: 'Streamlined navigation with direct Subjects tab & Daily Wrap-Up ready. Tap to update!',
+      title: '🚀 BunkClub v1.3.0 Final Master Release Available',
+      body: 'Single-choice attendance reconciliation, holiday toggle, smart login & clean UI ready. Tap to update!',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: {

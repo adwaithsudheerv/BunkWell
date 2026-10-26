@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Lock, User, Eye, EyeOff, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, Sparkles, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const { login, register, checkUsername } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Mode: 'login' | 'register'
   const [mode, setMode] = useState('login');
@@ -17,27 +18,50 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [statusHint, setStatusHint] = useState(null); // { type: 'existing' | 'new', message: string }
 
-  // Check username on blur
-  const handleUsernameBlur = async () => {
+  // Auto-detect existing registered user on mount
+  useEffect(() => {
+    const stateUser = location.state?.prefilledUsername;
+    const stateNotice = location.state?.autoNotice;
+    const queryUser = new URLSearchParams(location.search).get('username');
+    const rememberedUser = localStorage.getItem('bunkclub_last_username');
+
+    const targetUser = stateUser || queryUser || rememberedUser;
+    if (targetUser) {
+      setUsername(targetUser);
+      setMode('login');
+      setStatusHint({
+        type: 'existing',
+        message: stateNotice || `Welcome back @${targetUser}! Enter your password to log in.`
+      });
+    }
+  }, [location]);
+
+  // Debounced check as the user types username
+  useEffect(() => {
     const clean = username.trim().toLowerCase().replace(/\s+/g, '');
     const adminAliases = ['admin', 'adwaith.admin', 'adwaithsudheer', 'admin@bunkclub.internal', 'adwaith'];
     if (adminAliases.includes(clean)) {
       setMode('login');
+      setStatusHint({ type: 'existing', message: `👑 Master Admin Channel identified. Enter admin credentials.` });
       return;
     }
-    if (clean.length >= 3) {
+    if (clean.length < 3) {
+      return;
+    }
+    const timer = setTimeout(async () => {
       try {
         const res = await checkUsername(clean);
         if (res.exists) {
-          setStatusHint({ type: 'existing', message: `Welcome back @${clean}! Enter your password to enter.` });
+          setStatusHint({ type: 'existing', message: `Account found! Welcome back @${clean}, enter your password.` });
           setMode('login');
         } else {
-          setStatusHint({ type: 'new', message: `@${clean} is available! Enter password to create account.` });
+          setStatusHint({ type: 'new', message: `@${clean} is a new account. Enter password to register automatically!` });
           setMode('register');
         }
       } catch (err) {}
-    }
-  };
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [username]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,6 +85,7 @@ export default function LoginPage() {
     try {
       if (mode === 'login') {
         const res = await login(cleanUsername, password);
+        localStorage.setItem('bunkclub_last_username', cleanUsername);
         if (res?.isAdmin || res?.user?.role === 'admin') {
           toast.success('👑 Welcome Master Admin (Adwaith)!');
           navigate('/admin');
@@ -72,6 +97,7 @@ export default function LoginPage() {
           username: cleanUsername,
           password,
         });
+        localStorage.setItem('bunkclub_last_username', cleanUsername);
         toast.success(`Account created! Welcome @${cleanUsername} 🎉`);
       }
       navigate('/dashboard');

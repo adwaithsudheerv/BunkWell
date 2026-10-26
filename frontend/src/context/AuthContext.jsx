@@ -35,6 +35,9 @@ export function AuthProvider({ children }) {
     const res = await api.post('/auth/login', { username, password });
     localStorage.setItem('bunkwell_token', res.data.token);
     localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
+    if (res.data.user?.username) {
+      localStorage.setItem('bunkclub_last_username', res.data.user.username);
+    }
     setUser(res.data.user);
     return res.data;
   };
@@ -43,6 +46,9 @@ export function AuthProvider({ children }) {
     const res = await api.post('/auth/register', data);
     localStorage.setItem('bunkwell_token', res.data.token);
     localStorage.setItem('bunkwell_user', JSON.stringify(res.data.user));
+    if (res.data.user?.username) {
+      localStorage.setItem('bunkclub_last_username', res.data.user.username);
+    }
     setUser(res.data.user);
     return res.data;
   };
@@ -78,6 +84,9 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    if (user?.username) {
+      localStorage.setItem('bunkclub_last_username', user.username);
+    }
     localStorage.removeItem('bunkwell_token');
     localStorage.removeItem('bunkwell_user');
     setUser(null);
