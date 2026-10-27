@@ -6,8 +6,8 @@ import { Sparkles, RefreshCw, Download, X, ChevronRight, CheckCircle2, Zap } fro
 import { useTheme } from '../context/ThemeContext';
 
 // Current installed package version in build
-export const CURRENT_APP_VERSION = '1.3.3';
-export const CURRENT_VERSION_CODE = 16;
+export const CURRENT_APP_VERSION = '1.4.0';
+export const CURRENT_VERSION_CODE = 17;
 
 // Compares semantic versions (e.g., '1.0.0' vs '1.3.2')
 export function isVersionOutdated(currentVer, latestVer, currentCode = CURRENT_VERSION_CODE, latestCode = 15) {
@@ -128,8 +128,28 @@ export default function AppUpdateNotifier() {
     // 5. Native notification click listener
     let listenerHandle;
     if (Capacitor.isNativePlatform()) {
-      LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
-        if (action.notification.extra?.action === 'wrapup' || action.notification.id === 7777) {
+      LocalNotifications.addListener('localNotificationActionPerformed', async (action) => {
+        if (action.actionId === 'ACTION_ATTEND_YES') {
+          const now = new Date().toISOString().split('T')[0];
+          const subId = action.notification.extra?.subjectId;
+          const pNum = action.notification.extra?.periodNumber;
+          if (subId && pNum) {
+            try {
+              await api.post('/attendance/mark', { subjectId: subId, periodNumber: pNum, date: now, status: 'present' });
+              window.dispatchEvent(new CustomEvent('attendance-updated'));
+            } catch (e) {}
+          }
+        } else if (action.actionId === 'ACTION_BUNK_NO') {
+          const now = new Date().toISOString().split('T')[0];
+          const subId = action.notification.extra?.subjectId;
+          const pNum = action.notification.extra?.periodNumber;
+          if (subId && pNum) {
+            try {
+              await api.post('/attendance/mark', { subjectId: subId, periodNumber: pNum, date: now, status: 'absent' });
+              window.dispatchEvent(new CustomEvent('attendance-updated'));
+            } catch (e) {}
+          }
+        } else if (action.notification.extra?.action === 'wrapup' || action.notification.id === 7777) {
           window.dispatchEvent(new CustomEvent('open-daily-wrapup'));
         } else if (action.notification.id === 8888 || action.notification.extra?.url) {
           const downloadUrl = action.notification.extra?.url || 'https://bunkwell.onrender.com/BunkClub.apk';

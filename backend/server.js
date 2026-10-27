@@ -18,6 +18,8 @@ const analyticsRoutes = require('./routes/analytics');
 const bunkbotRoutes = require('./routes/bunkbot');
 const backupRoutes = require('./routes/backup');
 const adminRoutes = require('./routes/admin');
+const chatRoutes = require('./routes/chat');
+const massBunkRoutes = require('./routes/massBunk');
 
 const { sendMorningNotifications, sendEveningNotifications } = require('./services/notificationService');
 
@@ -57,6 +59,8 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/bunkbot', bunkbotRoutes);
 app.use('/api/backup', backupRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/mass-bunk', massBunkRoutes);
 
 app.get('/api/health', (req, res) => res.json({
   status: 'ok',

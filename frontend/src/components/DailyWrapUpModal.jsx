@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import {
   CheckCircle2, XCircle, RefreshCw, X, Check,
   Zap, Clock, ShieldCheck, AlertTriangle, ArrowRight,
-  BookOpen, ChevronRight, Calendar, Slash, RotateCcw
+  BookOpen, ChevronRight, Calendar, Slash, RotateCcw, Plus, Trash2
 } from 'lucide-react';
 
 export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
@@ -17,6 +17,12 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
   const [replacementStates, setReplacementStates] = useState({}); // { [periodNumber]: { subId: string } }
   const [isHolidayToday, setIsHolidayToday] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Extra class form state
+  const [showAddExtra, setShowAddExtra] = useState(false);
+  const [extraSubId, setExtraSubId] = useState('');
+  const [extraPeriodNum, setExtraPeriodNum] = useState(6);
+  const [extraStatus, setExtraStatus] = useState('present');
 
   // Load today's schedule, attendance records, and subjects
   const loadTodayData = async () => {
@@ -69,7 +75,47 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
 
   if (!isOpen) return null;
 
-  const periods = (scheduleData?.periods || []).filter(p => p.subjectName);
+  const scheduledPeriods = (scheduleData?.periods || []).filter(p => p.subjectName);
+  const scheduledNums = new Set(scheduledPeriods.map(p => p.periodNumber));
+
+  // Combine scheduled periods with any extra periods recorded today
+  const extraPeriods = Object.values(records)
+    .filter(r => r && r.periodNumber && !scheduledNums.has(r.periodNumber))
+    .map(r => ({
+      periodNumber: r.periodNumber,
+      subjectName: r.subjectId?.name || subjects.find(s => String(s._id) === String(r.subjectId?._id || r.subjectId))?.name || 'Extra Class',
+      subjectId: r.subjectId?._id || r.subjectId,
+      isExtra: true
+    }));
+
+  const periods = [...scheduledPeriods, ...extraPeriods].sort((a, b) => a.periodNumber - b.periodNumber);
+
+  const handleAddExtraClass = async () => {
+    if (!extraSubId) {
+      toast.error('Please choose a subject for the extra class');
+      return;
+    }
+    setSaving(true);
+    try {
+      const now = new Date().toISOString().split('T')[0];
+      const res = await api.post('/attendance/extra-class', {
+        subjectId: extraSubId,
+        periodNumber: extraPeriodNum,
+        date: now,
+        status: extraStatus,
+        notes: 'Faculty extra lecture'
+      });
+      toast.success(res.data.message || 'Extra class recorded! 🎓');
+      setShowAddExtra(false);
+      setExtraSubId('');
+      await loadTodayData();
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to record extra class');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // 1-Tap "Mark All Attended"
   const handleMarkAllAttended = async () => {
@@ -370,7 +416,14 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                         P{p.periodNumber}
                       </span>
                       <div>
-                        <p className={`font-black text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.subjectName}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className={`font-black text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.subjectName}</p>
+                          {p.isExtra && (
+                            <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30">
+                              Extra Class
+                            </span>
+                          )}
+                        </div>
                         <p className={`text-[11px] font-mono font-medium ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
                           {p.startTime || '—'} - {p.endTime || '—'}
                         </p>
@@ -491,6 +544,130 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                 </div>
               );
             })
+          )}
+        </div>
+
+        {/* Extra Class Section (e.g. Period 6, Remedial / Extra Faculty Lecture) */}
+        <div className={`mt-2 pt-2 border-t ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+          {!showAddExtra ? (
+            <button
+              type="button"
+              onClick={() => {
+                const nextPeriod = periods.length > 0 ? Math.max(...periods.map(p => p.periodNumber)) + 1 : 1;
+                setExtraPeriodNum(nextPeriod);
+                setShowAddExtra(true);
+              }}
+              className="w-full py-2.5 px-3 rounded-2xl border border-dashed border-blue-500/50 hover:border-blue-500 text-blue-500 hover:bg-blue-500/10 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
+            >
+              <Plus size={15} />
+              <span>➕ Add Extra Class (e.g. Period 6, Remedial / Special Lecture)</span>
+            </button>
+          ) : (
+            <div className={`p-3.5 rounded-2xl border space-y-3 animate-[fadeIn_0.2s_ease-out] ${
+              isDark ? 'bg-[#151c28] border-blue-500/40' : 'bg-blue-50/70 border-blue-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black flex items-center gap-1.5 text-blue-500">
+                  <Zap size={14} className="fill-blue-500" />
+                  Add Extra Class / Period
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAddExtra(false)}
+                  className={`p-1 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-black'}`}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
+                    Subject
+                  </label>
+                  <select
+                    value={extraSubId}
+                    onChange={(e) => setExtraSubId(e.target.value)}
+                    className={`w-full rounded-xl p-2 text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark ? 'bg-[#0a0d14] border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
+                    }`}
+                  >
+                    <option value="">-- Select Subject --</option>
+                    {subjects.map(s => (
+                      <option key={s._id} value={s._id}>
+                        {s.name} ({s.code || 'Class'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
+                    Period Number
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="15"
+                      value={extraPeriodNum}
+                      onChange={(e) => setExtraPeriodNum(Number(e.target.value))}
+                      className={`w-full rounded-xl p-2 text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark ? 'bg-[#0a0d14] border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
+                      }`}
+                    />
+                    <span className="text-xs font-mono font-bold text-blue-400 whitespace-nowrap">
+                      P{extraPeriodNum}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
+                  Status
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    { id: 'present', label: '✓ Attended', color: 'bg-emerald-600' },
+                    { id: 'absent', label: '✕ Bunked', color: 'bg-red-600' },
+                    { id: 'substitute', label: '🔄 Swapped', color: 'bg-blue-600' },
+                    { id: 'cancelled', label: '🚫 Cancelled', color: 'bg-amber-600' }
+                  ].map(st => (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => setExtraStatus(st.id)}
+                      className={`py-1.5 px-1 rounded-xl text-[11px] font-extrabold border transition-all ${
+                        extraStatus === st.id
+                          ? `${st.color} text-white border-transparent shadow-sm scale-102`
+                          : isDark ? 'bg-slate-800/80 text-slate-400 border-slate-700' : 'bg-white text-slate-600 border-slate-300'
+                      }`}
+                    >
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowAddExtra(false)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={saving || !extraSubId}
+                  onClick={handleAddExtraClass}
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-md shadow-blue-500/30 active:scale-95 disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save Extra Class'}
+                </button>
+              </div>
+            </div>
           )}
         </div>
 

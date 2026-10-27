@@ -14,7 +14,29 @@ export async function autoInitializeNotifications() {
         vibration: true
       });
 
-      // 2. Request / verify permission automatically on install/launch
+      // 2. Register Yes/No Direct Action Types for period attendance
+      await LocalNotifications.registerActionTypes({
+        types: [
+          {
+            id: 'PERIOD_ATTENDANCE_ACTIONS',
+            actions: [
+              {
+                id: 'ACTION_ATTEND_YES',
+                title: '✅ Yes, Attended',
+                foreground: false
+              },
+              {
+                id: 'ACTION_BUNK_NO',
+                title: '❌ No, Bunked',
+                foreground: false,
+                destructive: true
+              }
+            ]
+          }
+        ]
+      });
+
+      // 3. Request / verify permission automatically on install/launch
       const check = await LocalNotifications.checkPermissions();
       if (check.display !== 'granted') {
         await LocalNotifications.requestPermissions();
@@ -168,8 +190,15 @@ export async function scheduleScheduleReminders(timetable) {
 
           notificationsToSchedule.push({
             id: notifId++,
-            title: `⏰ Upcoming: ${p.subjectName || 'Class'} at ${p.startTime}`,
-            body: `Period ${p.periodNumber} is about to begin. Check your safe bunk cushion before skipping.`,
+            title: `⏰ Period ${p.periodNumber}: ${p.subjectName || 'Class'} (${p.startTime})`,
+            body: `Did you attend Period ${p.periodNumber}? Tap directly to mark your attendance.`,
+            actionTypeId: 'PERIOD_ATTENDANCE_ACTIONS',
+            extra: {
+              action: 'period_check',
+              periodNumber: p.periodNumber,
+              subjectName: p.subjectName,
+              subjectId: p.subjectId?._id || p.subjectId
+            },
             schedule: {
               on: {
                 weekday: dayNum,

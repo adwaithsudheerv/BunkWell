@@ -322,4 +322,62 @@ router.get('/today-pending', auth, async (req, res) => {
   }
 });
 
+// Add / Mark Extra Class (e.g. Period 6, Remedial, or Faculty Extra Lecture)
+router.post('/extra-class', auth, async (req, res) => {
+  try {
+    const { subjectId, periodNumber, date, status, notes } = req.body;
+    if (!subjectId) return res.status(400).json({ message: 'subjectId is required' });
+
+    const subject = await Subject.findOne({ _id: subjectId, userId: req.user._id });
+    if (!subject) return res.status(404).json({ message: 'Subject not found' });
+
+    const targetDate = date ? new Date(date) : new Date();
+    const periodNum = parseInt(periodNumber, 10) || 6;
+    const classStatus = ['present', 'absent', 'substitute', 'cancelled'].includes(status) ? status : 'present';
+
+    const startOfDay = new Date(targetDate); startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate); endOfDay.setHours(23, 59, 59, 999);
+
+    let record = await AttendanceRecord.findOne({
+      userId: req.user._id,
+      date: { $gte: startOfDay, $lte: endOfDay },
+      periodNumber: periodNum
+    });
+
+    if (record) {
+      record.subjectId = subjectId;
+      record.status = classStatus;
+      record.isExtra = true;
+      record.notes = notes || 'Extra class taken by faculty';
+      record.markedAt = new Date();
+      await record.save();
+    } else {
+      record = new AttendanceRecord({
+        userId: req.user._id,
+        subjectId,
+        date: targetDate,
+        periodNumber: periodNum,
+        status: classStatus,
+        isExtra: true,
+        notes: notes || 'Extra class taken by faculty',
+        markedAt: new Date()
+      });
+      await record.save();
+    }
+
+    // Recalculate subject attendance stats
+    await recalculateSubject(req.user._id, subjectId);
+    const updatedSubject = await Subject.findById(subjectId);
+
+    res.json({
+      success: true,
+      message: `Extra class (P${periodNum}) for ${subject.name} logged as ${classStatus}! 🎓`,
+      record,
+      subject: updatedSubject
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to log extra class: ' + err.message });
+  }
+});
+
 module.exports = router;

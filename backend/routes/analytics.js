@@ -17,16 +17,22 @@ router.get('/overview', auth, async (req, res) => {
     }).sort({ date: -1, periodNumber: -1 });
 
     const overview = subjects.map(s => {
-      const eligible = s.totalClasses - (s.cancelledClasses || 0);
-      const percentage = eligible > 0 ? parseFloat(((s.attendedClasses / eligible) * 100).toFixed(2)) : 100;
+      // Eligible classes can never be less than attended classes (prevents >100% bugs like 101%)
+      const baseTotal = Math.max(s.totalClasses, s.attendedClasses);
+      const eligible = Math.max(s.attendedClasses, baseTotal - (s.cancelledClasses || 0));
+      const safeAttended = Math.min(s.attendedClasses, eligible);
+
+      const percentage = eligible > 0
+        ? Math.min(100, Math.max(0, parseFloat(((safeAttended / eligible) * 100).toFixed(1))))
+        : 100;
 
       // Classes can be bunked while staying at target
       const minNeeded = Math.ceil(eligible * target / 100);
-      const canBunk = Math.max(0, s.attendedClasses - minNeeded);
+      const canBunk = Math.max(0, safeAttended - minNeeded);
 
       // To reach target from below, need this many more
       const needMore = percentage < target
-        ? Math.ceil((target / 100 * eligible - s.attendedClasses) / (1 - target / 100))
+        ? Math.max(1, Math.ceil((target / 100 * eligible - safeAttended) / (1 - target / 100)))
         : 0;
 
       const subjectBunks = bunkRecords
@@ -42,9 +48,9 @@ router.get('/overview', auth, async (req, res) => {
         name: s.name,
         color: s.color,
         type: s.type,
-        totalClasses: s.totalClasses,
-        attendedClasses: s.attendedClasses,
-        bunkedClasses: Math.max(0, s.totalClasses - s.attendedClasses),
+        totalClasses: eligible,
+        attendedClasses: safeAttended,
+        bunkedClasses: Math.max(0, eligible - safeAttended),
         cancelledClasses: s.cancelledClasses || 0,
         eligibleClasses: eligible,
         percentage,
@@ -57,9 +63,12 @@ router.get('/overview', auth, async (req, res) => {
 
     const totalEligible = overview.reduce((a, s) => a + s.eligibleClasses, 0);
     const totalAttended = overview.reduce((a, s) => a + s.attendedClasses, 0);
-    const totalCompleted = overview.reduce((a, s) => a + s.totalClasses, 0);
-    const totalBunked = Math.max(0, totalCompleted - totalAttended);
-    const overallPercentage = totalEligible > 0 ? parseFloat(((totalAttended / totalEligible) * 100).toFixed(2)) : 100;
+    const safeTotalAttended = Math.min(totalAttended, totalEligible);
+    const totalCompleted = totalEligible;
+    const totalBunked = Math.max(0, totalEligible - safeTotalAttended);
+    const overallPercentage = totalEligible > 0
+      ? Math.min(100, Math.max(0, parseFloat(((safeTotalAttended / totalEligible) * 100).toFixed(1))))
+      : 100;
 
     res.json({
       subjects: overview,

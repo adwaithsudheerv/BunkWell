@@ -14,6 +14,8 @@ import SubjectsPage from './pages/SubjectsPage';
 import ProfilePage from './pages/ProfilePage';
 import TodayPage from './pages/TodayPage';
 import AdminPanelPage from './pages/AdminPanelPage';
+import ChatPage from './pages/ChatPage';
+import MassBunkPage from './pages/MassBunkPage';
 import OfflineBanner from './components/OfflineBanner';
 import { autoInitializeNotifications } from './lib/nativeNotifications';
 
@@ -86,6 +88,8 @@ export default function App() {
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="chat" element={<ChatPage />} />
+              <Route path="mass-bunk" element={<MassBunkPage />} />
               <Route path="today" element={<TodayPage />} />
               <Route path="timetable" element={<TimetablePage />} />
               <Route path="attendance" element={<AttendancePage />} />

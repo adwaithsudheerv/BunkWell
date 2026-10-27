@@ -13,10 +13,12 @@ import OnboardingModal from '../components/OnboardingModal';
 import QuickBunkSimulator from '../components/QuickBunkSimulator';
 import ShareTimetableModal from '../components/ShareTimetableModal';
 import AttendanceRecoveryRadar, { openDailyWrapUp } from '../components/AttendanceRecoveryRadar';
+import PeriodAttendanceWidget from '../components/PeriodAttendanceWidget';
 
 function SubjectCard({ subject, target, onUpdate }) {
   const [bunkExpanded, setBunkExpanded] = useState(false);
-  const pct = subject.percentage ?? (subject.totalClasses > 0 ? (subject.attendedClasses / subject.totalClasses) * 100 : 100);
+  const rawPct = subject.percentage ?? (subject.totalClasses > 0 ? (subject.attendedClasses / subject.totalClasses) * 100 : 100);
+  const pct = Math.min(100, Math.max(0, rawPct));
   const isOnTrack = pct >= target;
   const bunkCount = subject.bunkHistory?.length || 0;
 
@@ -236,12 +238,21 @@ export default function DashboardPage() {
           >
             <HelpCircle size={15} /> Guide
           </button>
+          <Link to="/chat" className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all shadow-sm">
+            <span>💬 Class Chat</span>
+          </Link>
+          <Link to="/mass-bunk" className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 text-xs font-bold transition-all shadow-sm">
+            <span>🚨 Mass Bunk</span>
+          </Link>
           <Link to="/today" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25">
             <Clock size={16} />
             Today's Log
           </Link>
         </div>
       </div>
+
+      {/* Interactive Period Check-In Widget (1-Tap Yes/No Attended/Bunked Direct Action) */}
+      <PeriodAttendanceWidget onAttendanceUpdated={loadData} />
 
       {/* 1-Tap Quick Attendance Reconcile Banner (Takes user directly to the Lightning Point) */}
       <div
@@ -274,12 +285,12 @@ export default function DashboardPage() {
         <div className="flex items-center gap-5">
           <div className="relative w-20 h-20 flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart cx="50%" cy="50%" innerRadius="65%" outerRadius="100%" data={[{ value: analytics?.overallPercentage || 0, fill: '#0047FF' }]} startAngle={90} endAngle={-270}>
+              <RadialBarChart cx="50%" cy="50%" innerRadius="65%" outerRadius="100%" data={[{ value: Math.min(100, Math.max(0, analytics?.overallPercentage || 0)), fill: '#0047FF' }]} startAngle={90} endAngle={-270}>
                 <RadialBar dataKey="value" cornerRadius={8} />
               </RadialBarChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-base font-black">{(analytics?.overallPercentage || 0).toFixed(0)}%</span>
+              <span className="text-base font-black">{Math.min(100, Math.max(0, analytics?.overallPercentage || 0)).toFixed(0)}%</span>
             </div>
           </div>
           <div>
@@ -287,7 +298,7 @@ export default function DashboardPage() {
               <span className="text-xs font-bold text-slate-400">Target: {target}%</span>
             </div>
             <p className="text-xl sm:text-2xl font-black mt-0.5 text-white">
-              Overall Attendance: {(analytics?.overallPercentage || 0).toFixed(1)}%
+              Overall Attendance: {Math.min(100, Math.max(0, analytics?.overallPercentage || 0)).toFixed(1)}%
             </p>
             <div className="flex items-center gap-2 mt-1.5">
               <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${

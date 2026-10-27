@@ -67,18 +67,19 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.3.3',
-    versionCode: 16,
-    releaseDate: '2026-10-26',
+    latestVersion: '1.4.0',
+    versionCode: 17,
+    releaseDate: '2026-10-27',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.3.3 Release',
-    message: 'Attendance Recovery Radar, point-wise catch-up roadmap, and 1-tap Lightning Point reconciliation!',
+    title: '💬 BunkClub v1.4.0 WhatsApp & Mass Bunk Edition',
+    message: 'College group chat, end-to-end messaging, 🚨 Mass Bunk consensus engine, and extra class reconciliation!',
     changelog: [
-      '⚡ Attendance Recovery Radar: Point-by-point action plan calculating exact consecutive classes needed to reach safe standing',
-      '⚡ 1-Tap Lightning Hub: Tap any subject point or pop-up notification to immediately open the Daily Attendance Reconciliation modal',
-      '🔒 Zero-Data Loss Guarantee: All user timetables, subject attendance, and accounts are permanently preserved across deploys',
-      '🎯 Zero Fake Bunks: Fresh accounts start with 100% clean attendance without simulated absences',
-      '🌓 Day/Night Theme Perfection: High-contrast dual theme support across admin panel and reconciliation modal'
+      '💬 WhatsApp Model College Community: End-to-end secured class group chat and 1-on-1 direct messaging with GIFs & emojis',
+      '🚨 Live Mass Bunk Engine: Push class-wide mass bunk polls into chat with live consensus bars and 1-tap attendance apply',
+      '⚡ Lightning Extra Class Creator: Add Period 6 and remedial extra classes directly in the daily reconciliation modal',
+      '⏰ 1-Tap Period Check-In Widget: Instant in-app prompt with direct Yes/No buttons to record attended or bunked classes',
+      '🎯 Attendance Calculation Fix: Clamped to 100%, resolving 101% and 99% calculation discrepancies',
+      '⋮ Three-Dot Overflow Menu: Clean, uncluttered layout housing Subjects, Analytics, Register, and Settings'
     ]
   });
 });

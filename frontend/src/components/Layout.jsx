@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
   LayoutDashboard, CalendarDays, ClipboardCheck, BarChart3,
-  BookOpen, User, LogOut, Menu, X, Sun, Moon, Zap, GraduationCap
+  BookOpen, User, LogOut, Menu, X, Sun, Moon, Zap, GraduationCap,
+  MoreVertical, MessageSquare, Flame
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -13,9 +14,11 @@ import DailyWrapUpModal from './DailyWrapUpModal';
 import AppUpdateModal from './AppUpdateModal';
 
 const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/subjects', icon: GraduationCap, label: 'Subjects' },
+  { to: '/chat', icon: MessageSquare, label: 'Chats & Class' },
+  { to: '/mass-bunk', icon: Flame, label: '🚨 Mass Bunk' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Bunk Radar' },
   { to: '/timetable', icon: CalendarDays, label: 'Timetable' },
+  { to: '/subjects', icon: GraduationCap, label: 'Subjects' },
   { to: '/attendance', icon: BookOpen, label: 'Attendance Log' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics & Bunk' },
   { to: '/profile', icon: User, label: 'Profile' },
@@ -54,6 +57,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [wrapUpOpen, setWrapUpOpen] = useState(false);
+  const [threeDotOpen, setThreeDotOpen] = useState(false);
 
   // Global listener: allows opening the lightning point (DailyWrapUpModal) from any component,
   // notifications, popups, or deficit summary cards.
@@ -241,16 +245,96 @@ export default function Layout() {
               <span className="text-blue-500">Club</span>
             </span>
           </Link>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className={`p-1.5 rounded-lg ${isDark ? 'text-slate-300' : 'text-black'}`}
-            >
-              {isDark ? <Sun size={17} className="text-blue-400" /> : <Moon size={17} className="text-black" />}
-            </button>
+          <div className="flex items-center gap-1.5">
             {!Capacitor.isNativePlatform() && (
               <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
             )}
+
+            {/* Three-Dot Menu (WhatsApp style: houses Subjects, Analytics, Settings, Theme) */}
+            <div className="relative">
+              <button
+                onClick={() => setThreeDotOpen(!threeDotOpen)}
+                className={`p-2 rounded-xl transition-all ${
+                  isDark ? 'text-slate-300 hover:text-white hover:bg-white/10' : 'text-slate-700 hover:text-black hover:bg-black/5'
+                }`}
+                title="More Options (Subjects, Register, Settings)"
+              >
+                <MoreVertical size={20} />
+              </button>
+
+              {threeDotOpen && (
+                <div
+                  className={`absolute right-0 top-full mt-2 w-56 rounded-2xl border shadow-2xl p-1.5 z-50 animate-[slideDown_0.2s_ease-out] backdrop-blur-xl ${
+                    isDark ? 'bg-[#182229]/95 border-slate-700 text-white' : 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300'
+                  }`}
+                >
+                  <Link
+                    to="/subjects"
+                    onClick={() => setThreeDotOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                  >
+                    <GraduationCap size={16} />
+                    <span>Subjects Management</span>
+                  </Link>
+                  <Link
+                    to="/analytics"
+                    onClick={() => setThreeDotOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                  >
+                    <BarChart3 size={16} />
+                    <span>Analytics & Bunk Cushion</span>
+                  </Link>
+                  <Link
+                    to="/attendance"
+                    onClick={() => setThreeDotOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                  >
+                    <BookOpen size={16} />
+                    <span>Attendance Register (MAM)</span>
+                  </Link>
+                  <Link
+                    to="/timetable"
+                    onClick={() => setThreeDotOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                  >
+                    <CalendarDays size={16} />
+                    <span>Timetable Schedule</span>
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setThreeDotOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                  >
+                    <User size={16} />
+                    <span>My Profile</span>
+                  </Link>
+                  <div className="h-px bg-black/10 dark:bg-white/10 my-1" />
+                  <button
+                    onClick={() => {
+                      toggleTheme();
+                      setThreeDotOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors text-left"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                      <span>{isDark ? 'Switch to Day Mode' : 'Switch to Dark Mode'}</span>
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setThreeDotOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors text-left"
+                  >
+                    <LogOut size={16} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setDrawerOpen(true)}
               className={`p-2 rounded-lg ${isDark ? 'text-slate-300 hover:text-white' : 'text-black hover:bg-[#ede7db]'}`}
@@ -266,14 +350,48 @@ export default function Layout() {
         </main>
       </div>
 
-      {/* Fixed Native Mobile Bottom Navigation Bar (Thumb-reach Ergonomics) */}
+      {/* WhatsApp-Model Mobile Bottom Navigation Bar */}
       <nav
         className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl px-2 py-1.5 flex items-center justify-around transition-all ${
           isDark
-            ? 'bg-[#090b0e]/95 border-white/10 text-slate-400'
+            ? 'bg-[#0b141a]/95 border-white/10 text-slate-400'
             : 'bg-[#faf8f5]/95 border-black/10 text-slate-600 shadow-xl'
         }`}
       >
+        <NavLink
+          to="/chat"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-emerald-500 scale-105' : 'hover:text-white'
+            }`
+          }
+        >
+          <MessageSquare size={19} />
+          <span>Chats</span>
+        </NavLink>
+
+        <NavLink
+          to="/mass-bunk"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-red-500 scale-105' : 'hover:text-white'
+            }`
+          }
+        >
+          <Flame size={19} />
+          <span>Mass Bunk</span>
+        </NavLink>
+
+        {/* Center Hero Daily Wrap-Up Button (Lightning Point) */}
+        <button
+          type="button"
+          onClick={() => setWrapUpOpen(true)}
+          className="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/40 active:scale-90 transition-all border-2 border-[#090b0e] flex-shrink-0"
+          title="Daily Attendance Reconciliation"
+        >
+          <Zap size={20} className="fill-white" />
+        </button>
+
         <NavLink
           to="/dashboard"
           className={({ isActive }) =>
@@ -283,30 +401,8 @@ export default function Layout() {
           }
         >
           <LayoutDashboard size={19} />
-          <span>Home</span>
+          <span>Radar</span>
         </NavLink>
-
-        <NavLink
-          to="/subjects"
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-              isActive ? 'text-blue-500 scale-105' : 'hover:text-white'
-            }`
-          }
-        >
-          <GraduationCap size={19} />
-          <span>Subjects</span>
-        </NavLink>
-
-        {/* Center Hero Daily Wrap-Up Button */}
-        <button
-          type="button"
-          onClick={() => setWrapUpOpen(true)}
-          className="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/40 active:scale-90 transition-all border-2 border-[#090b0e] flex-shrink-0"
-          title="Daily Attendance Reconciliation"
-        >
-          <Zap size={20} className="fill-white" />
-        </button>
 
         <NavLink
           to="/timetable"
@@ -318,18 +414,6 @@ export default function Layout() {
         >
           <CalendarDays size={19} />
           <span>Schedule</span>
-        </NavLink>
-
-        <NavLink
-          to="/attendance"
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-              isActive ? 'text-blue-500 scale-105' : 'hover:text-white'
-            }`
-          }
-        >
-          <BookOpen size={19} />
-          <span>Register</span>
         </NavLink>
       </nav>
 
