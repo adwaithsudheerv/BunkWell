@@ -14,12 +14,11 @@ import DailyWrapUpModal from './DailyWrapUpModal';
 import AppUpdateModal from './AppUpdateModal';
 
 const navItems = [
-  { to: '/chat', icon: MessageSquare, label: 'Chats & Class' },
-  { to: '/mass-bunk', icon: Flame, label: '🚨 Mass Bunk' },
   { to: '/dashboard', icon: LayoutDashboard, label: 'Bunk Radar' },
-  { to: '/timetable', icon: CalendarDays, label: 'Timetable' },
+  { to: '/timetable', icon: CalendarDays, label: 'Timetable Schedule' },
   { to: '/subjects', icon: GraduationCap, label: 'Subjects' },
   { to: '/attendance', icon: BookOpen, label: 'Attendance Log' },
+  { to: '/chat', icon: MessageSquare, label: 'Student Messages' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics & Bunk' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
@@ -250,6 +249,22 @@ export default function Layout() {
               <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
             )}
 
+            {/* Instagram-style Direct Messages Button (Chat by User ID) */}
+            <NavLink
+              to="/chat"
+              className={({ isActive }) =>
+                `relative p-2 rounded-xl transition-all ${
+                  isActive
+                    ? 'text-emerald-500 bg-emerald-500/10'
+                    : isDark ? 'text-slate-300 hover:text-white hover:bg-white/10' : 'text-slate-700 hover:text-black hover:bg-black/5'
+                }`
+              }
+              title="Student Direct Messages (Search User ID)"
+            >
+              <MessageSquare size={20} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-[#0c0e14]" />
+            </NavLink>
+
             {/* Three-Dot Menu (WhatsApp style: houses Subjects, Analytics, Settings, Theme) */}
             <div className="relative">
               <button
@@ -275,6 +290,14 @@ export default function Layout() {
                   >
                     <GraduationCap size={16} />
                     <span>Subjects Management</span>
+                  </Link>
+                  <Link
+                    to="/chat"
+                    onClick={() => setThreeDotOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                  >
+                    <MessageSquare size={16} />
+                    <span>Student Messages (@UserIDs)</span>
                   </Link>
                   <Link
                     to="/analytics"
@@ -350,7 +373,7 @@ export default function Layout() {
         </main>
       </div>
 
-      {/* WhatsApp-Model Mobile Bottom Navigation Bar */}
+      {/* Attendance & Class Focused Mobile Bottom Navigation Bar */}
       <nav
         className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl px-2 py-1.5 flex items-center justify-around transition-all ${
           isDark
@@ -359,27 +382,27 @@ export default function Layout() {
         }`}
       >
         <NavLink
-          to="/chat"
+          to="/dashboard"
           className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-              isActive ? 'text-emerald-500 scale-105' : 'hover:text-white'
+            `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-blue-500 scale-105 font-extrabold' : 'hover:text-white'
             }`
           }
         >
-          <MessageSquare size={19} />
-          <span>Chats</span>
+          <LayoutDashboard size={19} />
+          <span>Radar</span>
         </NavLink>
 
         <NavLink
-          to="/mass-bunk"
+          to="/timetable"
           className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-              isActive ? 'text-red-500 scale-105' : 'hover:text-white'
+            `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-blue-500 scale-105 font-extrabold' : 'hover:text-white'
             }`
           }
         >
-          <Flame size={19} />
-          <span>Mass Bunk</span>
+          <CalendarDays size={19} />
+          <span>Schedule</span>
         </NavLink>
 
         {/* Center Hero Daily Wrap-Up Button (Lightning Point) */}
@@ -393,27 +416,27 @@ export default function Layout() {
         </button>
 
         <NavLink
-          to="/dashboard"
+          to="/attendance"
           className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-              isActive ? 'text-blue-500 scale-105' : 'hover:text-white'
+            `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-blue-500 scale-105 font-extrabold' : 'hover:text-white'
             }`
           }
         >
-          <LayoutDashboard size={19} />
-          <span>Radar</span>
+          <BookOpen size={19} />
+          <span>Register</span>
         </NavLink>
 
         <NavLink
-          to="/timetable"
+          to="/subjects"
           className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-              isActive ? 'text-blue-500 scale-105' : 'hover:text-white'
+            `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
+              isActive ? 'text-blue-500 scale-105 font-extrabold' : 'hover:text-white'
             }`
           }
         >
-          <CalendarDays size={19} />
-          <span>Schedule</span>
+          <GraduationCap size={19} />
+          <span>Subjects</span>
         </NavLink>
       </nav>
 

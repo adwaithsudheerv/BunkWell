@@ -147,14 +147,22 @@ router.post('/groups', auth, async (req, res) => {
   }
 });
 
-// 4. GET MESSAGES FOR CONVERSATION
+// 4. GET MESSAGES FOR CONVERSATION (Excludes expired Snapchat-style messages)
 router.get('/conversations/:id/messages', auth, async (req, res) => {
   try {
     const { id } = req.params;
     const conv = await Conversation.findOne({ _id: id, participants: req.user._id });
     if (!conv) return res.status(404).json({ message: 'Conversation not found or access denied' });
 
-    const messages = await Message.find({ conversationId: id })
+    const now = new Date();
+
+    // Background clean up of expired messages
+    Message.deleteMany({ conversationId: id, expiresAt: { $lte: now } }).exec().catch(() => {});
+
+    const messages = await Message.find({
+      conversationId: id,
+      $or: [{ expiresAt: { $gt: now } }, { expiresAt: null }]
+    })
       .populate('pollId')
       .sort({ createdAt: 1 })
       .limit(100);
@@ -162,20 +170,23 @@ router.get('/conversations/:id/messages', auth, async (req, res) => {
     // Mark as read
     await Message.updateMany(
       { conversationId: id, readBy: { $ne: req.user._id } },
-      { $addToSet: { readBy: req.user._id } }
+      { $addToSet: { readBy: req.user._id }, $set: { isViewed: true } }
     );
 
-    res.json({ messages });
+    res.json({
+      messages,
+      disappearingTimer: conv.disappearingTimer || 300
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// 5. SEND MESSAGE
+// 5. SEND MESSAGE (Snapchat Self-Destructing / Disappearing)
 router.post('/conversations/:id/messages', auth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { content, type, gifUrl, pollId } = req.body;
+    const { content, type, gifUrl, pollId, customTimer } = req.body;
 
     if (!content && !gifUrl && !pollId) {
       return res.status(400).json({ message: 'Message content or attachment required' });
@@ -183,6 +194,10 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
 
     const conv = await Conversation.findOne({ _id: id, participants: req.user._id });
     if (!conv) return res.status(404).json({ message: 'Conversation not found' });
+
+    // Calculate self-destruct timer (Snapchat model)
+    const durationSec = Number(customTimer) || conv.disappearingTimer || 300;
+    const expiresAt = new Date(Date.now() + durationSec * 1000);
 
     const msg = new Message({
       conversationId: id,
@@ -193,7 +208,9 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
       gifUrl: gifUrl || null,
       pollId: pollId || null,
       readBy: [req.user._id],
-      encrypted: true
+      encrypted: true,
+      disappearingSeconds: durationSec,
+      expiresAt: expiresAt
     });
 
     await msg.save();
@@ -209,6 +226,64 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
 
     const populatedMsg = await Message.findById(msg._id).populate('pollId');
     res.json({ message: populatedMsg });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 5B. SET DISAPPEARING TIMER (Snapchat style)
+router.post('/conversations/:id/disappearing', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { seconds } = req.body;
+    const conv = await Conversation.findOne({ _id: id, participants: req.user._id });
+    if (!conv) return res.status(404).json({ message: 'Conversation not found' });
+
+    conv.disappearingTimer = Number(seconds) || 300;
+    await conv.save();
+
+    res.json({ success: true, disappearingTimer: conv.disappearingTimer });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 5C. START OR GET CHAT BY USER ID / USERNAME
+router.post('/conversations/by-username', auth, async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username || !username.trim()) return res.status(400).json({ message: 'User ID is required' });
+
+    const cleanUsername = username.toLowerCase().trim().replace('@', '');
+    if (cleanUsername === req.user.username.toLowerCase()) {
+      return res.status(400).json({ message: 'Cannot chat with your own User ID' });
+    }
+
+    const recipient = await User.findOne({ username: cleanUsername });
+    if (!recipient) return res.status(404).json({ message: `Member with User ID "@${cleanUsername}" not found` });
+
+    let conv = await Conversation.findOne({
+      isGroup: false,
+      participants: { $all: [req.user._id, recipient._id], $size: 2 }
+    }).populate('participants', 'username avatar');
+
+    if (!conv) {
+      conv = new Conversation({
+        isGroup: false,
+        name: recipient.username,
+        participants: [req.user._id, recipient._id],
+        disappearingTimer: 300,
+        lastMessage: {
+          content: 'Started Snapchat-style disappearing chat ⏱️🔥',
+          senderName: req.user.username,
+          createdAt: new Date()
+        }
+      });
+      await conv.save();
+      conv = await Conversation.findById(conv._id).populate('participants', 'username avatar');
+    }
+
+    res.json({ conversation: conv });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -362,14 +437,21 @@ router.post('/friends/respond', auth, async (req, res) => {
   }
 });
 
-// 10. DISCOVER REGISTERED STUDENTS
+// 10. DISCOVER / SEARCH REGISTERED STUDENTS BY USER ID
 router.get('/users', auth, async (req, res) => {
   try {
-    const users = await User.find(
-      { _id: { $ne: req.user._id }, role: { $ne: 'admin' } },
-      'username avatar attendanceTarget createdAt'
-    ).limit(30);
+    const { search } = req.query;
+    const query = {
+      _id: { $ne: req.user._id },
+      role: { $ne: 'admin' }
+    };
 
+    if (search && search.trim()) {
+      const s = search.toLowerCase().trim().replace('@', '');
+      query.username = { $regex: new RegExp(s, 'i') };
+    }
+
+    const users = await User.find(query, 'username avatar attendanceTarget createdAt').limit(30);
     res.json({ users });
   } catch (err) {
     res.status(500).json({ message: err.message });

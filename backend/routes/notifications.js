@@ -67,19 +67,19 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.4.0',
-    versionCode: 17,
+    latestVersion: '1.4.1',
+    versionCode: 18,
     releaseDate: '2026-10-27',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '💬 BunkClub v1.4.0 WhatsApp & Mass Bunk Edition',
-    message: 'College group chat, end-to-end messaging, 🚨 Mass Bunk consensus engine, and extra class reconciliation!',
+    title: '🔥 BunkClub v1.4.1 Ephemeral Student Edition',
+    message: 'Instagram-style DMs by User ID, Snapchat self-destructing messages, and decluttered attendance navigation!',
     changelog: [
-      '💬 WhatsApp Model College Community: End-to-end secured class group chat and 1-on-1 direct messaging with GIFs & emojis',
-      '🚨 Live Mass Bunk Engine: Push class-wide mass bunk polls into chat with live consensus bars and 1-tap attendance apply',
-      '⚡ Lightning Extra Class Creator: Add Period 6 and remedial extra classes directly in the daily reconciliation modal',
-      '⏰ 1-Tap Period Check-In Widget: Instant in-app prompt with direct Yes/No buttons to record attended or bunked classes',
-      '🎯 Attendance Calculation Fix: Clamped to 100%, resolving 101% and 99% calculation discrepancies',
-      '⋮ Three-Dot Overflow Menu: Clean, uncluttered layout housing Subjects, Analytics, Register, and Settings'
+      '✈️ Instagram-Style Direct Messages: Search classmates by User ID and chat seamlessly right beside your schedule and classes',
+      '⏱️ Snapchat Self-Destructing Messages: Ephemeral chats auto-delete after 30s, 5m, 1h, or 24h with real-time countdowns',
+      '🎯 Attendance-Centric Navigation: Bottom navigation strictly focused on Radar, Schedule, Lightning Reconcile, Register, and Subjects',
+      '🚨 Integrated Mass Bunk: Class-wide mass bunk voting right inside your class group without cluttering tabs',
+      '⚡ Lightning Extra Class Creator: Add Period 6+ extra classes directly in the daily wrap-up',
+      '✅ Clamped Attendance Accuracy: Rectified 101% and 99% calculation discrepancies'
     ]
   });
 });

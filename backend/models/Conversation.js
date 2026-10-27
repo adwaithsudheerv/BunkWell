@@ -8,6 +8,7 @@ const conversationSchema = new mongoose.Schema({
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   admin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   isDefaultGroup: { type: Boolean, default: false },
+  disappearingTimer: { type: Number, default: 300 }, // Duration in seconds (e.g. 60, 300, 3600)
   lastMessage: {
     content: { type: String },
     senderName: { type: String },

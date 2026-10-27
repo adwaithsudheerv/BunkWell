@@ -6,7 +6,8 @@ import { useTheme } from '../context/ThemeContext';
 import {
   MessageSquare, Send, Smile, Image as ImageIcon, Flame,
   Search, Shield, CheckCheck, Users, UserPlus, X, ChevronLeft,
-  Pin, Sparkles, MoreVertical, Plus, Check
+  Pin, Sparkles, MoreVertical, Plus, Check, Clock, Timer,
+  Trash2, User, RefreshCw
 } from 'lucide-react';
 import MassBunkCard from './MassBunkCard';
 import MassBunkModal from './MassBunkModal';
@@ -21,7 +22,14 @@ const COLLEGE_GIFS = [
   { name: 'Exam Tomorrow', url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYWZ0bnJicjRld3BhN3V2M3pqdW8zZTR4dTB3d284aWw3N2h3Ynd2eiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/26ufcVAp3AiJJsrIs/giphy.gif' }
 ];
 
-export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) {
+const TIMER_OPTIONS = [
+  { label: '30s', seconds: 30 },
+  { label: '5m', seconds: 300 },
+  { label: '1h', seconds: 3600 },
+  { label: '24h', seconds: 86400 }
+];
+
+export default function WhatsAppChatView({ subjects = [] }) {
   const { user } = useAuth();
   const { isDark } = useTheme();
 
@@ -30,14 +38,22 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('chats'); // 'chats' | 'direct' | 'group' | 'members'
+  
+  // Snapchat Disappearing Timer
+  const [disappearingTimer, setDisappearingTimer] = useState(300);
+  const [showTimerMenu, setShowTimerMenu] = useState(false);
+
+  // Trays & Modals
   const [showEmojiTray, setShowEmojiTray] = useState(false);
   const [showGifTray, setShowGifTray] = useState(false);
-  const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showMassBunkModal, setShowMassBunkModal] = useState(false);
-  const [registeredUsers, setRegisteredUsers] = useState([]);
-  const [friendRequests, setFriendRequests] = useState({ incoming: [], friends: [] });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [friendUsername, setFriendUsername] = useState('');
+
+  // Members directory & Search
+  const [searchUserId, setSearchUserId] = useState('');
+  const [membersList, setMembersList] = useState([]);
+  const [searchingMembers, setSearchingMembers] = useState(false);
+
   const messagesEndRef = useRef(null);
 
   // Load conversations
@@ -47,10 +63,10 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
       const convList = res.data.conversations || [];
       setConversations(convList);
 
-      // Select default group if none selected
       if (!activeConv && convList.length > 0) {
         const def = convList.find(c => c.isDefaultGroup) || convList[0];
         setActiveConv(def);
+        setDisappearingTimer(def.disappearingTimer || 300);
       }
     } catch (err) {
       console.warn('Failed to load conversations:', err.message);
@@ -65,31 +81,30 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
     try {
       const res = await api.get(`/chat/conversations/${convId}/messages`);
       setMessages(res.data.messages || []);
+      if (res.data.disappearingTimer) {
+        setDisappearingTimer(res.data.disappearingTimer);
+      }
     } catch (err) {
       console.warn('Failed to load messages:', err.message);
     }
   };
 
-  // Load friends & discoverable users
-  const loadFriendsAndUsers = async () => {
+  // Search Members by User ID
+  const searchMembers = async (query = '') => {
+    setSearchingMembers(true);
     try {
-      const [fRes, uRes] = await Promise.all([
-        api.get('/chat/friends'),
-        api.get('/chat/users')
-      ]);
-      setFriendRequests({
-        incoming: fRes.data.incoming || [],
-        friends: fRes.data.friends || []
-      });
-      setRegisteredUsers(uRes.data.users || []);
-    } catch (e) {}
+      const res = await api.get(`/chat/users?search=${encodeURIComponent(query)}`);
+      setMembersList(res.data.users || []);
+    } catch (e) {
+    } finally {
+      setSearchingMembers(false);
+    }
   };
 
   useEffect(() => {
     loadConversations();
-    loadFriendsAndUsers();
+    searchMembers('');
 
-    // Poll for new messages every 3 seconds
     const interval = setInterval(() => {
       if (activeConv?._id) loadMessages(activeConv._id);
     }, 3000);
@@ -100,6 +115,7 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
   useEffect(() => {
     if (activeConv?._id) {
       loadMessages(activeConv._id);
+      setDisappearingTimer(activeConv.disappearingTimer || 300);
     }
   }, [activeConv]);
 
@@ -116,6 +132,7 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
       const res = await api.post(`/chat/conversations/${activeConv._id}/messages`, {
         content: content.trim(),
         type,
+        customTimer: disappearingTimer,
         ...extraPayload
       });
       setMessages(prev => [...prev, res.data.message]);
@@ -128,37 +145,30 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
     }
   };
 
-  const handleSendFriendRequest = async () => {
-    if (!friendUsername.trim()) return;
+  const handleSetTimer = async (seconds) => {
+    setDisappearingTimer(seconds);
+    setShowTimerMenu(false);
+    if (!activeConv?._id) return;
+
     try {
-      const res = await api.post('/chat/friends/request', { username: friendUsername.trim() });
-      toast.success(res.data.message);
-      setFriendUsername('');
-      loadFriendsAndUsers();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to send request');
+      await api.post(`/chat/conversations/${activeConv._id}/disappearing`, { seconds });
+      const secLabel = TIMER_OPTIONS.find(o => o.seconds === seconds)?.label || `${seconds}s`;
+      toast.success(`Disappearing timer set to ${secLabel} (Snapchat mode) ⏱️🔥`);
+      handleSendMessage(`⏱️ Set messages to self-destruct after ${secLabel}.`, 'system');
+    } catch (e) {
+      toast.error('Failed to update timer');
     }
   };
 
-  const handleRespondRequest = async (requestId, action) => {
+  const handleStartChatByUserId = async (targetUsername) => {
     try {
-      const res = await api.post('/chat/friends/respond', { requestId, action });
-      toast.success(res.data.message);
-      loadFriendsAndUsers();
-      loadConversations();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Action failed');
-    }
-  };
-
-  const handleStartDirectChat = async (targetUserId) => {
-    try {
-      const res = await api.post('/chat/conversations', { recipientId: targetUserId });
+      const res = await api.post('/chat/conversations/by-username', { username: targetUsername });
       setActiveConv(res.data.conversation);
-      setShowNewChatModal(false);
+      setActiveTab('chats');
       loadConversations();
+      toast.success(`Started chat with @${targetUsername}!`);
     } catch (err) {
-      toast.error('Failed to start chat');
+      toast.error(err.response?.data?.message || 'Failed to start chat');
     }
   };
 
@@ -169,31 +179,41 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
     } catch (e) {}
   };
 
-  // Filtered conversation list
+  // Filter conversations
   const filteredConversations = conversations.filter(c => {
-    const name = c.isGroup ? c.name : c.participants?.find(p => String(p._id) !== String(user?._id))?.username || c.name;
-    return (name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const title = c.isGroup ? c.name : c.participants?.find(p => String(p._id) !== String(user?._id))?.username || c.name;
+    const matchesSearch = (title || '').toLowerCase().includes(searchUserId.toLowerCase());
+    if (activeTab === 'group') return matchesSearch && c.isGroup;
+    if (activeTab === 'direct') return matchesSearch && !c.isGroup;
+    return matchesSearch;
   });
 
   const getConvTitle = (conv) => {
     if (!conv) return '';
     if (conv.isGroup) return conv.name;
     const otherUser = conv.participants?.find(p => String(p._id) !== String(user?._id));
-    return otherUser ? `@${otherUser.username}` : conv.name || 'Student';
+    return otherUser ? `@${otherUser.username}` : conv.name || 'Member';
+  };
+
+  // Remaining seconds calculation for a message
+  const getRemainingSeconds = (msg) => {
+    if (!msg.expiresAt) return null;
+    const diff = Math.max(0, Math.round((new Date(msg.expiresAt).getTime() - Date.now()) / 1000));
+    return diff;
   };
 
   return (
-    <div className={`rounded-3xl border shadow-2xl flex flex-col h-[78vh] sm:h-[82vh] overflow-hidden transition-all ${
+    <div className={`rounded-3xl border shadow-2xl flex flex-col h-[82vh] overflow-hidden transition-all ${
       isDark
         ? 'bg-[#0c1317] border-slate-700/80 text-white'
         : 'bg-[#f0f2f5] border-slate-300 text-slate-900'
     }`}>
       <div className="flex h-full w-full min-w-0">
-        {/* Left Side: Conversations & Groups List (WhatsApp Model) */}
+        {/* Left Side: User Search, Tabs & Chat List */}
         <div className={`w-full sm:w-80 md:w-96 flex flex-col border-r h-full flex-shrink-0 transition-all ${
           activeConv && 'hidden sm:flex'
         } ${isDark ? 'border-slate-800 bg-[#111b21]' : 'border-slate-200 bg-white'}`}>
-          {/* Top Bar */}
+          {/* Header */}
           <div className={`p-3.5 border-b flex items-center justify-between gap-2 ${
             isDark ? 'border-slate-800 bg-[#202c33]' : 'border-slate-200 bg-[#f0f2f5]'
           }`}>
@@ -201,136 +221,201 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
               <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-black text-sm shadow-sm">
                 💬
               </div>
-              <h3 className="font-extrabold text-base tracking-tight">
-                Chats & Groups
-              </h3>
+              <div>
+                <h3 className="font-extrabold text-sm sm:text-base tracking-tight leading-tight">
+                  Student Messenger
+                </h3>
+                <p className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                  <Flame size={11} className="fill-amber-400" />
+                  <span>Snapchat Disappearing Chats</span>
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setShowMassBunkModal(true)}
-                className="flex items-center gap-1 py-1.5 px-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-extrabold text-[11px] shadow-sm transition-all active:scale-95"
-                title="Initiate Class Mass Bunk"
-              >
-                <Flame size={13} className="fill-white" />
-                <span>🚨 Mass Bunk</span>
-              </button>
-              <button
-                onClick={() => setShowNewChatModal(true)}
-                className={`p-2 rounded-xl transition-all ${
-                  isDark ? 'bg-slate-700/80 hover:bg-slate-700 text-white' : 'bg-white hover:bg-slate-100 text-slate-800 border'
-                }`}
-                title="New Chat / Find Students"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
+            
+            <button
+              onClick={() => setActiveTab('members')}
+              className={`p-2 rounded-xl transition-all ${
+                activeTab === 'members'
+                  ? 'bg-emerald-600 text-white'
+                  : isDark ? 'bg-slate-700/80 text-slate-300 hover:text-white' : 'bg-white text-slate-700 border'
+              }`}
+              title="Search Members by User ID"
+            >
+              <UserPlus size={16} />
+            </button>
           </div>
 
-          {/* Pending Requests Alert */}
-          {friendRequests.incoming.length > 0 && (
-            <div className="p-2.5 bg-amber-500/15 border-b border-amber-500/30 flex items-center justify-between gap-2 text-xs">
-              <span className="font-bold text-amber-500 dark:text-amber-300 truncate">
-                👋 {friendRequests.incoming.length} incoming chat request{friendRequests.incoming.length > 1 ? 's' : ''}!
-              </span>
-              <button
-                onClick={() => setShowNewChatModal(true)}
-                className="px-2 py-0.5 rounded-lg bg-amber-500 text-black font-extrabold text-[10px] whitespace-nowrap"
-              >
-                Review
-              </button>
-            </div>
-          )}
-
-          {/* Search Bar */}
-          <div className="p-2.5 border-b border-black/5 dark:border-white/5">
+          {/* User ID Direct Search Bar */}
+          <div className="p-2.5 border-b border-black/5 dark:border-white/5 space-y-2">
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${
               isDark ? 'bg-[#202c33] border-slate-700/60 text-white' : 'bg-[#f0f2f5] border-slate-200 text-slate-900'
             }`}>
               <Search size={14} className="text-slate-400" />
               <input
                 type="text"
-                placeholder="Search chats, groups, or students..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search User ID (e.g. sonal, adwaith)..."
+                value={searchUserId}
+                onChange={(e) => {
+                  setSearchUserId(e.target.value);
+                  if (activeTab === 'members') searchMembers(e.target.value);
+                }}
                 className="w-full bg-transparent text-xs font-medium focus:outline-none placeholder-slate-400"
               />
             </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex items-center gap-1 text-[11px] font-bold">
+              {[
+                { id: 'chats', label: 'All Chats' },
+                { id: 'direct', label: '1-on-1' },
+                { id: 'group', label: 'Class Group' },
+                { id: 'members', label: 'Find Members' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (tab.id === 'members') searchMembers(searchUserId);
+                  }}
+                  className={`flex-1 py-1 px-1.5 rounded-lg text-center transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-emerald-600 text-white font-extrabold shadow-sm'
+                      : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-600 hover:text-black hover:bg-slate-100'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Conversations Scrollable List */}
-          <div className="flex-1 overflow-y-auto divide-y divide-black/5 dark:divide-white/5">
-            {loading ? (
-              <div className="p-8 text-center text-xs text-slate-400">Loading chats...</div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400">
-                No chats found. Tap "+" to start chatting!
+          {/* Members Directory Tab View */}
+          {activeTab === 'members' ? (
+            <div className="flex-1 overflow-y-auto divide-y divide-black/5 dark:divide-white/5 p-2 space-y-1">
+              <div className="px-2 py-1 flex items-center justify-between text-[11px] font-bold text-slate-400">
+                <span>Search by User ID:</span>
+                <span className="text-emerald-500">{membersList.length} registered</span>
               </div>
-            ) : (
-              filteredConversations.map(conv => {
-                const title = getConvTitle(conv);
-                const isSelected = activeConv?._id === conv._id;
-                const isGroup = conv.isGroup;
-
-                return (
-                  <button
-                    key={conv._id}
-                    onClick={() => setActiveConv(conv)}
-                    className={`w-full p-3.5 text-left flex items-start gap-3 transition-all ${
-                      isSelected
-                        ? isDark ? 'bg-[#2a3942]' : 'bg-[#f0f2f5]'
-                        : isDark ? 'hover:bg-[#202c33]' : 'hover:bg-slate-50'
+              {searchingMembers ? (
+                <div className="p-8 text-center text-xs text-slate-400">Searching User IDs...</div>
+              ) : membersList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400">
+                  No member found with User ID "{searchUserId}".
+                </div>
+              ) : (
+                membersList.map(member => (
+                  <div
+                    key={member._id}
+                    className={`p-2.5 rounded-2xl flex items-center justify-between gap-2 transition-all ${
+                      isDark ? 'hover:bg-[#202c33]' : 'hover:bg-slate-100'
                     }`}
                   >
-                    <div className="relative flex-shrink-0">
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-black shadow-sm ${
-                        isGroup
-                          ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white'
-                          : 'bg-blue-600 text-white'
-                      }`}>
-                        {isGroup ? (conv.avatar || '🎓') : title.replace('@', '').charAt(0).toUpperCase()}
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-black flex items-center justify-center text-sm flex-shrink-0 shadow-sm">
+                        {member.username?.charAt(0).toUpperCase()}
                       </div>
-                      {!isGroup && (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#111b21]" />
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1">
-                        <h4 className="font-extrabold text-sm truncate flex items-center gap-1.5">
-                          <span>{title}</span>
-                          {conv.isDefaultGroup && (
-                            <Pin size={12} className="text-amber-400 fill-amber-400 flex-shrink-0" />
-                          )}
-                        </h4>
-                        <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">
-                          {conv.updatedAt ? new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                        </span>
+                      <div className="min-w-0">
+                        <p className="font-extrabold text-xs truncate">
+                          @{member.username}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          Target: {member.attendanceTarget || 80}%
+                        </p>
                       </div>
-                      <p className={`text-xs mt-0.5 truncate flex items-center gap-1 ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}>
-                        {conv.lastMessage?.senderName && (
-                          <span className="font-bold text-slate-300 dark:text-slate-400">
-                            {conv.lastMessage.senderName}:
-                          </span>
-                        )}
-                        <span>{conv.lastMessage?.content || 'No messages yet'}</span>
-                      </p>
                     </div>
+                    <button
+                      onClick={() => handleStartChatByUserId(member.username)}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-sm active:scale-95 flex items-center gap-1"
+                    >
+                      <MessageSquare size={13} />
+                      <span>Chat</span>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            /* Conversations List */
+            <div className="flex-1 overflow-y-auto divide-y divide-black/5 dark:divide-white/5">
+              {loading ? (
+                <div className="p-8 text-center text-xs text-slate-400">Loading chats...</div>
+              ) : filteredConversations.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400 space-y-2">
+                  <p>No chats found.</p>
+                  <button
+                    onClick={() => setActiveTab('members')}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs"
+                  >
+                    Find Members by User ID
                   </button>
-                );
-              })
-            )}
-          </div>
+                </div>
+              ) : (
+                filteredConversations.map(conv => {
+                  const title = getConvTitle(conv);
+                  const isSelected = activeConv?._id === conv._id;
+                  const isGroup = conv.isGroup;
+
+                  return (
+                    <button
+                      key={conv._id}
+                      onClick={() => setActiveConv(conv)}
+                      className={`w-full p-3.5 text-left flex items-start gap-3 transition-all ${
+                        isSelected
+                          ? isDark ? 'bg-[#2a3942]' : 'bg-[#f0f2f5]'
+                          : isDark ? 'hover:bg-[#202c33]' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="relative flex-shrink-0">
+                        <div className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-black shadow-sm ${
+                          isGroup
+                            ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white'
+                            : 'bg-blue-600 text-white'
+                        }`}>
+                          {isGroup ? (conv.avatar || '🎓') : title.replace('@', '').charAt(0).toUpperCase()}
+                        </div>
+                        {!isGroup && (
+                          <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#111b21]" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <h4 className="font-extrabold text-sm truncate flex items-center gap-1.5">
+                            <span>{title}</span>
+                            {conv.isDefaultGroup && (
+                              <Pin size={12} className="text-amber-400 fill-amber-400 flex-shrink-0" />
+                            )}
+                          </h4>
+                          <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">
+                            {conv.updatedAt ? new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          </span>
+                        </div>
+                        <p className={`text-xs mt-0.5 truncate flex items-center gap-1 ${
+                          isDark ? 'text-slate-400' : 'text-slate-500'
+                        }`}>
+                          {conv.lastMessage?.senderName && (
+                            <span className="font-bold text-slate-300 dark:text-slate-400">
+                              {conv.lastMessage.senderName}:
+                            </span>
+                          )}
+                          <span>{conv.lastMessage?.content || 'No messages yet'}</span>
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Right Side: Active Conversation Room */}
+        {/* Right Side: Active Snapchat Disappearing Chat Room */}
         <div className={`flex-1 flex flex-col h-full min-w-0 ${
           !activeConv && 'hidden sm:flex'
         }`}>
           {activeConv ? (
             <>
-              {/* WhatsApp Active Chat Header */}
+              {/* Chat Top Bar */}
               <div className={`px-4 py-3 border-b flex items-center justify-between gap-3 ${
                 isDark ? 'bg-[#202c33] border-slate-800' : 'bg-[#f0f2f5] border-slate-200'
               }`}>
@@ -347,28 +432,70 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
                     {activeConv.isGroup ? (activeConv.avatar || '🎓') : getConvTitle(activeConv).replace('@', '').charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-extrabold text-sm sm:text-base truncate flex items-center gap-1.5">
-                      <span>{getConvTitle(activeConv)}</span>
+                    <h4 className="font-extrabold text-sm sm:text-base truncate">
+                      {getConvTitle(activeConv)}
                     </h4>
-                    <p className="text-[11px] text-emerald-500 dark:text-emerald-400 font-bold truncate flex items-center gap-1">
-                      <span>Online • 🔒 End-to-end secured</span>
+                    <p className="text-[11px] text-amber-400 font-bold truncate flex items-center gap-1">
+                      <Timer size={11} />
+                      <span>Snapchat Disappearing Mode ({TIMER_OPTIONS.find(o => o.seconds === disappearingTimer)?.label || `${disappearingTimer}s`})</span>
                     </p>
                   </div>
                 </div>
 
-                {/* Header Action: 🚨 Mass Bunk */}
+                {/* Header Controls: Disappearing Timer + Mass Bunk for Group */}
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => setShowMassBunkModal(true)}
-                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-black text-xs shadow-md shadow-red-600/30 active:scale-95 transition-all"
-                  >
-                    <Flame size={14} className="fill-white" />
-                    <span className="hidden sm:inline">🚨 Mass Bunk</span>
-                  </button>
+                  {/* Disappearing Timer Selector */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowTimerMenu(!showTimerMenu)}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                        isDark ? 'bg-slate-800 border-slate-700 text-amber-300' : 'bg-white border-slate-300 text-amber-700'
+                      }`}
+                      title="Set Snapchat self-destruct timer"
+                    >
+                      <Timer size={13} />
+                      <span>{TIMER_OPTIONS.find(o => o.seconds === disappearingTimer)?.label || `${disappearingTimer}s`}</span>
+                    </button>
+
+                    {showTimerMenu && (
+                      <div className={`absolute right-0 top-full mt-1.5 w-36 rounded-2xl border shadow-xl p-1 z-50 animate-[slideDown_0.2s_ease-out] ${
+                        isDark ? 'bg-[#182229] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
+                      }`}>
+                        <p className="text-[10px] font-bold px-2 py-1 uppercase tracking-wider text-slate-400">
+                          Auto-Delete Timer:
+                        </p>
+                        {TIMER_OPTIONS.map(opt => (
+                          <button
+                            key={opt.seconds}
+                            onClick={() => handleSetTimer(opt.seconds)}
+                            className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-between ${
+                              disappearingTimer === opt.seconds
+                                ? 'bg-emerald-600 text-white'
+                                : isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'
+                            }`}
+                          >
+                            <span>{opt.label}</span>
+                            {disappearingTimer === opt.seconds && <Check size={13} />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mass Bunk button in class group */}
+                  {activeConv.isGroup && (
+                    <button
+                      onClick={() => setShowMassBunkModal(true)}
+                      className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-black text-xs shadow-md shadow-red-600/30 active:scale-95 transition-all"
+                    >
+                      <Flame size={14} className="fill-white" />
+                      <span className="hidden sm:inline">🚨 Mass Bunk</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Message Feed (WhatsApp Wallpaper aesthetic) */}
+              {/* Message Feed */}
               <div
                 className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3"
                 style={{
@@ -377,19 +504,20 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
                   backgroundSize: '24px 24px'
                 }}
               >
-                {/* Security E2E Badge */}
+                {/* Snapchat Disappearing Notice Banner */}
                 <div className="flex justify-center my-2">
                   <div className={`px-4 py-2 rounded-2xl border text-[11px] font-semibold text-center max-w-md shadow-sm ${
-                    isDark ? 'bg-[#182229]/90 border-slate-700/50 text-amber-300' : 'bg-[#ffeecd] border-amber-200 text-amber-900'
+                    isDark ? 'bg-[#182229]/95 border-amber-500/30 text-amber-300' : 'bg-[#fff5db] border-amber-300 text-amber-900'
                   }`}>
-                    <Shield size={13} className="inline mr-1 -mt-0.5" />
-                    Messages and mass bunk votes in this chat are end-to-end secured with 256-bit BunkClub Encryption.
+                    <Timer size={13} className="inline mr-1 -mt-0.5 text-amber-400" />
+                    Snapchat Mode Active: Messages in this chat self-destruct after {TIMER_OPTIONS.find(o => o.seconds === disappearingTimer)?.label || `${disappearingTimer}s`}. Nothing is permanently saved.
                   </div>
                 </div>
 
                 {/* Messages stream */}
                 {messages.map((m, idx) => {
                   const isMine = String(m.sender) === String(user?._id);
+                  const remSec = getRemainingSeconds(m);
 
                   if (m.type === 'poll' && m.pollId) {
                     return (
@@ -399,6 +527,16 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
                           currentUserId={user?._id}
                           onVoted={() => loadMessages(activeConv._id)}
                         />
+                      </div>
+                    );
+                  }
+
+                  if (m.type === 'system') {
+                    return (
+                      <div key={m._id || idx} className="flex justify-center my-1">
+                        <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-black/20 dark:bg-white/10 text-slate-400">
+                          {m.content}
+                        </span>
                       </div>
                     );
                   }
@@ -415,14 +553,14 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
                             : isDark ? 'bg-[#202c33] text-white rounded-tl-none' : 'bg-white text-slate-900 rounded-tl-none'
                         }`}
                       >
-                        {/* Sender name for group chats */}
+                        {/* Sender name for groups */}
                         {!isMine && activeConv.isGroup && (
                           <p className="text-[10px] font-black text-amber-400 mb-0.5">
                             @{m.senderName}
                           </p>
                         )}
 
-                        {/* GIF render */}
+                        {/* GIF media */}
                         {m.type === 'gif' && m.gifUrl && (
                           <div className="rounded-xl overflow-hidden my-1 max-w-xs">
                             <img src={m.gifUrl} alt="GIF" className="w-full h-auto object-cover rounded-xl" />
@@ -434,15 +572,19 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
                           {m.content}
                         </p>
 
-                        {/* Timestamp & read receipts */}
-                        <div className="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-400">
-                          <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          {isMine && (
-                            <CheckCheck size={13} className="text-blue-400 inline" />
+                        {/* Self-destruct timer pill & timestamp */}
+                        <div className="flex items-center justify-end gap-1.5 mt-1 text-[9px] text-slate-400">
+                          {remSec !== null && (
+                            <span className="text-amber-400 font-mono font-bold flex items-center gap-0.5">
+                              <Timer size={10} />
+                              <span>{remSec > 60 ? `${Math.ceil(remSec / 60)}m` : `${remSec}s`}</span>
+                            </span>
                           )}
+                          <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          {isMine && <CheckCheck size={13} className="text-blue-400 inline" />}
                         </div>
 
-                        {/* Reactions bar */}
+                        {/* Reactions */}
                         {m.reactions?.length > 0 && (
                           <div className="absolute -bottom-2.5 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-900/90 text-[10px] border border-white/20 shadow-sm">
                             {m.reactions.map((r, i) => (
@@ -452,7 +594,7 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
                         )}
                       </div>
 
-                      {/* Quick Emoji Reaction Pill on hover/touch */}
+                      {/* Reaction bar on hover */}
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-0.5 px-2">
                         {['🔥', '😂', '💀', '👍'].map(emoji => (
                           <button
@@ -512,7 +654,7 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
                 </div>
               )}
 
-              {/* Input Bar (WhatsApp style) */}
+              {/* Input Bar */}
               <div className={`p-2.5 sm:p-3 border-t flex items-center gap-2 ${
                 isDark ? 'bg-[#202c33] border-slate-800' : 'bg-[#f0f2f5] border-slate-200'
               }`}>
@@ -546,7 +688,7 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
 
                 <input
                   type="text"
-                  placeholder="Type a message or bunk plan..."
+                  placeholder="Type a disappearing message (burns after timer)..."
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => {
@@ -572,130 +714,14 @@ export default function WhatsAppChatView({ defaultPoll = null, subjects = [] }) 
               <div className="w-16 h-16 rounded-full bg-emerald-600/20 text-emerald-500 flex items-center justify-center">
                 <MessageSquare size={32} />
               </div>
-              <h3 className="font-black text-lg">BunkClub Messenger</h3>
+              <h3 className="font-black text-lg">Snapchat Disappearing Chats</h3>
               <p className="text-xs text-slate-400 max-w-sm">
-                Select a college group or classmate to start chatting and coordinating mass bunks.
+                Search classmates by their User ID and send self-destructing messages that vanish after minutes.
               </p>
             </div>
           )}
         </div>
       </div>
-
-      {/* New Chat / Find Students Modal */}
-      {showNewChatModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-          <div className={`w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl border transition-all animate-[slideUp_0.3s_ease-out] ${
-            isDark ? 'bg-[#111b21] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-          }`}>
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-black/10 dark:border-white/10">
-              <h3 className="font-black text-base flex items-center gap-2">
-                <UserPlus size={18} className="text-emerald-500" />
-                <span>Connect with Classmates</span>
-              </h3>
-              <button
-                onClick={() => setShowNewChatModal(false)}
-                className={`p-1 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-black'}`}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Incoming Requests */}
-            {friendRequests.incoming.length > 0 && (
-              <div className="mb-4 space-y-2">
-                <p className="text-xs font-bold text-amber-500 uppercase tracking-wider">
-                  Pending Chat Requests
-                </p>
-                {friendRequests.incoming.map(reqDoc => (
-                  <div
-                    key={reqDoc._id}
-                    className="flex items-center justify-between p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20"
-                  >
-                    <div>
-                      <p className="font-extrabold text-xs">@{reqDoc.sender?.username}</p>
-                      <p className="text-[10px] text-slate-400">Wants to chat with you</p>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => handleRespondRequest(reqDoc._id, 'accept')}
-                        className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-bold text-xs"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => handleRespondRequest(reqDoc._id, 'reject')}
-                        className="px-2.5 py-1 rounded-xl bg-red-600/20 text-red-400 font-bold text-xs"
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Send Request by Username */}
-            <div className="mb-4">
-              <label className="text-xs font-bold block mb-1 uppercase tracking-wider text-slate-400">
-                Send Request by Username
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="e.g. sonal, adwaith..."
-                  value={friendUsername}
-                  onChange={(e) => setFriendUsername(e.target.value)}
-                  className={`flex-1 p-2.5 rounded-xl text-xs font-semibold border focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                    isDark ? 'bg-[#202c33] border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-black'
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={handleSendFriendRequest}
-                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-
-            {/* Discover Students */}
-            <div>
-              <p className="text-xs font-bold block mb-2 uppercase tracking-wider text-slate-400">
-                Classmates in BunkClub
-              </p>
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {registeredUsers.length === 0 ? (
-                  <p className="text-xs text-slate-400">No other students registered yet.</p>
-                ) : (
-                  registeredUsers.map(u => (
-                    <div
-                      key={u._id}
-                      className="flex items-center justify-between p-2 rounded-xl bg-black/5 dark:bg-white/5"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">
-                          {u.username?.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-extrabold text-xs">@{u.username}</p>
-                          <p className="text-[10px] text-slate-400">Student</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleStartDirectChat(u._id)}
-                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm"
-                      >
-                        Chat
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Mass Bunk Initiator Modal */}
       <MassBunkModal

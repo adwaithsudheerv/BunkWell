@@ -15,9 +15,13 @@ const messageSchema = new mongoose.Schema({
   }],
   readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   encrypted: { type: Boolean, default: true },
+  disappearingSeconds: { type: Number, default: 300 }, // Default 5 minutes (Snapchat style)
+  expiresAt: { type: Date },
+  isViewed: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 
 messageSchema.index({ conversationId: 1, createdAt: 1 });
+messageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // Auto-purges from MongoDB when expired
 
 module.exports = mongoose.model('Message', messageSchema);
