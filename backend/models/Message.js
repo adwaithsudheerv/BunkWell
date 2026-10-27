@@ -5,9 +5,19 @@ const messageSchema = new mongoose.Schema({
   sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   senderName: { type: String, required: true },
   content: { type: String, required: true },
-  type: { type: String, enum: ['text', 'gif', 'poll', 'system'], default: 'text' },
+  type: { type: String, enum: ['text', 'chit', 'bunk_sync', 'gif', 'poll', 'system'], default: 'text' },
   gifUrl: { type: String },
   pollId: { type: mongoose.Schema.Types.ObjectId, ref: 'MassBunkPoll' },
+  isChit: { type: Boolean, default: false },
+  isOpened: { type: Boolean, default: false },
+  openedAt: { type: Date },
+  burnSeconds: { type: Number, default: 30 },
+  bunkSync: {
+    period: { type: Number },
+    subject: { type: String },
+    targetUsername: { type: String },
+    isAgreed: { type: Boolean, default: false }
+  },
   reactions: [{
     emoji: { type: String },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

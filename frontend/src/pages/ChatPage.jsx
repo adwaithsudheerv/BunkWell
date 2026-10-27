@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
-import WhatsAppChatView from '../components/WhatsAppChatView';
+import GhostChitView from '../components/GhostChitView';
 
 export default function ChatPage() {
   const [subjects, setSubjects] = useState([]);
@@ -11,7 +11,7 @@ export default function ChatPage() {
 
   return (
     <div className="space-y-4 animate-[fadeIn_0.3s_ease-out]">
-      <WhatsAppChatView subjects={subjects} />
+      <GhostChitView subjects={subjects} />
     </div>
   );
 }

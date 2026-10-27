@@ -18,7 +18,7 @@ const navItems = [
   { to: '/timetable', icon: CalendarDays, label: 'Timetable Schedule' },
   { to: '/subjects', icon: GraduationCap, label: 'Subjects' },
   { to: '/attendance', icon: BookOpen, label: 'Attendance Log' },
-  { to: '/chat', icon: MessageSquare, label: 'Student Messages' },
+  { to: '/chat', icon: Flame, label: 'Ghost Whispers' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics & Bunk' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
@@ -249,23 +249,23 @@ export default function Layout() {
               <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
             )}
 
-            {/* Instagram-style Direct Messages Button (Chat by User ID) */}
+            {/* Ghost Terminal Button (Pass Chits & Bunk Sync by User ID) */}
             <NavLink
               to="/chat"
               className={({ isActive }) =>
                 `relative p-2 rounded-xl transition-all ${
                   isActive
-                    ? 'text-emerald-500 bg-emerald-500/10'
+                    ? 'text-amber-500 bg-amber-500/10'
                     : isDark ? 'text-slate-300 hover:text-white hover:bg-white/10' : 'text-slate-700 hover:text-black hover:bg-black/5'
                 }`
               }
-              title="Student Direct Messages (Search User ID)"
+              title="Ghost Terminal (Pass Chits & Bunk Sync by User ID)"
             >
-              <MessageSquare size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-[#0c0e14]" />
+              <Flame size={20} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-[#0c0e14]" />
             </NavLink>
 
-            {/* Three-Dot Menu (WhatsApp style: houses Subjects, Analytics, Settings, Theme) */}
+            {/* Three-Dot Menu (Houses Subjects, Analytics, Settings, Theme) */}
             <div className="relative">
               <button
                 onClick={() => setThreeDotOpen(!threeDotOpen)}
@@ -296,8 +296,8 @@ export default function Layout() {
                     onClick={() => setThreeDotOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
                   >
-                    <MessageSquare size={16} />
-                    <span>Student Messages (@UserIDs)</span>
+                    <Flame size={16} />
+                    <span>Ghost Whispers (@UserIDs)</span>
                   </Link>
                   <Link
                     to="/analytics"

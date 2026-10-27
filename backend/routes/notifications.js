@@ -67,19 +67,18 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.4.1',
-    versionCode: 18,
-    releaseDate: '2026-10-27',
+    latestVersion: '1.4.2',
+    versionCode: 19,
+    releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🔥 BunkClub v1.4.1 Ephemeral Student Edition',
-    message: 'Instagram-style DMs by User ID, Snapchat self-destructing messages, and decluttered attendance navigation!',
+    title: '🔥 BunkClub v1.4.2 Ghost Terminal & Chit Edition',
+    message: 'Pass-the-Chit secret classroom notes, 1-on-1 User ID whispers, Bunk Buddy sync & zero group clutter!',
     changelog: [
-      '✈️ Instagram-Style Direct Messages: Search classmates by User ID and chat seamlessly right beside your schedule and classes',
-      '⏱️ Snapchat Self-Destructing Messages: Ephemeral chats auto-delete after 30s, 5m, 1h, or 24h with real-time countdowns',
-      '🎯 Attendance-Centric Navigation: Bottom navigation strictly focused on Radar, Schedule, Lightning Reconcile, Register, and Subjects',
-      '🚨 Integrated Mass Bunk: Class-wide mass bunk voting right inside your class group without cluttering tabs',
-      '⚡ Lightning Extra Class Creator: Add Period 6+ extra classes directly in the daily wrap-up',
-      '✅ Clamped Attendance Accuracy: Rectified 101% and 99% calculation discrepancies'
+      '📜 Pass-The-Chit Secret Notes: Classroom notes that unfold on tap and burn into ashes with a self-destruct timer',
+      '👤 1-on-1 User ID Whispers: Connect directly with any student via User ID with zero group clutter',
+      '🤝 Bunk Buddy Sync: 1-tap period sync pings to mutually agree on bunking classes with classmates',
+      '🔥 Incinerate Session: 1-tap button to wipe and burn all message traces immediately for both sides',
+      '🚫 Zero WhatsApp Clutter: Completely removed group chats and WhatsApp clones to keep BunkClub sleek and private'
     ]
   });
 });

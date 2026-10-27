@@ -7,66 +7,15 @@ const FriendRequest = require('../models/FriendRequest');
 const MassBunkPoll = require('../models/MassBunkPoll');
 const router = express.Router();
 
-const DEFAULT_GROUP_NAME = '🎓 MCA Section A - Official Bunk Syndicate';
-const DEFAULT_GROUP_DESC = 'Official class group chat for bunk coordination, timetable swaps & announcements.';
-
-/**
- * Ensures the default college group exists and has all users enrolled.
- */
-async function ensureDefaultCollegeGroup(currentUserId) {
-  let defaultGroup = await Conversation.findOne({ isDefaultGroup: true });
-  const allUsers = await User.find({ role: { $ne: 'admin' } }, '_id');
-  const allUserIds = allUsers.map(u => u._id);
-
-  if (!defaultGroup) {
-    defaultGroup = new Conversation({
-      isGroup: true,
-      name: DEFAULT_GROUP_NAME,
-      description: DEFAULT_GROUP_DESC,
-      avatar: '🎓',
-      isDefaultGroup: true,
-      participants: allUserIds,
-      lastMessage: {
-        content: 'Welcome to BunkClub! Coordinate bunks and discuss classes here. 🔥',
-        senderName: 'BunkClub Bot',
-        createdAt: new Date()
-      }
-    });
-    await defaultGroup.save();
-
-    // Create welcome message
-    const welcomeMsg = new Message({
-      conversationId: defaultGroup._id,
-      sender: currentUserId,
-      senderName: 'BunkClub Bot',
-      content: '🚨 Official MCA Section A Bunk Syndicate is live! Use the 🚨 MASS BUNK button to initiate class-wide polls.',
-      type: 'system',
-      encrypted: true
-    });
-    await welcomeMsg.save();
-  } else {
-    // Ensure all active students are in participants list
-    const existingSet = new Set(defaultGroup.participants.map(p => String(p)));
-    let added = false;
-    allUserIds.forEach(uid => {
-      if (!existingSet.has(String(uid))) {
-        defaultGroup.participants.push(uid);
-        added = true;
-      }
-    });
-    if (added) await defaultGroup.save();
-  }
-
-  return defaultGroup;
-}
-
-// 1. GET ALL CONVERSATIONS FOR USER
+// 1. GET ALL 1-ON-1 WHISPER CHANNELS FOR USER (Pure User ID to User ID, No Groups)
 router.get('/conversations', auth, async (req, res) => {
   try {
-    await ensureDefaultCollegeGroup(req.user._id);
+    // Delete any stale groups
+    await Conversation.deleteMany({ isGroup: true }).exec().catch(() => {});
 
     const conversations = await Conversation.find({
-      participants: req.user._id
+      participants: req.user._id,
+      isGroup: false
     })
       .populate('participants', 'username avatar attendanceTarget')
       .sort({ updatedAt: -1 });
@@ -182,11 +131,11 @@ router.get('/conversations/:id/messages', auth, async (req, res) => {
   }
 });
 
-// 5. SEND MESSAGE (Snapchat Self-Destructing / Disappearing)
+// 5. SEND MESSAGE (Ghost Whisper / Pass-The-Chit / Snapchat Ephemeral)
 router.post('/conversations/:id/messages', auth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { content, type, gifUrl, pollId, customTimer } = req.body;
+    const { content, type, gifUrl, pollId, customTimer, isChit, burnSeconds } = req.body;
 
     if (!content && !gifUrl && !pollId) {
       return res.status(400).json({ message: 'Message content or attachment required' });
@@ -195,18 +144,26 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
     const conv = await Conversation.findOne({ _id: id, participants: req.user._id });
     if (!conv) return res.status(404).json({ message: 'Conversation not found' });
 
-    // Calculate self-destruct timer (Snapchat model)
+    // Calculate self-destruct timer
+    const isChitType = type === 'chit' || isChit;
     const durationSec = Number(customTimer) || conv.disappearingTimer || 300;
-    const expiresAt = new Date(Date.now() + durationSec * 1000);
+    
+    // If it's an unopened Chit, expiresAt is set only once opened (or defaults to 24 hours if unread)
+    const expiresAt = isChitType
+      ? new Date(Date.now() + 24 * 3600 * 1000)
+      : new Date(Date.now() + durationSec * 1000);
 
     const msg = new Message({
       conversationId: id,
       sender: req.user._id,
       senderName: req.user.username,
-      content: content || (type === 'gif' ? 'Sent a GIF' : 'Sent a Poll'),
-      type: type || (gifUrl ? 'gif' : 'text'),
+      content: content || (type === 'gif' ? 'Sent a GIF' : 'Secret Chit 📜'),
+      type: isChitType ? 'chit' : (type || (gifUrl ? 'gif' : 'text')),
       gifUrl: gifUrl || null,
       pollId: pollId || null,
+      isChit: Boolean(isChitType),
+      isOpened: false,
+      burnSeconds: Number(burnSeconds) || 30,
       readBy: [req.user._id],
       encrypted: true,
       disappearingSeconds: durationSec,
@@ -217,7 +174,7 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
 
     // Update conversation lastMessage
     conv.lastMessage = {
-      content: msg.content,
+      content: isChitType ? `📜 Secret Chit from @${req.user.username}` : msg.content,
       senderName: req.user.username,
       createdAt: msg.createdAt
     };
@@ -226,6 +183,105 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
 
     const populatedMsg = await Message.findById(msg._id).populate('pollId');
     res.json({ message: populatedMsg });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 5A. OPEN SECRET CHIT (Starts Burn Countdown)
+router.post('/messages/:id/open-chit', auth, async (req, res) => {
+  try {
+    const msg = await Message.findById(req.params.id);
+    if (!msg) return res.status(404).json({ message: 'Chit has already burned or vanished' });
+
+    if (!msg.isOpened) {
+      msg.isOpened = true;
+      msg.openedAt = new Date();
+      const burnDuration = msg.burnSeconds || 30;
+      msg.expiresAt = new Date(Date.now() + burnDuration * 1000);
+      await msg.save();
+    }
+
+    res.json({ message: msg });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 5B. BUNK BUDDY SYNC (Mutual Period Coordination)
+router.post('/conversations/:id/bunk-sync', auth, async (req, res) => {
+  try {
+    const { period, subject } = req.body;
+    const conv = await Conversation.findOne({ _id: req.params.id, participants: req.user._id, isGroup: false })
+      .populate('participants', 'username');
+    if (!conv) return res.status(404).json({ message: 'Channel not found' });
+
+    const otherUser = conv.participants.find(p => String(p._id) !== String(req.user._id));
+
+    // Check if the other user already sent a pending sync for this period
+    const existingSync = await Message.findOne({
+      conversationId: conv._id,
+      type: 'bunk_sync',
+      sender: otherUser._id,
+      'bunkSync.period': Number(period),
+      'bunkSync.isAgreed': false
+    });
+
+    if (existingSync) {
+      existingSync.bunkSync.isAgreed = true;
+      await existingSync.save();
+
+      const agreedMsg = new Message({
+        conversationId: conv._id,
+        sender: req.user._id,
+        senderName: req.user.username,
+        content: `🤝 BUNK SYNC CONFIRMED! Both you and @${otherUser.username} are bunking Period ${period} (${subject || 'Class'}).`,
+        type: 'bunk_sync',
+        bunkSync: { period: Number(period), subject: subject || 'Class', isAgreed: true },
+        disappearingSeconds: 180,
+        expiresAt: new Date(Date.now() + 180 * 1000)
+      });
+      await agreedMsg.save();
+
+      return res.json({ message: agreedMsg, agreed: true });
+    }
+
+    // New Bunk Sync Request
+    const syncMsg = new Message({
+      conversationId: conv._id,
+      sender: req.user._id,
+      senderName: req.user.username,
+      content: `🚨 Bunk Sync Request: Wanna bunk Period ${period} (${subject || 'Class'})?`,
+      type: 'bunk_sync',
+      bunkSync: { period: Number(period), subject: subject || 'Class', targetUsername: otherUser.username, isAgreed: false },
+      disappearingSeconds: 300,
+      expiresAt: new Date(Date.now() + 300 * 1000)
+    });
+    await syncMsg.save();
+
+    res.json({ message: syncMsg, agreed: false });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 5C. BURN SESSION (Clean Slate / Zero Footprint Wipe)
+router.delete('/conversations/:id/burn', auth, async (req, res) => {
+  try {
+    const conv = await Conversation.findOne({ _id: req.params.id, participants: req.user._id });
+    if (!conv) return res.status(404).json({ message: 'Channel not found' });
+
+    await Message.deleteMany({ conversationId: conv._id });
+
+    conv.lastMessage = {
+      content: '🔥 Channel incinerated. Zero traces remaining.',
+      senderName: 'Ghost Terminal',
+      createdAt: new Date()
+    };
+    conv.updatedAt = new Date();
+    await conv.save();
+
+    res.json({ success: true, message: 'Channel incinerated cleanly' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
