@@ -4,9 +4,9 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
-  Flame, Send, Search, Sparkles, Clock, Trash2,
-  ChevronLeft, AlertCircle, ShieldCheck, CheckCheck,
-  FileText, Zap, RefreshCw, Eye
+  Flame, Send, UserPlus, Clock, Trash2,
+  ShieldCheck, CheckCheck, FileText, Zap, Eye,
+  AlertCircle, Check, X, Shield, Lock
 } from 'lucide-react';
 
 const QUICK_CHITS = [
@@ -32,10 +32,21 @@ export default function GhostChitView({ subjects = [] }) {
   const [conversations, setConversations] = useState([]);
   const [activeConv, setActiveConv] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [discoveredUsers, setDiscoveredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Connection Handshake State
+  const [friends, setFriends] = useState([]);
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [outgoingRequests, setOutgoingRequests] = useState([]);
+  const [requestInput, setRequestInput] = useState('');
+  const [sendingRequest, setSendingRequest] = useState(false);
+
+  // Democratic 2-Peer Vouch State
+  const [vouchStatus, setVouchStatus] = useState({ isVerified: true, vouchCount: 2, classCode: 'MCA-A' });
+  const [showVouchModal, setShowVouchModal] = useState(false);
+  const [vouchTargetInput, setVouchTargetInput] = useState('');
+
+  // Chit & Message State
   const [inputText, setInputText] = useState('');
   const [sendAsChit, setSendAsChit] = useState(false);
   const [burnTimer, setBurnTimer] = useState(30);
@@ -46,7 +57,25 @@ export default function GhostChitView({ subjects = [] }) {
 
   const messagesEndRef = useRef(null);
 
-  // Load existing 1-on-1 conversations
+  // Load friends & pending connection requests
+  const loadConnections = async () => {
+    try {
+      const res = await api.get('/chat/friends');
+      setFriends(res.data.friends || []);
+      setIncomingRequests(res.data.incoming || []);
+      setOutgoingRequests(res.data.outgoing || []);
+    } catch (e) {}
+  };
+
+  // Load vouch status
+  const loadVouchStatus = async () => {
+    try {
+      const res = await api.get('/chat/vouch/status');
+      setVouchStatus(res.data);
+    } catch (e) {}
+  };
+
+  // Load 1-on-1 conversations (only accepted connections)
   const loadConversations = async () => {
     try {
       const res = await api.get('/chat/conversations');
@@ -64,15 +93,7 @@ export default function GhostChitView({ subjects = [] }) {
     }
   };
 
-  // Discover registered classmates by User ID
-  const searchUsers = async (q = '') => {
-    try {
-      const res = await api.get(`/chat/users?search=${encodeURIComponent(q)}`);
-      setDiscoveredUsers(res.data.users || []);
-    } catch (e) {}
-  };
-
-  // Load messages for the selected User ID
+  // Load messages for the active conversation
   const loadMessages = async (convId) => {
     if (!convId) return;
     try {
@@ -83,12 +104,14 @@ export default function GhostChitView({ subjects = [] }) {
   };
 
   useEffect(() => {
+    loadConnections();
     loadConversations();
-    searchUsers('');
+    loadVouchStatus();
 
     const interval = setInterval(() => {
+      loadConnections();
       if (activeConv?._id) loadMessages(activeConv._id);
-    }, 2500);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [activeConv?._id]);
@@ -103,18 +126,64 @@ export default function GhostChitView({ subjects = [] }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Start 1-on-1 whisper channel with a User ID
-  const handleSelectUser = async (targetUsername) => {
+  // Send Connection / Chit Request by exact User ID
+  const handleSendRequest = async (e) => {
+    e?.preventDefault();
+    const clean = requestInput.trim().replace('@', '');
+    if (!clean) return;
+
+    setSendingRequest(true);
     try {
-      const res = await api.post('/chat/conversations/by-username', { username: targetUsername });
+      const res = await api.post('/chat/friends/request', { username: clean });
+      toast.success(res.data.message || `Request sent to @${clean}!`);
+      setRequestInput('');
+      loadConnections();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not send request');
+    } finally {
+      setSendingRequest(false);
+    }
+  };
+
+  // Respond to incoming connection request (Accept / Reject)
+  const handleRespondRequest = async (requestId, action) => {
+    try {
+      const res = await api.post('/chat/friends/respond', { requestId, action });
+      toast.success(res.data.message);
+      loadConnections();
+      loadConversations();
+    } catch (err) {
+      toast.error('Failed to respond to request');
+    }
+  };
+
+  // Give a Peer Vouch to a Classmate
+  const handlePeerVouch = async (e) => {
+    e?.preventDefault();
+    const clean = vouchTargetInput.trim().replace('@', '');
+    if (!clean) return;
+
+    try {
+      const res = await api.post('/chat/vouch/peer', { targetUsername: clean });
+      toast.success(res.data.message);
+      setVouchTargetInput('');
+      setShowVouchModal(false);
+      loadVouchStatus();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to vouch');
+    }
+  };
+
+  // Start or open 1-on-1 channel with an accepted friend
+  const handleOpenChannelWithFriend = async (friendUsername) => {
+    try {
+      const res = await api.post('/chat/conversations/by-username', { username: friendUsername });
       const conv = res.data.conversation;
       setActiveConv(conv);
       setBurnTimer(conv.disappearingTimer || 30);
-      setSearchQuery('');
       loadConversations();
-      toast.success(`Whisper channel open with @${targetUsername}! 🔥`);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not connect with that User ID');
+      toast.error(err.response?.data?.message || 'Connection pending or locked');
     }
   };
 
@@ -227,7 +296,7 @@ export default function GhostChitView({ subjects = [] }) {
         ? 'bg-[#0a0d14] border-slate-800 text-white shadow-black/50'
         : 'bg-[#faf8f5] border-stone-300 text-stone-900 shadow-xl'
     }`}>
-      {/* Top Bar: User ID Selector & Channel Header */}
+      {/* Top Bar: Class Scope, Vouch Status & Actions */}
       <div className={`p-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${
         isDark ? 'border-white/10 bg-[#0f141f]/90' : 'border-stone-200 bg-white/90'
       }`}>
@@ -240,133 +309,206 @@ export default function GhostChitView({ subjects = [] }) {
               <h3 className="font-extrabold text-sm sm:text-base tracking-tight leading-tight">
                 Ghost Terminal
               </h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">
-                1-on-1 Ephemeral
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+                <Shield size={10} />
+                <span>{vouchStatus.classCode || 'MCA-A'}</span>
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">
-              Pass secret chits & sync bunks • Zero permanent traces
+            <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+              <span>Private 1-on-1 Backchannel</span>
+              <span>•</span>
+              <span className={vouchStatus.isVerified ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                {vouchStatus.isVerified ? '🛡️ 2-Peer Verified' : `⏳ ${vouchStatus.vouchCount}/2 Vouches`}
+              </span>
             </p>
           </div>
         </div>
 
-        {/* Active Partner Info & Actions */}
-        {activeConv && (
-          <div className="flex items-center gap-2">
-            <div className={`px-3 py-1.5 rounded-2xl border flex items-center gap-2 ${
-              isDark ? 'bg-white/5 border-white/10' : 'bg-stone-100 border-stone-200'
-            }`}>
-              <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center">
-                {getPartnerUsername().charAt(0).toUpperCase()}
-              </div>
-              <span className="font-extrabold text-xs">@{getPartnerUsername()}</span>
-            </div>
+        {/* Top Right Controls */}
+        <div className="flex items-center gap-2">
+          {/* Peer Vouch Trigger Button */}
+          <button
+            onClick={() => setShowVouchModal(true)}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1 ${
+              isDark ? 'bg-white/5 border-white/10 text-slate-300 hover:text-white' : 'bg-stone-100 border-stone-200 text-stone-700'
+            }`}
+            title="Democratic Peer Vouch (Verify Classmate)"
+          >
+            <ShieldCheck size={14} className="text-emerald-400" />
+            <span className="hidden sm:inline">Vouch Classmate</span>
+          </button>
 
-            {/* Burn Timer Selector */}
-            <div className="relative">
+          {/* Active Partner Info & Actions */}
+          {activeConv && (
+            <>
+              <div className={`px-3 py-1.5 rounded-2xl border flex items-center gap-2 ${
+                isDark ? 'bg-white/5 border-white/10' : 'bg-stone-100 border-stone-200'
+              }`}>
+                <div className="w-5 h-5 rounded-full bg-blue-600 text-white font-black text-[11px] flex items-center justify-center">
+                  {getPartnerUsername().charAt(0).toUpperCase()}
+                </div>
+                <span className="font-extrabold text-xs">@{getPartnerUsername()}</span>
+              </div>
+
+              {/* Burn Timer Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowTimerMenu(!showTimerMenu)}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all ${
+                    isDark
+                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                      : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
+                  }`}
+                  title="Change Burn Timer"
+                >
+                  <Clock size={13} />
+                  <span>{burnTimer}s Burn</span>
+                </button>
+
+                {showTimerMenu && (
+                  <div className={`absolute right-0 top-full mt-2 w-36 rounded-2xl border shadow-xl p-1.5 z-50 backdrop-blur-xl ${
+                    isDark ? 'bg-[#182030] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}>
+                    {BURN_TIMERS.map(t => (
+                      <button
+                        key={t.seconds}
+                        onClick={() => handleUpdateTimer(t.seconds)}
+                        className={`w-full px-3 py-1.5 rounded-xl text-xs font-bold text-left transition-colors flex items-center justify-between ${
+                          burnTimer === t.seconds
+                            ? 'bg-red-500 text-white'
+                            : isDark ? 'hover:bg-white/10' : 'hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{t.label}</span>
+                        {burnTimer === t.seconds && <Flame size={12} className="fill-white" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Bunk Sync Ping Button */}
               <button
-                onClick={() => setShowTimerMenu(!showTimerMenu)}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all ${
-                  isDark
-                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-                    : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
-                }`}
-                title="Change Burn Timer"
+                onClick={() => setShowSyncModal(true)}
+                className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center gap-1 shadow-sm transition-all"
+                title="Ping to Sync Bunk"
               >
-                <Clock size={13} />
-                <span>{burnTimer}s Burn</span>
+                <Zap size={13} className="fill-white" />
+                <span className="hidden sm:inline">Bunk Sync</span>
               </button>
 
-              {showTimerMenu && (
-                <div className={`absolute right-0 top-full mt-2 w-36 rounded-2xl border shadow-xl p-1.5 z-50 backdrop-blur-xl ${
-                  isDark ? 'bg-[#182030] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
-                }`}>
-                  {BURN_TIMERS.map(t => (
-                    <button
-                      key={t.seconds}
-                      onClick={() => handleUpdateTimer(t.seconds)}
-                      className={`w-full px-3 py-1.5 rounded-xl text-xs font-bold text-left transition-colors flex items-center justify-between ${
-                        burnTimer === t.seconds
-                          ? 'bg-red-500 text-white'
-                          : isDark ? 'hover:bg-white/10' : 'hover:bg-slate-100'
-                      }`}
-                    >
-                      <span>{t.label}</span>
-                      {burnTimer === t.seconds && <Flame size={12} className="fill-white" />}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Bunk Sync Ping Button */}
-            <button
-              onClick={() => setShowSyncModal(true)}
-              className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center gap-1 shadow-sm transition-all"
-              title="Ping to Sync Bunk"
-            >
-              <Zap size={13} className="fill-white" />
-              <span className="hidden sm:inline">Bunk Sync</span>
-            </button>
-
-            {/* Incinerate Channel Button */}
-            <button
-              onClick={handleBurnSession}
-              className="p-2 rounded-xl text-red-400 hover:bg-red-500/20 border border-red-500/30 transition-all"
-              title="Incinerate All Messages (Clean Slate)"
-            >
-              <Trash2 size={15} />
-            </button>
-          </div>
-        )}
+              {/* Incinerate Channel Button */}
+              <button
+                onClick={handleBurnSession}
+                className="p-2 rounded-xl text-red-400 hover:bg-red-500/20 border border-red-500/30 transition-all"
+                title="Incinerate All Messages (Clean Slate)"
+              >
+                <Trash2 size={15} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Classmate User ID Quick Switcher & Direct Search */}
-      <div className={`px-3.5 py-2.5 border-b flex items-center gap-2 overflow-x-auto no-scrollbar ${
+      {/* Incoming Connection Requests Banner (Zero Random Chatting Allowed) */}
+      {incomingRequests.length > 0 && (
+        <div className="p-3 bg-amber-500/10 border-b border-amber-500/30 space-y-2 animate-[fadeIn_0.2s_ease-out]">
+          <span className="text-xs font-black text-amber-500 uppercase tracking-wider flex items-center gap-1.5">
+            <Lock size={13} />
+            <span>Incoming Chit Requests ({incomingRequests.length})</span>
+          </span>
+          <div className="space-y-1.5 max-h-36 overflow-y-auto">
+            {incomingRequests.map(req => (
+              <div
+                key={req._id}
+                className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-black/30 dark:bg-white/5 border border-amber-500/20"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-amber-500 text-black font-black text-xs flex items-center justify-center flex-shrink-0">
+                    {req.sender?.username?.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">@{req.sender?.username}</p>
+                    <p className="text-[10px] text-slate-400">Wants to unlock 1-on-1 secret chits</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => handleRespondRequest(req._id, 'accept')}
+                    className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-sm active:scale-95 transition-all"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => handleRespondRequest(req._id, 'reject')}
+                    className="px-2.5 py-1 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 font-bold text-xs"
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Handshake Request Sender & Accepted Classmates Bar (NO PUBLIC USER DIRECTORY) */}
+      <div className={`px-3.5 py-2.5 border-b flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 ${
         isDark ? 'border-white/5 bg-[#0b0f17]' : 'border-stone-200 bg-[#f5f2eb]'
       }`}>
-        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border flex-shrink-0 min-w-[140px] sm:min-w-[190px] ${
-          isDark ? 'bg-white/5 border-white/10' : 'bg-white border-stone-300'
-        }`}>
-          <Search size={13} className="text-slate-400" />
-          <input
-            type="text"
-            placeholder="Type User ID..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              searchUsers(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && searchQuery.trim()) {
-                handleSelectUser(searchQuery.trim());
-              }
-            }}
-            className="w-full bg-transparent text-xs font-semibold focus:outline-none placeholder-slate-400"
-          />
-        </div>
+        {/* Send Request by exact User ID */}
+        <form onSubmit={handleSendRequest} className="flex items-center gap-1.5 flex-shrink-0">
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${
+            isDark ? 'bg-white/5 border-white/10' : 'bg-white border-stone-300'
+          }`}>
+            <UserPlus size={14} className="text-slate-400" />
+            <input
+              type="text"
+              placeholder="Enter @username to request..."
+              value={requestInput}
+              onChange={(e) => setRequestInput(e.target.value)}
+              className="bg-transparent text-xs font-semibold focus:outline-none placeholder-slate-400 w-44 sm:w-52"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={!requestInput.trim() || sendingRequest}
+            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold text-xs shadow-sm flex-shrink-0"
+          >
+            {sendingRequest ? '...' : 'Send Request'}
+          </button>
+        </form>
 
-        {/* Quick User ID Chips */}
-        <div className="flex items-center gap-1.5 flex-1 overflow-x-auto no-scrollbar">
-          {discoveredUsers.map(u => {
-            const isSelected = getPartnerUsername().toLowerCase() === u.username.toLowerCase();
-            return (
-              <button
-                key={u._id}
-                onClick={() => handleSelectUser(u.username)}
-                className={`px-3 py-1 rounded-xl text-xs font-bold flex-shrink-0 transition-all flex items-center gap-1.5 border ${
-                  isSelected
-                    ? 'bg-blue-600 text-white border-blue-400 shadow-sm scale-105'
-                    : isDark
-                    ? 'bg-white/5 text-slate-300 hover:bg-white/10 border-white/5'
-                    : 'bg-white text-stone-700 hover:bg-stone-100 border-stone-200'
-                }`}
-              >
-                <span>@{u.username}</span>
-                {isSelected && <Flame size={11} className="fill-white" />}
-              </button>
-            );
-          })}
+        {/* Accepted Friends Horizontal Bar (Only verified mutual connections) */}
+        <div className="flex items-center gap-1.5 flex-1 overflow-x-auto no-scrollbar pt-1 sm:pt-0">
+          {friends.length === 0 ? (
+            <p className="text-[11px] text-slate-400 italic">
+              No accepted classmates yet. Enter a classmate's User ID to connect!
+            </p>
+          ) : (
+            friends.map(f => {
+              const isSelected = getPartnerUsername().toLowerCase() === f.username.toLowerCase();
+              return (
+                <button
+                  key={f._id}
+                  onClick={() => handleOpenChannelWithFriend(f.username)}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold flex-shrink-0 transition-all flex items-center gap-1.5 border ${
+                    isSelected
+                      ? 'bg-blue-600 text-white border-blue-400 shadow-sm scale-105 font-black'
+                      : isDark
+                      ? 'bg-white/5 text-slate-300 hover:bg-white/10 border-white/5'
+                      : 'bg-white text-stone-700 hover:bg-stone-100 border-stone-200'
+                  }`}
+                >
+                  <div className="w-4 h-4 rounded-full bg-emerald-500 text-white font-black text-[9px] flex items-center justify-center">
+                    ✓
+                  </div>
+                  <span>@{f.username}</span>
+                  {isSelected && <Flame size={11} className="fill-white" />}
+                </button>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -377,9 +519,9 @@ export default function GhostChitView({ subjects = [] }) {
             <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500">
               <FileText size={32} />
             </div>
-            <h4 className="font-extrabold text-base">Select a Classmate's User ID Above</h4>
+            <h4 className="font-extrabold text-base">Select or Request a Classmate Above</h4>
             <p className="text-xs text-slate-400 max-w-sm">
-              Pass secret folded chits, coordinate mutual bunks, or whisper discrete notes that incinerate automatically.
+              Zero public directories. To pass secret chits, enter your classmate's exact User ID to send a private Chit Request.
             </p>
           </div>
         ) : messages.length === 0 ? (
@@ -658,6 +800,55 @@ export default function GhostChitView({ subjects = [] }) {
               <Zap size={15} className="fill-white" />
               <span>Send Mutual Bunk Ping</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Democratic 2-Peer Vouch Modal (No Single CR Monopoly) */}
+      {showVouchModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className={`p-6 rounded-3xl border shadow-2xl max-w-sm w-full space-y-4 animate-[scaleUp_0.2s_ease-out] ${
+            isDark ? 'bg-[#101624] border-slate-700 text-white' : 'bg-white border-stone-200 text-stone-900'
+          }`}>
+            <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={20} className="text-emerald-400" />
+                <h3 className="font-extrabold text-sm sm:text-base">
+                  Democratic Peer Vouch
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowVouchModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Confirm a student sits in your class ({vouchStatus.classCode || 'MCA-A'}). Once 2 classmates vouch for them, they are officially verified to view and vote on class Mass Bunks.
+              </p>
+              <form onSubmit={handlePeerVouch} className="space-y-3 pt-2">
+                <input
+                  type="text"
+                  placeholder="Enter classmate's @username..."
+                  value={vouchTargetInput}
+                  onChange={(e) => setVouchTargetInput(e.target.value)}
+                  className={`w-full p-2.5 rounded-xl text-xs font-bold border focus:outline-none ${
+                    isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-stone-100 border-stone-300 text-stone-900'
+                  }`}
+                />
+                <button
+                  type="submit"
+                  disabled={!vouchTargetInput.trim()}
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Check size={14} />
+                  <span>Vouch for Classmate</span>
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}

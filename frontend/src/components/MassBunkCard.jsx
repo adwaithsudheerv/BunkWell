@@ -64,6 +64,11 @@ export default function MassBunkCard({ poll, onVoted, currentUserId }) {
           <span className="text-[11px] font-black uppercase tracking-wider text-red-500 dark:text-red-400">
             🚨 Class Mass Bunk Poll
           </span>
+          {poll.classCode && (
+            <span className="font-mono text-[10px] font-black px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-400 border border-blue-500/30">
+              {poll.classCode}
+            </span>
+          )}
         </div>
         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border uppercase ${
           isPassed

@@ -7,12 +7,19 @@ const Subject = require('../models/Subject');
 const AttendanceRecord = require('../models/AttendanceRecord');
 const router = express.Router();
 
-// 1. GET ACTIVE MASS BUNK POLLS
+// 1. GET ACTIVE MASS BUNK POLLS (Strictly Scoped to Requester's College & Section)
 router.get('/active', auth, async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
+    const userClassCode = (req.user.classCode || `${req.user.college || 'GEN'}-${req.user.department || 'GEN'}-S${req.user.semester || 1}${req.user.section || 'A'}`).toUpperCase();
+
+    // Only fetch polls belonging strictly to this user's classCode
     const polls = await MassBunkPoll.find({
-      $or: [{ date: today }, { status: 'voting' }]
+      $or: [{ date: today }, { status: 'voting' }],
+      $or: [
+        { classCode: userClassCode },
+        { creator: req.user._id }
+      ]
     })
       .populate('creator', 'username avatar')
       .sort({ createdAt: -1 });
@@ -23,7 +30,7 @@ router.get('/active', auth, async (req, res) => {
   }
 });
 
-// 2. INITIATE A NEW MASS BUNK POLL (Pushes directly into group chat)
+// 2. INITIATE A NEW MASS BUNK POLL (Scoped to College & Section)
 router.post('/create', auth, async (req, res) => {
   try {
     const { subjectName, periodNumber, date, reason } = req.body;
@@ -32,15 +39,13 @@ router.post('/create', auth, async (req, res) => {
     }
 
     const todayStr = date || new Date().toISOString().split('T')[0];
-
-    // Find the default college group chat
-    let group = await Conversation.findOne({ isDefaultGroup: true });
-    if (!group) {
-      group = await Conversation.findOne({ isGroup: true });
-    }
+    const userClassCode = (req.user.classCode || `${req.user.college || 'GEN'}-${req.user.department || 'GEN'}-S${req.user.semester || 1}${req.user.section || 'A'}`).toUpperCase();
 
     const poll = new MassBunkPoll({
-      conversationId: group ? group._id : null,
+      classCode: userClassCode,
+      college: req.user.college || 'General',
+      department: req.user.department || 'General',
+      section: req.user.section || 'A',
       creator: req.user._id,
       creatorName: req.user.username,
       subjectName: subjectName.trim(),

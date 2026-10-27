@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const FriendRequest = require('../models/FriendRequest');
+const ClassVouch = require('../models/ClassVouch');
 const MassBunkPoll = require('../models/MassBunkPoll');
 const router = express.Router();
 
@@ -304,7 +305,7 @@ router.post('/conversations/:id/disappearing', auth, async (req, res) => {
   }
 });
 
-// 5C. START OR GET CHAT BY USER ID / USERNAME
+// 5C. START OR GET CHAT BY USER ID / USERNAME (Requires Mutual Acceptance)
 router.post('/conversations/by-username', auth, async (req, res) => {
   try {
     const { username } = req.body;
@@ -318,6 +319,30 @@ router.post('/conversations/by-username', auth, async (req, res) => {
     const recipient = await User.findOne({ username: cleanUsername });
     if (!recipient) return res.status(404).json({ message: `Member with User ID "@${cleanUsername}" not found` });
 
+    // Verify mutual request acceptance (Privacy & Anti-Spam Handshake)
+    const connection = await FriendRequest.findOne({
+      $or: [
+        { sender: req.user._id, receiver: recipient._id },
+        { sender: recipient._id, receiver: req.user._id }
+      ]
+    });
+
+    if (!connection || connection.status !== 'accepted') {
+      const isPending = connection?.status === 'pending';
+      const isOutgoing = isPending && String(connection.sender) === String(req.user._id);
+      return res.status(403).json({
+        message: isPending
+          ? (isOutgoing ? `Chit request sent to @${cleanUsername}. Waiting for them to accept.` : `@${cleanUsername} sent you a request! Please accept to unlock chat.`)
+          : `You must send a request to @${cleanUsername} and be accepted before chatting.`,
+        requiresRequest: !isPending,
+        isPending: Boolean(isPending),
+        isOutgoing: Boolean(isOutgoing),
+        targetUsername: cleanUsername,
+        targetId: recipient._id,
+        requestId: connection?._id
+      });
+    }
+
     let conv = await Conversation.findOne({
       isGroup: false,
       participants: { $all: [req.user._id, recipient._id], $size: 2 }
@@ -328,9 +353,9 @@ router.post('/conversations/by-username', auth, async (req, res) => {
         isGroup: false,
         name: recipient.username,
         participants: [req.user._id, recipient._id],
-        disappearingTimer: 300,
+        disappearingTimer: 30,
         lastMessage: {
-          content: 'Started Snapchat-style disappearing chat ⏱️🔥',
+          content: 'Connected! Pass secret chits safely 📜🔥',
           senderName: req.user.username,
           createdAt: new Date()
         }
@@ -468,6 +493,12 @@ router.post('/friends/respond', auth, async (req, res) => {
     await freq.save();
 
     if (action === 'accept') {
+      // Add each other to classNetwork
+      await Promise.all([
+        User.findByIdAndUpdate(req.user._id, { $addToSet: { classNetwork: freq.sender } }),
+        User.findByIdAndUpdate(freq.sender, { $addToSet: { classNetwork: req.user._id } })
+      ]);
+
       // Auto-create or find 1-on-1 conversation
       let conv = await Conversation.findOne({
         isGroup: false,
@@ -493,21 +524,94 @@ router.post('/friends/respond', auth, async (req, res) => {
   }
 });
 
-// 10. DISCOVER / SEARCH REGISTERED STUDENTS BY USER ID
+// 9B. DEMOCRATIC 2-PEER VOUCH (No Single CR Point of Failure)
+router.post('/vouch/peer', auth, async (req, res) => {
+  try {
+    const { targetUsername } = req.body;
+    if (!targetUsername) return res.status(400).json({ message: 'Target username is required' });
+
+    const target = await User.findOne({ username: targetUsername.toLowerCase().trim() });
+    if (!target) return res.status(404).json({ message: `Student "@${targetUsername}" not found` });
+
+    if (String(target._id) === String(req.user._id)) {
+      return res.status(400).json({ message: 'Cannot vouch for yourself' });
+    }
+
+    let vouchDoc = await ClassVouch.findOne({ targetUser: target._id });
+    if (!vouchDoc) {
+      vouchDoc = new ClassVouch({
+        targetUser: target._id,
+        targetUsername: target.username,
+        classCode: target.classCode || req.user.classCode || 'MCA-A',
+        college: target.college || req.user.college || 'General',
+        department: target.department || req.user.department || 'General',
+        section: target.section || 'A',
+        vouches: []
+      });
+    }
+
+    if (vouchDoc.vouches.some(v => String(v.userId) === String(req.user._id))) {
+      return res.status(400).json({ message: `You have already vouched for @${target.username}!` });
+    }
+
+    vouchDoc.vouches.push({
+      userId: req.user._id,
+      username: req.user.username,
+      at: new Date()
+    });
+
+    const isNowVerified = vouchDoc.vouches.length >= 2;
+    if (isNowVerified) {
+      vouchDoc.status = 'verified';
+      target.isClassVerified = true;
+      await target.save();
+    }
+    await vouchDoc.save();
+
+    res.json({
+      success: true,
+      vouchCount: vouchDoc.vouches.length,
+      isVerified: isNowVerified,
+      message: isNowVerified
+        ? `🎉 @${target.username} verified as a legitimate classmate via 2-Peer Vouch!`
+        : `Vouched for @${target.username}! (${vouchDoc.vouches.length}/2 vouches reached)`
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 9C. GET CLASS VOUCH STATUS FOR CURRENT USER
+router.get('/vouch/status', auth, async (req, res) => {
+  try {
+    const vouchDoc = await ClassVouch.findOne({ targetUser: req.user._id });
+    res.json({
+      isVerified: Boolean(req.user.isClassVerified || (vouchDoc && vouchDoc.vouches.length >= 2)),
+      vouchCount: vouchDoc?.vouches?.length || (req.user.isClassVerified ? 2 : 0),
+      classCode: req.user.classCode || 'MCA-A',
+      vouches: vouchDoc?.vouches || []
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 10. SEARCH STUDENT BY EXACT USER ID (No Public Browse / Zero Directory Leak)
 router.get('/users', auth, async (req, res) => {
   try {
     const { search } = req.query;
-    const query = {
-      _id: { $ne: req.user._id },
-      role: { $ne: 'admin' }
-    };
-
-    if (search && search.trim()) {
-      const s = search.toLowerCase().trim().replace('@', '');
-      query.username = { $regex: new RegExp(s, 'i') };
+    if (!search || search.trim().length < 2) {
+      // Never expose or list all user IDs publicly
+      return res.json({ users: [] });
     }
 
-    const users = await User.find(query, 'username avatar attendanceTarget createdAt').limit(30);
+    const s = search.toLowerCase().trim().replace('@', '');
+    const users = await User.find({
+      _id: { $ne: req.user._id },
+      role: { $ne: 'admin' },
+      username: { $regex: new RegExp(`^${s}`, 'i') }
+    }, 'username').limit(5);
+
     res.json({ users });
   } catch (err) {
     res.status(500).json({ message: err.message });

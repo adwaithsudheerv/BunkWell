@@ -67,18 +67,18 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.4.2',
-    versionCode: 19,
+    latestVersion: '1.4.3',
+    versionCode: 20,
     releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🔥 BunkClub v1.4.2 Ghost Terminal & Chit Edition',
-    message: 'Pass-the-Chit secret classroom notes, 1-on-1 User ID whispers, Bunk Buddy sync & zero group clutter!',
+    title: '🛡️ BunkClub v1.4.3 Class Isolation & Privacy Edition',
+    message: 'College & Section isolation for Mass Bunks, 2-way Chit Handshake, and Democratic 2-Peer Vouching!',
     changelog: [
-      '📜 Pass-The-Chit Secret Notes: Classroom notes that unfold on tap and burn into ashes with a self-destruct timer',
-      '👤 1-on-1 User ID Whispers: Connect directly with any student via User ID with zero group clutter',
-      '🤝 Bunk Buddy Sync: 1-tap period sync pings to mutually agree on bunking classes with classmates',
-      '🔥 Incinerate Session: 1-tap button to wipe and burn all message traces immediately for both sides',
-      '🚫 Zero WhatsApp Clutter: Completely removed group chats and WhatsApp clones to keep BunkClub sleek and private'
+      '🏫 College & Section Isolation: Mass bunks are strictly scoped to your specific College + Department + Section (Zero cross-college confusion)',
+      '🔒 Private Chit Handshake: No public user directories; 1-on-1 chats unlock only after mutual request acceptance',
+      '👥 Democratic 2-Peer Vouch: 2 classmates vouch to verify membership — zero dependency on lazy or irresponsible CRs',
+      '📜 Pass-The-Chit Secret Notes: Classroom notes that unfold on tap and self-destruct with a burn timer',
+      '🤝 Bunk Buddy Sync: 1-tap period sync pings to coordinate bunks directly with trusted classmates'
     ]
   });
 });
