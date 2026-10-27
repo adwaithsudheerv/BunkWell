@@ -67,18 +67,18 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.4.3',
-    versionCode: 20,
+    latestVersion: '1.4.4',
+    versionCode: 21,
     releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '🛡️ BunkClub v1.4.3 Class Isolation & Privacy Edition',
-    message: 'College & Section isolation for Mass Bunks, 2-way Chit Handshake, and Democratic 2-Peer Vouching!',
+    title: '⚡ BunkClub v1.4.4 Personal Space & One-Time Chit Edition',
+    message: 'Dedicated side-by-side personal chat space, One-Time Viewable Chits, and instant reply-then-burn model!',
     changelog: [
-      '🏫 College & Section Isolation: Mass bunks are strictly scoped to your specific College + Department + Section (Zero cross-college confusion)',
-      '🔒 Private Chit Handshake: No public user directories; 1-on-1 chats unlock only after mutual request acceptance',
-      '👥 Democratic 2-Peer Vouch: 2 classmates vouch to verify membership — zero dependency on lazy or irresponsible CRs',
-      '📜 Pass-The-Chit Secret Notes: Classroom notes that unfold on tap and self-destruct with a burn timer',
-      '🤝 Bunk Buddy Sync: 1-tap period sync pings to coordinate bunks directly with trusted classmates'
+      '💬 Dedicated Personal Space: Side-by-side accepted classmate contacts and dedicated personal space for 1-on-1 chatting',
+      '① One-Time Viewable Chits: ChitChat format viewable once that burns out immediately upon viewing or replying',
+      '⚡ Reply-Then-Burn Pop-up Model: View incoming chits, reply then and there itself, and watch original chits incinerate into ashes',
+      '🏫 College & Section Isolation: Mass bunks strictly scoped to your specific section with democratic 2-peer vouching',
+      '🔒 Absolute Privacy: No public directories, zero unwanted pings, and two-way request acceptance'
     ]
   });
 });

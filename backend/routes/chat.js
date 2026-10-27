@@ -132,11 +132,11 @@ router.get('/conversations/:id/messages', auth, async (req, res) => {
   }
 });
 
-// 5. SEND MESSAGE (Ghost Whisper / Pass-The-Chit / Snapchat Ephemeral)
+// 5. SEND MESSAGE (Ghost Whisper / Pass-The-Chit / View-Once Burn-Out)
 router.post('/conversations/:id/messages', auth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { content, type, gifUrl, pollId, customTimer, isChit, burnSeconds } = req.body;
+    const { content, type, gifUrl, pollId, customTimer, isChit, burnSeconds, isViewOnce, replyToMsgId } = req.body;
 
     if (!content && !gifUrl && !pollId) {
       return res.status(400).json({ message: 'Message content or attachment required' });
@@ -145,11 +145,16 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
     const conv = await Conversation.findOne({ _id: id, participants: req.user._id });
     if (!conv) return res.status(404).json({ message: 'Conversation not found' });
 
+    // If this is a reply to a View-Once or Chit message, burn the original message immediately!
+    if (replyToMsgId) {
+      Message.findOneAndDelete({ _id: replyToMsgId, $or: [{ isViewOnce: true }, { isChit: true }] }).exec().catch(() => {});
+    }
+
     // Calculate self-destruct timer
-    const isChitType = type === 'chit' || isChit;
+    const isChitType = type === 'chit' || isChit || isViewOnce;
     const durationSec = Number(customTimer) || conv.disappearingTimer || 300;
     
-    // If it's an unopened Chit, expiresAt is set only once opened (or defaults to 24 hours if unread)
+    // If it's an unopened Chit or View-Once, expiresAt is set only once opened (or defaults to 24 hours if unread)
     const expiresAt = isChitType
       ? new Date(Date.now() + 24 * 3600 * 1000)
       : new Date(Date.now() + durationSec * 1000);
@@ -163,8 +168,9 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
       gifUrl: gifUrl || null,
       pollId: pollId || null,
       isChit: Boolean(isChitType),
+      isViewOnce: Boolean(isViewOnce),
       isOpened: false,
-      burnSeconds: Number(burnSeconds) || 30,
+      burnSeconds: Number(burnSeconds) || (isViewOnce ? 15 : 30),
       readBy: [req.user._id],
       encrypted: true,
       disappearingSeconds: durationSec,
@@ -175,7 +181,7 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
 
     // Update conversation lastMessage
     conv.lastMessage = {
-      content: isChitType ? `📜 Secret Chit from @${req.user.username}` : msg.content,
+      content: isViewOnce ? '① View Once Chit' : (isChitType ? `📜 Secret Chit from @${req.user.username}` : msg.content),
       senderName: req.user.username,
       createdAt: msg.createdAt
     };

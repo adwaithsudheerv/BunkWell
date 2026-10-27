@@ -9,6 +9,7 @@ const messageSchema = new mongoose.Schema({
   gifUrl: { type: String },
   pollId: { type: mongoose.Schema.Types.ObjectId, ref: 'MassBunkPoll' },
   isChit: { type: Boolean, default: false },
+  isViewOnce: { type: Boolean, default: false },
   isOpened: { type: Boolean, default: false },
   openedAt: { type: Date },
   burnSeconds: { type: Number, default: 30 },
