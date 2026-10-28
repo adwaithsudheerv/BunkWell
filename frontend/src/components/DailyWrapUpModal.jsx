@@ -119,10 +119,11 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
 
       const subName = subjects.find(s => String(s._id) === String(extraSubId))?.name || 'Extra Class';
       if (extraStatus === 'absent' || extraStatus === 'cancelled') {
-        backgroundSentinel.markBunk(extraPeriodNum, now);
+        await backgroundSentinel.markBunk(extraPeriodNum, now, subName);
       } else {
-        backgroundSentinel.sync();
+        await backgroundSentinel.markPresent(extraPeriodNum, now, subName);
       }
+      window.dispatchEvent(new CustomEvent('attendance-updated'));
       toast.success(res.data.message || `Extra class (${subName}) recorded as ${extraStatus}! 🎓`);
 
       setShowAddExtra(false);
@@ -161,6 +162,13 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       localStorage.removeItem('today_holiday_' + now);
       localStorage.setItem('wrapup_done_' + now, 'true');
 
+      for (const p of periods) {
+        localStorage.removeItem('bunked_' + now + '_P' + p.periodNumber);
+        localStorage.setItem('present_' + now + '_P' + p.periodNumber, 'true');
+      }
+      await backgroundSentinel.evaluate();
+      window.dispatchEvent(new CustomEvent('attendance-updated'));
+
       toast.success('All scheduled classes marked attended! 🎉');
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -195,6 +203,9 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       localStorage.setItem('today_holiday_' + now, 'true');
       localStorage.setItem('wrapup_done_' + now, 'true');
 
+      await backgroundSentinel.unmute('Marked as Holiday');
+      window.dispatchEvent(new CustomEvent('attendance-updated'));
+
       toast.success('Today marked as Holiday! Classes exempted from attendance. 🎉');
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -209,6 +220,8 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
     const now = new Date().toISOString().split('T')[0];
     localStorage.removeItem('today_holiday_' + now);
     setIsHolidayToday(false);
+    backgroundSentinel.sync();
+    window.dispatchEvent(new CustomEvent('attendance-updated'));
     toast.success('Restored timetable schedule for today.');
   };
 
@@ -242,14 +255,18 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       }
 
       // Auto-mute on attend, auto-unmute on bunk/cancelled
+      const subName = p.subjectName || p.subjectId?.name || 'Class';
       if (status === 'absent' || status === 'cancelled') {
-        backgroundSentinel.markBunk(p.periodNumber, now);
+        await backgroundSentinel.markBunk(p.periodNumber, now, subName);
+      } else if (status === 'present') {
+        await backgroundSentinel.markPresent(p.periodNumber, now, subName);
       } else {
-        backgroundSentinel.evaluate();
+        await backgroundSentinel.evaluate();
       }
+      window.dispatchEvent(new CustomEvent('attendance-updated'));
 
       const statusNames = {
-        present: 'Present ✅',
+        present: 'Present ✅ (Phone Muted 🔕)',
         absent: 'Bunked ❌ (Phone Unmuted 🔔)',
         substitute: 'Replacement Subject 🔄',
         cancelled: 'Cancelled / Faculty Leave ⏸️'
@@ -270,6 +287,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
     try {
       const now = new Date().toISOString().split('T')[0];
       const subId = p.subjectId?._id || p.subjectId;
+      const subName = p.subjectName || p.subjectId?.name || 'Class';
 
       await api.post('/attendance/mark', {
         subjectId: subId,
@@ -291,12 +309,13 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       }));
 
       if (replacementAttendance === 'absent') {
-        backgroundSentinel.markBunk(p.periodNumber, now);
+        await backgroundSentinel.markBunk(p.periodNumber, now, subName);
         toast.error(`Period ${p.periodNumber}: Replaced by substitute, but BUNKED! (Phone Unmuted 🔔) ❌`);
       } else {
-        backgroundSentinel.evaluate();
-        toast.success(`Period ${p.periodNumber} marked replaced & attended! ✅`);
+        await backgroundSentinel.markPresent(p.periodNumber, now, subName);
+        toast.success(`Period ${p.periodNumber} marked replaced & attended! (Phone Muted 🔕) ✅`);
       }
+      window.dispatchEvent(new CustomEvent('attendance-updated'));
 
       if (onRefresh) onRefresh();
     } catch (err) {

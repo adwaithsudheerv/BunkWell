@@ -12,7 +12,7 @@ import { Capacitor } from '@capacitor/core';
 import OnboardingModal from '../components/OnboardingModal';
 import QuickBunkSimulator from '../components/QuickBunkSimulator';
 import ShareTimetableModal from '../components/ShareTimetableModal';
-import AttendanceRecoveryRadar, { openDailyWrapUp } from '../components/AttendanceRecoveryRadar';
+import BunkRunwayMatrix, { openDailyWrapUp } from '../components/BunkRunwayMatrix';
 import HourlyLectureHub from '../components/HourlyLectureHub';
 
 function SubjectCard({ subject, target, onUpdate }) {
@@ -340,9 +340,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Point-wise Attendance Recovery Radar (Deficit Action Plan & Lightning Point trigger) */}
+      {/* Bunk Runway & Live Intelligence Matrix */}
       {analytics?.subjects && analytics.subjects.length > 0 && (
-        <AttendanceRecoveryRadar
+        <BunkRunwayMatrix
           subjects={analytics.subjects}
           target={target}
         />

@@ -16,7 +16,7 @@ import FloatingClassControl from './FloatingClassControl';
 import { backgroundSentinel } from '../lib/backgroundSentinel';
 
 const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Bunk Radar' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
   { to: '/timetable', icon: CalendarDays, label: 'Timetable Schedule' },
   { to: '/subjects', icon: GraduationCap, label: 'Subjects' },
   { to: '/attendance', icon: BookOpen, label: 'Attendance Log' },
@@ -402,7 +402,7 @@ export default function Layout() {
           }
         >
           <LayoutDashboard size={19} />
-          <span>Radar</span>
+          <span>Overview</span>
         </NavLink>
 
         <NavLink

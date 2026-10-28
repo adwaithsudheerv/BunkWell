@@ -6,7 +6,7 @@ const BunkClubBackground = registerPlugin('BunkClubBackground');
 class BackgroundSentinelService {
   constructor() {
     this.isMuted = false;
-    this.currentPeriod = null;
+    this.activeSession = null; // Current period (present or bunked)
     this.timer = null;
     this.todaySchedule = null;
     this.todayExtraPeriods = [];
@@ -69,9 +69,25 @@ class BackgroundSentinelService {
     }
   }
 
-  // Mark a period as bunked: IMMEDIATELY UNMUTES PHONE!
-  async markBunk(periodNumber, dateKey) {
+  // Mark a period as PRESENT (Attended lab/class): IMMEDIATELY MUTES PHONE!
+  async markPresent(periodNumber, dateKey, subjectName) {
     const today = dateKey || new Date().toISOString().split('T')[0];
+    localStorage.removeItem(`bunked_${today}_P${periodNumber}`);
+    localStorage.setItem(`present_${today}_P${periodNumber}`, 'true');
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await BunkClubBackground.markPresent({ periodNumber, date: today });
+      } catch (e) {}
+    }
+
+    await this.evaluate();
+  }
+
+  // Mark a period as BUNKED / ABSENT: IMMEDIATELY UNMUTES PHONE!
+  async markBunk(periodNumber, dateKey, subjectName) {
+    const today = dateKey || new Date().toISOString().split('T')[0];
+    localStorage.removeItem(`present_${today}_P${periodNumber}`);
     localStorage.setItem(`bunked_${today}_P${periodNumber}`, 'true');
 
     if (Capacitor.isNativePlatform()) {
@@ -80,15 +96,24 @@ class BackgroundSentinelService {
       } catch (e) {}
     }
 
-    this.isMuted = false;
-    this.currentPeriod = null;
+    await this.evaluate();
+  }
 
-    window.dispatchEvent(new CustomEvent('sentinel-status', {
-      detail: {
-        isMuted: false,
-        text: `🔔 Bunked P${periodNumber} • Phone Unmuted (Active Mode)`
-      }
-    }));
+  // Toggle current attendance for active period
+  async toggleCurrentPeriodAttendance() {
+    if (!this.activeSession) return null;
+    const now = new Date();
+    const dateKey = now.toISOString().split('T')[0];
+    const pNum = this.activeSession.periodNumber;
+    const isBunked = localStorage.getItem(`bunked_${dateKey}_P${pNum}`) === 'true';
+
+    if (isBunked) {
+      await this.markPresent(pNum, dateKey, this.activeSession.subjectName);
+      return 'present';
+    } else {
+      await this.markBunk(pNum, dateKey, this.activeSession.subjectName);
+      return 'absent';
+    }
   }
 
   // Evaluate current lecture period and strictly apply mute/unmute
@@ -134,20 +159,46 @@ class BackgroundSentinelService {
       }
 
       if (currentPeriod) {
-        // Check if student marked this class as bunked
-        const isBunked = localStorage.getItem(`bunked_${dateKey}_P${currentPeriod.periodNumber}`) === 'true' ||
-                         currentPeriod.status === 'absent' ||
-                         currentPeriod.status === 'cancelled';
+        this.activeSession = currentPeriod;
+        const isExplicitPresent = localStorage.getItem(`present_${dateKey}_P${currentPeriod.periodNumber}`) === 'true' || currentPeriod.status === 'present';
+        const isExplicitBunk = !isExplicitPresent && (
+          localStorage.getItem(`bunked_${dateKey}_P${currentPeriod.periodNumber}`) === 'true' ||
+          currentPeriod.status === 'absent' ||
+          currentPeriod.status === 'cancelled'
+        );
 
-        if (isBunked) {
+        if (isExplicitBunk) {
           // Bunked: student is outside class -> MUST UNMUTE!
-          await this.unmute(`Bunked P${currentPeriod.periodNumber} (${currentPeriod.subjectName})`);
+          this.isMuted = false;
+          if (Capacitor.isNativePlatform()) {
+            try { await BunkClubBackground.unmuteNow(); } catch (e) {}
+          }
+          window.dispatchEvent(new CustomEvent('sentinel-status', {
+            detail: {
+              isMuted: false,
+              isBunked: true,
+              session: currentPeriod,
+              text: `🔔 Bunked P${currentPeriod.periodNumber} (${currentPeriod.subjectName}) • Active Mode`
+            }
+          }));
         } else {
           // Attending: in class session -> MUST MUTE!
-          await this.mute(currentPeriod);
+          this.isMuted = true;
+          if (Capacitor.isNativePlatform()) {
+            try { await BunkClubBackground.muteNow(); } catch (e) {}
+          }
+          window.dispatchEvent(new CustomEvent('sentinel-status', {
+            detail: {
+              isMuted: true,
+              isBunked: false,
+              session: currentPeriod,
+              text: `🔕 Period ${currentPeriod.periodNumber}: ${currentPeriod.subjectName} • Auto-Muted`
+            }
+          }));
         }
       } else {
         // Free Hour / Break / Classes over for the day: MUST UNMUTE!
+        this.activeSession = null;
         await this.unmute(nextPeriod ? `Break until ${nextPeriod.startTime}` : 'All classes finished for today');
       }
     } catch (err) {
@@ -155,28 +206,9 @@ class BackgroundSentinelService {
     }
   }
 
-  async mute(session) {
-    this.isMuted = true;
-    this.currentPeriod = session;
-
-    if (Capacitor.isNativePlatform()) {
-      try {
-        await BunkClubBackground.muteNow();
-      } catch (e) {}
-    }
-
-    window.dispatchEvent(new CustomEvent('sentinel-status', {
-      detail: {
-        isMuted: true,
-        session,
-        text: `🔕 Period ${session.periodNumber}: ${session.subjectName} in Session • Auto-Muted`
-      }
-    }));
-  }
-
   async unmute(reason) {
     this.isMuted = false;
-    this.currentPeriod = null;
+    this.activeSession = null;
 
     if (Capacitor.isNativePlatform()) {
       try {
@@ -187,6 +219,8 @@ class BackgroundSentinelService {
     window.dispatchEvent(new CustomEvent('sentinel-status', {
       detail: {
         isMuted: false,
+        isBunked: false,
+        session: null,
         reason,
         text: `🔔 Active Ringer • ${reason || 'Free Hour'}`
       }

@@ -6,7 +6,7 @@ import {
   XCircle, ChevronDown, ChevronUp, Calendar, Clock, Sparkles, Zap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import AttendanceRecoveryRadar, { openDailyWrapUp } from '../components/AttendanceRecoveryRadar';
+import BunkRunwayMatrix, { openDailyWrapUp } from '../components/BunkRunwayMatrix';
 
 const COLORS = [
   '#0047FF', '#2563eb', '#06b6d4', '#10b981', '#8b5cf6',
@@ -291,9 +291,9 @@ export default function SubjectsPage() {
         </div>
       )}
 
-      {/* Point-wise Attendance Recovery Radar (Deficit Action Plan & Lightning Point trigger) */}
+      {/* Bunk Runway & Live Intelligence Matrix */}
       {overview?.subjects && overview.subjects.length > 0 && (
-        <AttendanceRecoveryRadar
+        <BunkRunwayMatrix
           subjects={overview.subjects}
           target={target}
         />

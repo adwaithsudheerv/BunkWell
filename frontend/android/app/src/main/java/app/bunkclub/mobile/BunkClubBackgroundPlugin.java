@@ -74,6 +74,33 @@ public class BunkClubBackgroundPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void markPresent(PluginCall call) {
+        try {
+            int periodNumber = call.getInt("periodNumber", 1);
+            String date = call.getString("date");
+            if (date == null) {
+                date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+            }
+
+            Context ctx = getContext();
+            SharedPreferences prefs = ctx.getSharedPreferences("BunkClubPrefs", Context.MODE_PRIVATE);
+            // Clear bunked flag, mark present
+            prefs.edit().remove("bunked_" + date + "_P" + periodNumber)
+                 .putBoolean("present_" + date + "_P" + periodNumber, true).apply();
+
+            // Mute phone because student is present in lecture/lab
+            AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+            if (audioManager != null) {
+                audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+            }
+
+            call.resolve();
+        } catch (Exception e) {
+            call.reject(e.getMessage());
+        }
+    }
+
+    @PluginMethod
     public void muteNow(PluginCall call) {
         try {
             AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
+import { backgroundSentinel } from '../lib/backgroundSentinel';
 import {
   CheckCircle2, XCircle, Ban, Clock, CalendarDays,
   RefreshCw, Check, Sparkles, ChevronRight, AlertCircle, ShieldCheck
@@ -52,6 +53,17 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
       });
       setStatus(newStatus);
       setIsReplaced(false);
+
+      const subName = period.subjectName || period.subjectId?.name || 'Class';
+      if (newStatus === 'absent' || newStatus === 'cancelled') {
+        await backgroundSentinel.markBunk(period.periodNumber, date, subName);
+      } else if (newStatus === 'present') {
+        await backgroundSentinel.markPresent(period.periodNumber, date, subName);
+      } else {
+        await backgroundSentinel.evaluate();
+      }
+      window.dispatchEvent(new CustomEvent('attendance-updated'));
+
       toast.success(`Period ${period.periodNumber} marked as ${STATUS_CONFIG[newStatus].label}`);
       if (onMark) onMark();
     } catch (err) {
@@ -87,6 +99,15 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
         substituteFaculty: facultyNote,
       });
       setStatus('substitute');
+
+      const subName = period.subjectName || period.subjectId?.name || 'Class';
+      if (replacementAttendance === 'absent') {
+        await backgroundSentinel.markBunk(period.periodNumber, date, subName);
+      } else {
+        await backgroundSentinel.markPresent(period.periodNumber, date, subName);
+      }
+      window.dispatchEvent(new CustomEvent('attendance-updated'));
+
       toast.success(res.data?.message || 'Replacement class & attendance saved! ✅');
       if (onMark) onMark();
     } catch (err) {

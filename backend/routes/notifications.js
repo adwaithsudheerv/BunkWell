@@ -67,19 +67,18 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.5.0',
-    versionCode: 27,
+    latestVersion: '1.5.1',
+    versionCode: 28,
     releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.5.0 24/7 Background Sentinel & Floating Pop-Up Edition',
-    message: 'Persistent Android background foreground service for guaranteed auto-mute and auto-unmute, native notification action buttons, and non-blocking floating control!',
+    title: '⚡ BunkClub v1.5.1 Bunk Runway & Two-Way Attendance Sync Edition',
+    message: 'Instant two-way synchronization between lightning mode and device ringer, real-time command capsule, and replaced old safety radar with the modern Bunk Runway & Fuel Tank Matrix!',
     changelog: [
-      '🔕 24/7 Background Sentinel: Android Foreground Service runs continuously so even if you never opened the app all day, your phone auto-mutes during lectures',
-      '🔔 Guaranteed Auto-Unmute: Automatically un-mutes your phone as soon as you bunk a class, when taking a break, and when all classes finish for the day',
-      '📱 Non-Blocking Floating Pop-Up: Sleek floating control docked at the bottom-right that never obstructs top navigation or headers, with one-tap quick-bunk and reply-and-burn modals',
-      '⚡ High Priority Notification Actions: Direct [ ❌ Bunk (Unmute) ] and [ ✅ Attending ] action buttons directly on the Android notification shade',
-      '📖 Hourly Lecture Hub & Debrief: Front page card to log faculty homework, notes, and quiz announcements right after every lecture',
-      '🔄 Replaced But Bunked Tracking: Full support for substitutions when you bunked the replacement class'
+      '⚡ Complete Two-Way Sync: Marking Present or Bunk in lightning mode, labs, or class immediately auto-mutes or auto-unmutes the phone and syncs the floating widget',
+      '🚀 Bunk Runway & Fuel Tank Matrix: Brand new visual fuel gauges and safe bunk credits completely replacing the old radar',
+      '🎛️ Live Lecture & Ringer Command Capsule: Top-of-dashboard status showing current period, time remaining, and instant toggle',
+      '🔔 Symmetrical Notification Actions: Both [ ❌ Bunk (Unmute) ] and [ ✅ Attending (Mute) ] directly responsive from Android notification shade',
+      '✨ Clean Glassmorphic Polish: Refined navigation, zero outdated labels, and ultra-fluid transitions'
     ]
   });
 });

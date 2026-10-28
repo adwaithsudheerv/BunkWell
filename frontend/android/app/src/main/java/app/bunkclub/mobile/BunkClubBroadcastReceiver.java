@@ -18,6 +18,7 @@ public class BunkClubBroadcastReceiver extends BroadcastReceiver {
     public static final String ACTION_CLASS_START = "app.bunkclub.action.CLASS_START";
     public static final String ACTION_CLASS_END = "app.bunkclub.action.CLASS_END";
     public static final String ACTION_BUNK_CLICKED = "app.bunkclub.action.BUNK_CLICKED";
+    public static final String ACTION_ATTEND_CLICKED = "app.bunkclub.action.ATTEND_CLICKED";
     public static final String CHANNEL_ID = "bunkclub_alerts";
 
     @Override
@@ -74,11 +75,22 @@ public class BunkClubBroadcastReceiver extends BroadcastReceiver {
                 PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
             );
 
+            Intent attendIntent = new Intent(context, BunkClubBroadcastReceiver.class);
+            attendIntent.setAction(ACTION_ATTEND_CLICKED);
+            attendIntent.putExtra("periodNumber", periodNumber);
+            attendIntent.putExtra("subjectName", subjectName);
+            PendingIntent attendPending = PendingIntent.getBroadcast(
+                context,
+                periodNumber * 200 + 2,
+                attendIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+
             Intent openAppIntent = new Intent(context, MainActivity.class);
             openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             PendingIntent openPending = PendingIntent.getActivity(
                 context,
-                periodNumber * 200 + 2,
+                periodNumber * 200 + 3,
                 openAppIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
             );
@@ -91,7 +103,26 @@ public class BunkClubBroadcastReceiver extends BroadcastReceiver {
                 .setContentIntent(openPending)
                 .setAutoCancel(true)
                 .addAction(android.R.drawable.ic_delete, "❌ Bunk (Unmute)", bunkPending)
-                .addAction(android.R.drawable.ic_menu_agenda, "✅ Attending", openPending);
+                .addAction(android.R.drawable.ic_menu_agenda, "✅ Attending (Muted)", attendPending);
+
+            if (notifManager != null) {
+                notifManager.notify(3000 + periodNumber, builder.build());
+            }
+
+        } else if (ACTION_ATTEND_CLICKED.equals(action)) {
+            // USER ATTENDING: ENSURE MUTED & CLEAR BUNKED FLAG
+            prefs.edit().remove(bunkKey).putBoolean("present_" + today + "_P" + periodNumber, true).apply();
+
+            if (audioManager != null) {
+                audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+            }
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("🔕 Class Attending • Phone Muted")
+                .setContentText("Attending Period " + periodNumber + " (" + subjectName + "). Ringer muted for session.")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true);
 
             if (notifManager != null) {
                 notifManager.notify(3000 + periodNumber, builder.build());
