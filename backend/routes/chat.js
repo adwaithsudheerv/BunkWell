@@ -97,7 +97,7 @@ router.post('/groups', auth, async (req, res) => {
   }
 });
 
-// 4. GET MESSAGES FOR CONVERSATION (Excludes expired Snapchat-style messages)
+// 4. GET MESSAGES FOR CONVERSATION (Excludes expired ephemeral chits)
 router.get('/conversations/:id/messages', auth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -294,7 +294,7 @@ router.delete('/conversations/:id/burn', auth, async (req, res) => {
   }
 });
 
-// 5B. SET DISAPPEARING TIMER (Snapchat style)
+// 5B. SET DISAPPEARING TIMER (Ephemeral Chit duration)
 router.post('/conversations/:id/disappearing', auth, async (req, res) => {
   try {
     const { id } = req.params;

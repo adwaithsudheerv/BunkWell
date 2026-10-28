@@ -12,13 +12,15 @@ import { Capacitor } from '@capacitor/core';
 import InstallPWAButton from './InstallPWAButton';
 import DailyWrapUpModal from './DailyWrapUpModal';
 import AppUpdateModal from './AppUpdateModal';
+import DynamicAlertPill from './DynamicAlertPill';
+import { autoSilentService } from '../lib/classAutoSilent';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Bunk Radar' },
   { to: '/timetable', icon: CalendarDays, label: 'Timetable Schedule' },
   { to: '/subjects', icon: GraduationCap, label: 'Subjects' },
   { to: '/attendance', icon: BookOpen, label: 'Attendance Log' },
-  { to: '/chat', icon: Flame, label: 'Ghost Whispers' },
+  { to: '/chat', icon: Flame, label: 'ChitChat (1-Time)' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics & Bunk' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
@@ -57,6 +59,15 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [wrapUpOpen, setWrapUpOpen] = useState(false);
   const [threeDotOpen, setThreeDotOpen] = useState(false);
+
+  // Initialize Auto-Silent service on mount
+  useEffect(() => {
+    try {
+      autoSilentService.init();
+    } catch (e) {
+      console.warn('Auto-Silent init failed:', e);
+    }
+  }, []);
 
   // Global listener: allows opening the lightning point (DailyWrapUpModal) from any component,
   // notifications, popups, or deficit summary cards.
@@ -180,6 +191,8 @@ export default function Layout() {
         isDark ? 'bg-[#090b0e] text-slate-100' : 'bg-[#f8f6f0] text-[#0a0a0c]'
       }`}
     >
+      {/* Dynamic Heads-Up Notification Island */}
+      <DynamicAlertPill />
       {/* Background ambient lighting for Dark Mode */}
       {isDark && (
         <div
@@ -227,8 +240,8 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile topbar */}
         <header
-          className={`lg:hidden flex items-center justify-between px-4 py-3 border-b sticky top-0 z-10 backdrop-blur-md transition-colors ${
-            isDark ? 'border-white/10 bg-[#0c0e14]/90' : 'border-[#e6e1d6] bg-[#fbf9f4]/95 text-black'
+          className={`lg:hidden flex items-center justify-between px-4 py-3 border-b sticky top-0 z-10 glass-morphic transition-colors ${
+            isDark ? 'border-white/10 bg-[#0c0e14]/75 text-white' : 'border-[#e6e1d6] bg-[#fbf9f4]/80 text-black'
           }`}
         >
           <Link to="/dashboard" className="flex items-center gap-2">
@@ -373,12 +386,12 @@ export default function Layout() {
         </main>
       </div>
 
-      {/* Attendance & Class Focused Mobile Bottom Navigation Bar */}
+      {/* Attendance & Class Focused Mobile Bottom Navigation Bar (Glassmorphic) */}
       <nav
-        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl px-2 py-1.5 flex items-center justify-around transition-all ${
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t glass-morphic px-2 py-1.5 flex items-center justify-around transition-all ${
           isDark
-            ? 'bg-[#0b141a]/95 border-white/10 text-slate-400'
-            : 'bg-[#faf8f5]/95 border-black/10 text-slate-600 shadow-xl'
+            ? 'bg-[#0b141a]/80 border-white/10 text-slate-400'
+            : 'bg-[#faf8f5]/85 border-black/10 text-slate-600 shadow-xl'
         }`}
       >
         <NavLink
@@ -415,16 +428,22 @@ export default function Layout() {
           <Zap size={20} className="fill-white" />
         </button>
 
+        {/* Primary Bottom Navigation ChitChat Tab (One-Time Viewable ChitChat) */}
         <NavLink
-          to="/attendance"
+          to="/chat"
           className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-              isActive ? 'text-blue-500 scale-105 font-extrabold' : 'hover:text-white'
+            `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all relative ${
+              isActive ? 'text-amber-500 scale-105 font-extrabold' : 'hover:text-white'
             }`
           }
         >
-          <BookOpen size={19} />
-          <span>Register</span>
+          <div className="relative">
+            <Flame size={19} className="text-amber-400" />
+            <span className="absolute -top-1 -right-2 bg-rose-500 text-white text-[8px] font-black rounded-full w-3.5 h-3.5 flex items-center justify-center ring-1 ring-black shadow-xs">
+              1
+            </span>
+          </div>
+          <span>ChitChat</span>
         </NavLink>
 
         <NavLink

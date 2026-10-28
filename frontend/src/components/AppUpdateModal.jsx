@@ -6,8 +6,8 @@ import { Sparkles, RefreshCw, Download, X, ChevronRight, CheckCircle2, Zap } fro
 import { useTheme } from '../context/ThemeContext';
 
 // Current installed package version in build
-export const CURRENT_APP_VERSION = '1.4.4';
-export const CURRENT_VERSION_CODE = 21;
+export const CURRENT_APP_VERSION = '1.4.5';
+export const CURRENT_VERSION_CODE = 22;
 
 // Compares semantic versions (e.g., '1.0.0' vs '1.3.2')
 export function isVersionOutdated(currentVer, latestVer, currentCode = CURRENT_VERSION_CODE, latestCode = 15) {
@@ -129,23 +129,35 @@ export default function AppUpdateNotifier() {
     let listenerHandle;
     if (Capacitor.isNativePlatform()) {
       LocalNotifications.addListener('localNotificationActionPerformed', async (action) => {
-        if (action.actionId === 'ACTION_ATTEND_YES') {
-          const now = new Date().toISOString().split('T')[0];
-          const subId = action.notification.extra?.subjectId;
-          const pNum = action.notification.extra?.periodNumber;
+        const now = new Date().toISOString().split('T')[0];
+        const subId = action.notification.extra?.subjectId;
+        const pNum = action.notification.extra?.periodNumber;
+
+        if (action.actionId === 'ACTION_PRESENT' || action.actionId === 'ACTION_ATTEND_YES') {
           if (subId && pNum) {
             try {
               await api.post('/attendance/mark', { subjectId: subId, periodNumber: pNum, date: now, status: 'present' });
               window.dispatchEvent(new CustomEvent('attendance-updated'));
             } catch (e) {}
           }
-        } else if (action.actionId === 'ACTION_BUNK_NO') {
-          const now = new Date().toISOString().split('T')[0];
-          const subId = action.notification.extra?.subjectId;
-          const pNum = action.notification.extra?.periodNumber;
+        } else if (action.actionId === 'ACTION_ABSENT' || action.actionId === 'ACTION_BUNK_NO') {
           if (subId && pNum) {
             try {
               await api.post('/attendance/mark', { subjectId: subId, periodNumber: pNum, date: now, status: 'absent' });
+              window.dispatchEvent(new CustomEvent('attendance-updated'));
+            } catch (e) {}
+          }
+        } else if (action.actionId === 'ACTION_CANCELLED') {
+          if (subId && pNum) {
+            try {
+              await api.post('/attendance/mark', { subjectId: subId, periodNumber: pNum, date: now, status: 'cancelled' });
+              window.dispatchEvent(new CustomEvent('attendance-updated'));
+            } catch (e) {}
+          }
+        } else if (action.actionId === 'ACTION_REPLACED') {
+          if (subId && pNum) {
+            try {
+              await api.post('/attendance/mark', { subjectId: subId, periodNumber: pNum, date: now, status: 'swapped' });
               window.dispatchEvent(new CustomEvent('attendance-updated'));
             } catch (e) {}
           }

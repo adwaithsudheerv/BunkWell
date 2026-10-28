@@ -306,7 +306,7 @@ export default function GhostChitView({ subjects = [] }) {
         : 'bg-[#faf8f5] border-stone-300 text-stone-900 shadow-xl'
     }`}>
       {/* ======================================================== */}
-      {/* LEFT COLUMN: Accepted Contacts Side by Side (Like WhatsApp) */}
+      {/* LEFT COLUMN: Accepted Contacts Side by Side */}
       {/* ======================================================== */}
       <div className={`w-full md:w-80 lg:w-96 flex flex-col border-r h-full flex-shrink-0 transition-all ${
         activeConv && 'hidden md:flex'
@@ -532,7 +532,7 @@ export default function GhostChitView({ subjects = [] }) {
               </div>
             </div>
 
-            {/* Direct Reply Pop-up Card (The old WhatsApp direct reply model) */}
+            {/* Direct Reply Pop-up Card (Direct reply Heads-Up card) */}
             {activeQuickReplyMsg && (
               <div className="p-3.5 bg-gradient-to-r from-amber-600 via-red-600 to-amber-700 text-white shadow-2xl animate-[slideDown_0.2s_ease-out]">
                 <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider mb-1">
@@ -802,7 +802,7 @@ export default function GhostChitView({ subjects = [] }) {
             <form onSubmit={handleSendRequest} className="space-y-3">
               <input
                 type="text"
-                placeholder="Enter @username (e.g. sonal, adwaith)..."
+                placeholder="Enter exact @username..."
                 value={requestInput}
                 onChange={(e) => setRequestInput(e.target.value)}
                 className={`w-full p-2.5 rounded-xl text-xs font-bold border focus:outline-none ${

@@ -14,22 +14,32 @@ export async function autoInitializeNotifications() {
         vibration: true
       });
 
-      // 2. Register Yes/No Direct Action Types for period attendance
+      // 2. Register Direct Action Types for period attendance (Present, Absent, Cancelled, Replaced)
       await LocalNotifications.registerActionTypes({
         types: [
           {
             id: 'PERIOD_ATTENDANCE_ACTIONS',
             actions: [
               {
-                id: 'ACTION_ATTEND_YES',
-                title: '✅ Yes, Attended',
+                id: 'ACTION_PRESENT',
+                title: '✅ Present',
                 foreground: false
               },
               {
-                id: 'ACTION_BUNK_NO',
-                title: '❌ No, Bunked',
+                id: 'ACTION_ABSENT',
+                title: '❌ Absent',
                 foreground: false,
                 destructive: true
+              },
+              {
+                id: 'ACTION_CANCELLED',
+                title: '🚫 Cancelled',
+                foreground: false
+              },
+              {
+                id: 'ACTION_REPLACED',
+                title: '🔄 Replaced',
+                foreground: false
               }
             ]
           }

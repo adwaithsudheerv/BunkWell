@@ -6,6 +6,30 @@
   font-weight: 800;
 }
 
+/* Glassmorphism Classes */
+.glass-morphic {
+  background: rgba(14, 20, 32, 0.68) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5) !important;
+}
+
+.glass-morphic-light {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.glass-morphic-card {
+  background: rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
 @layer reset, tokens, base, layout, components;
 
 @layer reset {

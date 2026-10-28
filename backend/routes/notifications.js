@@ -67,18 +67,19 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.4.4',
-    versionCode: 21,
+    latestVersion: '1.4.5',
+    versionCode: 22,
     releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.4.4 Personal Space & One-Time Chit Edition',
-    message: 'Dedicated side-by-side personal chat space, One-Time Viewable Chits, and instant reply-then-burn model!',
+    title: '⚡ BunkClub v1.4.5 Glassmorphic Heads-Up & Auto-Silent Edition',
+    message: 'Primary bottom nav ChitChat, Dynamic Heads-Up 4-Action Island, Timetable Auto-Silent during lectures, and pristine Glassmorphic aesthetic!',
     changelog: [
-      '💬 Dedicated Personal Space: Side-by-side accepted classmate contacts and dedicated personal space for 1-on-1 chatting',
-      '① One-Time Viewable Chits: ChitChat format viewable once that burns out immediately upon viewing or replying',
-      '⚡ Reply-Then-Burn Pop-up Model: View incoming chits, reply then and there itself, and watch original chits incinerate into ashes',
-      '🏫 College & Section Isolation: Mass bunks strictly scoped to your specific section with democratic 2-peer vouching',
-      '🔒 Absolute Privacy: No public directories, zero unwanted pings, and two-way request acceptance'
+      '💬 Bottom Navigation ChitChat: One-tap ChitChat directly accessible from the primary bottom bar with ① badge',
+      '🔕 Smart Lecture Auto-Silent: Phone automatically switches to silent/vibrate when classes start and restores ringer during lunch, breaks, and free periods',
+      '📱 Dynamic Heads-Up Island: Floating interactive top pill for 1-tap direct attendance marking and instant Chit reply-and-burn',
+      '✅ 4-Action Direct Attendance: Mark Present, Absent, Cancelled, or Replaced directly from heads-up alerts without opening the app',
+      '🪟 Rich Glassmorphic Aesthetic: Translucent glassmorphic navigation bar, cards, and dynamic notification panels',
+      '① One-Time Viewable Chits: Ephemeral chits that incinerate after viewing or replying'
     ]
   });
 });

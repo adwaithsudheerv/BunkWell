@@ -26,7 +26,7 @@ const messageSchema = new mongoose.Schema({
   }],
   readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   encrypted: { type: Boolean, default: true },
-  disappearingSeconds: { type: Number, default: 300 }, // Default 5 minutes (Snapchat style)
+  disappearingSeconds: { type: Number, default: 300 }, // Default 5 minutes (Auto-burnout duration)
   expiresAt: { type: Date },
   isViewed: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
