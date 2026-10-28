@@ -70,7 +70,7 @@ router.get('/version', (req, res) => {
     latestVersion: '1.5.3',
     versionCode: 30,
     releaseDate: '2026-10-28',
-    downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
+    downloadUrl: 'https://bunkclub-app.onrender.com/BunkClub.apk',
     title: '⚡ BunkClub v1.5.3 Public Download & Lecture Briefing Ledger Edition',
     message: 'Guaranteed audio muting fallback, faculty notes and homework ledger display, public download portal for Chrome/Brave indexing, and open store compatibility!',
     changelog: [
