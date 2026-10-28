@@ -47,6 +47,28 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/bunk_widget_info" />
         </receiver>
+        <!-- 24/7 Background Sentinel Service for Auto-Mute / Auto-Unmute -->
+        <service
+            android:name=".BunkClubBackgroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Class session auto-muting and attendance monitoring" />
+        </service>
+
+        <!-- Broadcast Receiver for Class Start / End and Direct Bunk Unmute Actions -->
+        <receiver
+            android:name=".BunkClubBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="app.bunkclub.action.CLASS_START" />
+                <action android:name="app.bunkclub.action.CLASS_END" />
+                <action android:name="app.bunkclub.action.BUNK_CLICKED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
     <!-- Permissions -->
@@ -60,5 +82,10 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

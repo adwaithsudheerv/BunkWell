@@ -17,6 +17,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(BunkClubBackgroundPlugin.class);
         super.onCreate(savedInstanceState);
         
         // 1. Create high-priority notification channel immediately upon launch

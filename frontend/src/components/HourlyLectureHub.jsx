@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
+import { backgroundSentinel } from '../lib/backgroundSentinel';
 import {
   Clock, Check, X, RefreshCw, Slash, ChevronRight,
   BookOpen, AlertCircle, FileText, Sparkles, Send, BellRing, CheckCircle2
@@ -134,9 +135,11 @@ export default function HourlyLectureHub({ onAttendanceUpdated }) {
       });
 
       if (status === 'absent' || status === 'cancelled') {
-        toast.success(`Period ${currentPeriod.periodNumber} marked Bunked ❌`);
+        await backgroundSentinel.markBunk(currentPeriod.periodNumber, now);
+        toast.success(`Period ${currentPeriod.periodNumber} marked Bunked ❌ Phone Unmuted 🔔`);
       } else {
-        toast.success(`Period ${currentPeriod.periodNumber} marked Attended ✅`);
+        await backgroundSentinel.evaluate();
+        toast.success(`Period ${currentPeriod.periodNumber} marked Attended ✅ Phone Auto-Muted 🔕`);
       }
 
       await loadHourlySchedule();

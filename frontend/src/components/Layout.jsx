@@ -12,6 +12,8 @@ import { Capacitor } from '@capacitor/core';
 import InstallPWAButton from './InstallPWAButton';
 import DailyWrapUpModal from './DailyWrapUpModal';
 import AppUpdateModal from './AppUpdateModal';
+import FloatingClassControl from './FloatingClassControl';
+import { backgroundSentinel } from '../lib/backgroundSentinel';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Bunk Radar' },
@@ -57,6 +59,15 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [wrapUpOpen, setWrapUpOpen] = useState(false);
   const [threeDotOpen, setThreeDotOpen] = useState(false);
+
+  // Initialize 24/7 background sentinel on mount
+  useEffect(() => {
+    try {
+      backgroundSentinel.init();
+    } catch (e) {
+      console.warn('Sentinel init failed:', e);
+    }
+  }, []);
 
   // Global listener: allows opening the lightning point (DailyWrapUpModal) from any component,
   // notifications, popups, or deficit summary cards.
@@ -457,6 +468,7 @@ export default function Layout() {
         <span>Daily Wrap-Up</span>
       </button>
 
+      <FloatingClassControl />
       <DailyWrapUpModal isOpen={wrapUpOpen} onClose={() => setWrapUpOpen(false)} />
       <AppUpdateModal />
     </div>

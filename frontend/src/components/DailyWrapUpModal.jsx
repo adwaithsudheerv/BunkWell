@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
+import { backgroundSentinel } from '../lib/backgroundSentinel';
 import {
   CheckCircle2, XCircle, RefreshCw, X, Check,
   Zap, Clock, ShieldCheck, AlertTriangle, ArrowRight,
@@ -117,6 +118,11 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       });
 
       const subName = subjects.find(s => String(s._id) === String(extraSubId))?.name || 'Extra Class';
+      if (extraStatus === 'absent' || extraStatus === 'cancelled') {
+        backgroundSentinel.markBunk(extraPeriodNum, now);
+      } else {
+        backgroundSentinel.sync();
+      }
       toast.success(res.data.message || `Extra class (${subName}) recorded as ${extraStatus}! 🎓`);
 
       setShowAddExtra(false);
@@ -235,9 +241,16 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         });
       }
 
+      // Auto-mute on attend, auto-unmute on bunk/cancelled
+      if (status === 'absent' || status === 'cancelled') {
+        backgroundSentinel.markBunk(p.periodNumber, now);
+      } else {
+        backgroundSentinel.evaluate();
+      }
+
       const statusNames = {
         present: 'Present ✅',
-        absent: 'Bunked ❌',
+        absent: 'Bunked ❌ (Phone Unmuted 🔔)',
         substitute: 'Replacement Subject 🔄',
         cancelled: 'Cancelled / Faculty Leave ⏸️'
       };
@@ -278,8 +291,10 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       }));
 
       if (replacementAttendance === 'absent') {
-        toast.error(`Period ${p.periodNumber}: Replaced by substitute, but BUNKED! (Absence logged for substitute) ❌`);
+        backgroundSentinel.markBunk(p.periodNumber, now);
+        toast.error(`Period ${p.periodNumber}: Replaced by substitute, but BUNKED! (Phone Unmuted 🔔) ❌`);
       } else {
+        backgroundSentinel.evaluate();
         toast.success(`Period ${p.periodNumber} marked replaced & attended! ✅`);
       }
 
