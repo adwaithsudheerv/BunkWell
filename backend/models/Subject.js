@@ -13,6 +13,12 @@ const subjectSchema = new mongoose.Schema({
   cancelledClasses: { type: Number, default: 0 },
   totalPlannedClasses: { type: Number, default: 45 },
   isActive: { type: Boolean, default: true },
+  lastTask: {
+    taskType: { type: String, enum: ['none', 'assignment', 'notes', 'test', 'custom'], default: 'none' },
+    description: { type: String, default: '' },
+    assignedDate: { type: Date },
+    dueDate: { type: Date }
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

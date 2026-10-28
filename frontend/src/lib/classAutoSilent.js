@@ -16,12 +16,13 @@ class ClassAutoSilentService {
   // Initialize service
   init() {
     this.syncSchedule();
-    // Check every 30 seconds
-    this.timer = setInterval(() => this.evaluate(), 30 * 1000);
+    // Check every 20 seconds
+    this.timer = setInterval(() => this.evaluate(), 20 * 1000);
     this.evaluate();
 
     window.addEventListener('timetable-updated', () => this.syncSchedule());
     window.addEventListener('holiday-toggled', () => this.evaluate());
+    window.addEventListener('attendance-updated', () => this.evaluate());
   }
 
   async syncSchedule() {
@@ -29,20 +30,65 @@ class ClassAutoSilentService {
       const res = await api.get('/timetable');
       this.todaySchedule = res.data?.timetable || null;
       this.evaluate();
+      this.syncNativeAlarms();
     } catch (e) {}
+  }
+
+  // Pass today's periods to Android native AlarmManager for guaranteed background execution
+  async syncNativeAlarms() {
+    if (!Capacitor.isNativePlatform() || !this.isEnabled || !this.todaySchedule) return;
+    try {
+      const now = new Date();
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const currentDay = days[now.getDay()];
+      const dayData = this.todaySchedule?.days?.find(d => d.day === currentDay);
+      if (!dayData || !dayData.periods) return;
+
+      const activePeriods = dayData.periods
+        .filter(p => p.subjectName && p.startTime && p.endTime)
+        .map(p => ({
+          periodNumber: p.periodNumber,
+          startTime: p.startTime,
+          endTime: p.endTime,
+          subjectName: p.subjectName
+        }));
+
+      if (activePeriods.length > 0) {
+        await ClassSilentMode.scheduleLectureAlarms({ periods: activePeriods });
+      }
+    } catch (err) {
+      console.warn('Native alarm sync error:', err);
+    }
   }
 
   toggle(enabled) {
     this.isEnabled = enabled;
     localStorage.setItem('auto_silent_enabled', enabled ? 'true' : 'false');
     if (!enabled) {
-      this.setNormalMode();
+      this.setNormalMode({ reason: 'Auto-Silent Disabled' });
     } else {
       this.evaluate();
     }
   }
 
-  // Evaluate current time against today's lecture schedule and breaks
+  // User explicitly marked a class as bunked/absent or cancelled
+  async markPeriodBunked(periodNumber, dateKey) {
+    const today = dateKey || new Date().toISOString().split('T')[0];
+    localStorage.setItem(`bunked_${today}_P${periodNumber}`, 'true');
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await ClassSilentMode.markBunk({ periodNumber, date: today });
+      } catch (e) {}
+    }
+
+    // Since student is outside class, IMMEDIATELY RESTORE ACTIVE RINGER MODE!
+    await this.setNormalMode({
+      reason: `Bunked Period ${periodNumber} • Outside Class (Active Mode)`
+    });
+  }
+
+  // Evaluate current time against today's lecture schedule and bunks
   async evaluate() {
     if (!this.isEnabled) return;
 
@@ -50,9 +96,9 @@ class ClassAutoSilentService {
       const now = new Date();
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const currentDay = days[now.getDay()];
+      const dateKey = now.toISOString().split('T')[0];
 
       // 1. Holiday / Weekend check
-      const dateKey = now.toISOString().split('T')[0];
       const isMarkedHoliday = localStorage.getItem('holiday_' + dateKey) === 'true';
       if (currentDay === 'Sunday' || isMarkedHoliday) {
         this.setNormalMode({ reason: 'Holiday / No classes today' });
@@ -94,14 +140,24 @@ class ClassAutoSilentService {
       }
 
       if (currentClassPeriod) {
-        // Class is in session! Auto-Silence the phone
+        // CHECK IF STUDENT BUNKED OR CANCELLED THIS PERIOD:
+        const isBunked = localStorage.getItem(`bunked_${dateKey}_P${currentClassPeriod.periodNumber}`) === 'true';
+        if (isBunked) {
+          // Student is OUTSIDE the class: RESTORE ACTIVE RINGER MODE!
+          this.setNormalMode({
+            reason: `Bunked P${currentClassPeriod.periodNumber} (${currentClassPeriod.subjectName}) • Active Mode Restored`
+          });
+          return;
+        }
+
+        // Class is in session and student is attending: Auto-Silence the phone
         this.setSilentMode({
           periodNumber: currentClassPeriod.periodNumber,
           subjectName: currentClassPeriod.subjectName,
           endTime: currentClassPeriod.endTime
         });
       } else {
-        // Free Hour, Lunch/Break, or Classes finished for the day! Auto-Restore ringer
+        // Free Hour, Lunch/Break, or Classes finished for the day! Auto-Restore active ringer
         this.setNormalMode({
           reason: nextUpcomingPeriod
             ? `Break / Free Hour until ${nextUpcomingPeriod.startTime} (Period ${nextUpcomingPeriod.periodNumber})`
@@ -121,7 +177,7 @@ class ClassAutoSilentService {
     this.currentMode = 'silent';
     this.currentSession = sessionInfo;
 
-    // Trigger Android Native Audio Service
+    // Trigger Android Native Audio Service to vibrate/silent
     if (Capacitor.isNativePlatform()) {
       try {
         await ClassSilentMode.setSilent();
@@ -146,7 +202,7 @@ class ClassAutoSilentService {
     this.currentMode = 'normal';
     this.currentSession = null;
 
-    // Trigger Android Native Audio Service to restore normal ringer
+    // Trigger Android Native Audio Service to restore normal audible ringer
     if (Capacitor.isNativePlatform()) {
       try {
         await ClassSilentMode.setNormal();
@@ -157,8 +213,8 @@ class ClassAutoSilentService {
     window.dispatchEvent(new CustomEvent('class-silent-status', {
       detail: {
         isSilent: false,
-        reason: info.reason || 'Normal Ringer Active',
-        text: `🔔 Ringer Restored • ${info.reason || 'Normal Mode'}`
+        reason: info.reason || 'Active Audible Mode',
+        text: `🔔 Active Mode • ${info.reason || 'Normal Ringer'}`
       }
     }));
   }

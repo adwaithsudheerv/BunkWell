@@ -67,19 +67,19 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.4.5',
-    versionCode: 22,
+    latestVersion: '1.4.6',
+    versionCode: 23,
     releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.4.5 Glassmorphic Heads-Up & Auto-Silent Edition',
-    message: 'Primary bottom nav ChitChat, Dynamic Heads-Up 4-Action Island, Timetable Auto-Silent during lectures, and pristine Glassmorphic aesthetic!',
+    title: '⚡ BunkClub v1.4.6 Background Auto-Silent & Hourly Lecture Hub Edition',
+    message: 'Internal Android background auto-silent alarms, instant active mode on bunking, replaced-but-bunked tracking, and hourly lecture debrief & next class briefing!',
     changelog: [
-      '💬 Bottom Navigation ChitChat: One-tap ChitChat directly accessible from the primary bottom bar with ① badge',
-      '🔕 Smart Lecture Auto-Silent: Phone automatically switches to silent/vibrate when classes start and restores ringer during lunch, breaks, and free periods',
-      '📱 Dynamic Heads-Up Island: Floating interactive top pill for 1-tap direct attendance marking and instant Chit reply-and-burn',
-      '✅ 4-Action Direct Attendance: Mark Present, Absent, Cancelled, or Replaced directly from heads-up alerts without opening the app',
-      '🪟 Rich Glassmorphic Aesthetic: Translucent glassmorphic navigation bar, cards, and dynamic notification panels',
-      '① One-Time Viewable Chits: Ephemeral chits that incinerate after viewing or replying'
+      '🔔 Instant Active Mode on Bunking: As soon as you mark a lecture bunked or absent, your phone immediately switches back to active audible ringer mode',
+      '⏰ Native Background Alarms: Exact Android system alarms automatically silence the phone at class start and restore active mode at class end even if the app was closed all day',
+      '🔄 Replaced But Bunked Tracking: Full support for substitutions when you bunked the replacement class (logs absence accurately for substitute subject and restores ringer)',
+      '📖 Hourly Lecture Hub & Debrief: Front page debrief card to log faculty homework, notes, and quiz announcements right after every lecture',
+      '📌 Next Class Mission Briefing: Live countdown preview for next class displaying assigned tasks and notes from the previous lecture',
+      '🔥 Whispr Tab: Ultra-modern view-once ephemeral messaging directly in the bottom navigation bar'
     ]
   });
 });

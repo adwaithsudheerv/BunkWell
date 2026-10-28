@@ -13,7 +13,7 @@ import OnboardingModal from '../components/OnboardingModal';
 import QuickBunkSimulator from '../components/QuickBunkSimulator';
 import ShareTimetableModal from '../components/ShareTimetableModal';
 import AttendanceRecoveryRadar, { openDailyWrapUp } from '../components/AttendanceRecoveryRadar';
-import PeriodAttendanceWidget from '../components/PeriodAttendanceWidget';
+import HourlyLectureHub from '../components/HourlyLectureHub';
 
 function SubjectCard({ subject, target, onUpdate }) {
   const [bunkExpanded, setBunkExpanded] = useState(false);
@@ -251,8 +251,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Interactive Period Check-In Widget (1-Tap Yes/No Attended/Bunked Direct Action) */}
-      <PeriodAttendanceWidget onAttendanceUpdated={loadData} />
+      {/* Hourly Lecture Hub & Faculty Debrief (Current Hour + Next Class Mission Briefing) */}
+      <HourlyLectureHub onAttendanceUpdated={loadData} />
 
       {/* 1-Tap Quick Attendance Reconcile Banner (Takes user directly to the Lightning Point) */}
       <div

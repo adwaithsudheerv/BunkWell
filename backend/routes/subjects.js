@@ -49,6 +49,27 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
+// Save / Update lecture task or assignment for a subject
+router.post('/:id/task', auth, async (req, res) => {
+  try {
+    const { taskType, description, dueDate } = req.body;
+    const subject = await Subject.findOne({ _id: req.params.id, userId: req.user._id });
+    if (!subject) return res.status(404).json({ message: 'Subject not found' });
+
+    subject.lastTask = {
+      taskType: taskType || 'custom',
+      description: description || '',
+      assignedDate: new Date(),
+      dueDate: dueDate ? new Date(dueDate) : null
+    };
+    await subject.save();
+
+    res.json({ message: 'Lecture debrief & task saved', lastTask: subject.lastTask });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Delete subject
 router.delete('/:id', auth, async (req, res) => {
   try {

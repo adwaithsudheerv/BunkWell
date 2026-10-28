@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
+import { autoSilentService } from '../lib/classAutoSilent';
 import {
   CheckCircle2, XCircle, RefreshCw, X, Check,
   Zap, Clock, ShieldCheck, AlertTriangle, ArrowRight,
@@ -222,9 +223,14 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         });
       }
 
+      // If bunked or cancelled, ensure active phone mode is immediately restored!
+      if (status === 'absent' || status === 'cancelled') {
+        autoSilentService.markPeriodBunked(p.periodNumber, now);
+      }
+
       const statusNames = {
         present: 'Present ✅',
-        absent: 'Bunked ❌',
+        absent: 'Bunked ❌ (Active Mode 🔔)',
         substitute: 'Replacement Subject 🔄',
         cancelled: 'Cancelled / Faculty Leave ⏸️'
       };
@@ -238,8 +244,8 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
     }
   };
 
-  // Save replacement class
-  const handleSaveReplacement = async (p, replacementSubId) => {
+  // Save replacement class (with option for Attended or Bunked substitute)
+  const handleSaveReplacement = async (p, replacementSubId, replacementAttendance = 'present') => {
     setSaving(true);
     try {
       const now = new Date().toISOString().split('T')[0];
@@ -251,20 +257,26 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         periodNumber: p.periodNumber,
         status: 'substitute',
         replacementSubjectId: replacementSubId,
-        replacementAttendance: 'present'
+        replacementAttendance
       });
 
       setRecords(prev => ({
         ...prev,
-        [p.periodNumber]: { ...prev[p.periodNumber], status: 'substitute' }
+        [p.periodNumber]: { ...prev[p.periodNumber], status: 'substitute', replacementAttendance }
       }));
 
       setReplacementStates(prev => ({
         ...prev,
-        [p.periodNumber]: { subId: replacementSubId }
+        [p.periodNumber]: { subId: replacementSubId, attendance: replacementAttendance }
       }));
 
-      toast.success(`Period ${p.periodNumber} marked replaced by substitute subject! ✅`);
+      if (replacementAttendance === 'absent') {
+        autoSilentService.markPeriodBunked(p.periodNumber, now);
+        toast.error(`Period ${p.periodNumber}: Replaced by substitute, but BUNKED! (Absence logged for substitute & Active Mode Restored) ❌`);
+      } else {
+        toast.success(`Period ${p.periodNumber} marked replaced & attended! ✅`);
+      }
+
       if (onRefresh) onRefresh();
     } catch (err) {
       toast.error('Failed to save replacement');
@@ -516,29 +528,72 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
 
                   {/* Inline Replacement Selector (Only shown if Replaced is chosen) */}
                   {isReplaced && (
-                    <div className={`p-3 rounded-xl border space-y-2 mt-2 animate-[fadeIn_0.2s_ease-out] ${
-                      isDark ? 'bg-blue-600/15 border-blue-500/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-900'
+                    <div className={`p-3.5 rounded-2xl border space-y-2.5 mt-2 animate-[fadeIn_0.2s_ease-out] ${
+                      isDark ? 'bg-blue-600/15 border-blue-500/40 text-blue-200' : 'bg-blue-50 border-blue-200 text-blue-900'
                     }`}>
-                      <p className="text-xs font-extrabold">
-                        Which subject took Period {p.periodNumber}?
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-black">
+                          Which subject took Period {p.periodNumber}?
+                        </p>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                          Substitution
+                        </span>
+                      </div>
                       <select
                         value={repState.subId || ''}
                         onChange={(e) => {
                           const val = e.target.value;
-                          if (val) handleSaveReplacement(p, val);
+                          if (val) handleSaveReplacement(p, val, repState.attendance || 'present');
                         }}
                         className={`w-full rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-400 border ${
                           isDark ? 'bg-[#0a0d14] border-blue-500/60 text-white' : 'bg-white border-blue-300 text-slate-900 shadow-xs'
                         }`}
                       >
-                        <option value="">-- Choose Replacement Subject --</option>
+                        <option value="">-- Choose Replacement Subject (e.g. Maths) --</option>
                         {subjects.filter(s => (s._id || s.id) !== subId).map(s => (
                           <option key={s._id} value={s._id}>
                             {s.name} ({s.code || 'Class'})
                           </option>
                         ))}
                       </select>
+
+                      {/* Did you attend or bunk this replacement class? */}
+                      {repState.subId && (
+                        <div className="pt-1.5 border-t border-blue-500/20 space-y-1.5">
+                          <p className="text-[11px] font-bold text-slate-400">
+                            Did you attend or bunk this replacement class?
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveReplacement(p, repState.subId, 'present')}
+                              className={`py-2 px-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
+                                (repState.attendance || 'present') === 'present'
+                                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/30 border border-emerald-400'
+                                  : isDark ? 'bg-slate-800 text-slate-300 hover:text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'
+                              }`}
+                            >
+                              <Check size={14} /> Attended Substitute
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveReplacement(p, repState.subId, 'absent')}
+                              className={`py-2 px-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
+                                repState.attendance === 'absent'
+                                  ? 'bg-rose-600 text-white shadow-md shadow-rose-500/30 border border-rose-400'
+                                  : isDark ? 'bg-slate-800 text-slate-300 hover:text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'
+                              }`}
+                            >
+                              <X size={14} /> Replaced but Bunked!
+                            </button>
+                          </div>
+                          {repState.attendance === 'absent' && (
+                            <p className="text-[10px] text-rose-400 font-bold bg-rose-500/10 p-1.5 rounded-lg border border-rose-500/20">
+                              ⚠️ Absence recorded for substitute subject • Phone restored to Active Mode 🔔 (Outside class)
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

@@ -320,14 +320,14 @@ export default function GhostChitView({ subjects = [] }) {
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-extrabold text-base tracking-tight">
-                ChitChat Whispers
+                Whispr
               </h3>
               <span className="font-mono text-[10px] font-black px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-400 border border-blue-500/30">
                 {vouchStatus.classCode || 'MCA-A'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-medium">
-              Side-by-side accepted contacts
+              1-on-1 Private Whisprs (One-Time Viewable)
             </p>
           </div>
 

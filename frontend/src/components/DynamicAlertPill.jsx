@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
+import { autoSilentService } from '../lib/classAutoSilent';
 import {
   Flame, Check, X, Ban, RefreshCw, Send,
   Volume2, VolumeX, Clock, ChevronDown, ChevronUp
@@ -56,7 +57,11 @@ export default function DynamicAlertPill() {
         status
       });
 
-      const label = status === 'present' ? 'Present ✅' : status === 'absent' ? 'Absent ❌' : status === 'cancelled' ? 'Cancelled 🚫' : 'Replaced 🔄';
+      if (status === 'absent' || status === 'cancelled') {
+        autoSilentService.markPeriodBunked(periodAlert.periodNumber, now);
+      }
+
+      const label = status === 'present' ? 'Present ✅' : status === 'absent' ? 'Absent (Active Mode 🔔)' : status === 'cancelled' ? 'Cancelled 🚫' : 'Replaced 🔄';
       toast.success(`Marked P${periodAlert.periodNumber} (${periodAlert.subjectName}): ${label}`);
       window.dispatchEvent(new CustomEvent('attendance-updated'));
       setPeriodAlert(null);

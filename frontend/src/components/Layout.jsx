@@ -20,7 +20,7 @@ const navItems = [
   { to: '/timetable', icon: CalendarDays, label: 'Timetable Schedule' },
   { to: '/subjects', icon: GraduationCap, label: 'Subjects' },
   { to: '/attendance', icon: BookOpen, label: 'Attendance Log' },
-  { to: '/chat', icon: Flame, label: 'ChitChat (1-Time)' },
+  { to: '/chat', icon: Flame, label: 'Whispr (1-Time)' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics & Bunk' },
   { to: '/profile', icon: User, label: 'Profile' },
 ];
@@ -428,7 +428,7 @@ export default function Layout() {
           <Zap size={20} className="fill-white" />
         </button>
 
-        {/* Primary Bottom Navigation ChitChat Tab (One-Time Viewable ChitChat) */}
+        {/* Primary Bottom Navigation Whispr Tab (One-Time Viewable Whispr) */}
         <NavLink
           to="/chat"
           className={({ isActive }) =>
@@ -443,7 +443,7 @@ export default function Layout() {
               1
             </span>
           </div>
-          <span>ChitChat</span>
+          <span>Whispr</span>
         </NavLink>
 
         <NavLink
