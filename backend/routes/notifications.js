@@ -67,19 +67,18 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.4.6',
-    versionCode: 23,
+    latestVersion: '1.4.7',
+    versionCode: 24,
     releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.4.6 Background Auto-Silent & Hourly Lecture Hub Edition',
-    message: 'Internal Android background auto-silent alarms, instant active mode on bunking, replaced-but-bunked tracking, and hourly lecture debrief & next class briefing!',
+    title: '⚡ BunkClub v1.4.7 Strict Class & Extra Hour Auto-Silent Edition',
+    message: 'Strict auto-silent for extra classes and remedial hours, continuous 10s ringer verification, and guaranteed background silence execution!',
     changelog: [
-      '🔔 Instant Active Mode on Bunking: As soon as you mark a lecture bunked or absent, your phone immediately switches back to active audible ringer mode',
-      '⏰ Native Background Alarms: Exact Android system alarms automatically silence the phone at class start and restore active mode at class end even if the app was closed all day',
-      '🔄 Replaced But Bunked Tracking: Full support for substitutions when you bunked the replacement class (logs absence accurately for substitute subject and restores ringer)',
-      '📖 Hourly Lecture Hub & Debrief: Front page debrief card to log faculty homework, notes, and quiz announcements right after every lecture',
-      '📌 Next Class Mission Briefing: Live countdown preview for next class displaying assigned tasks and notes from the previous lecture',
-      '🔥 Whispr Tab: Ultra-modern view-once ephemeral messaging directly in the bottom navigation bar'
+      '🔕 Extra Class Auto-Silent: Dynamically added extra classes and remedial lectures are automatically recognized, setting the phone to silent mode immediately',
+      '⏱️ Strict Ringer Verification: Periodic 10s cycle strictly verifies that whenever you are in class, phone is in silent mode, and whenever outside class or bunked, phone is active',
+      '⏰ Native Background Alarms: Android system alarms trigger silent mode at lecture start and active mode at end even if you never opened the app all day',
+      '🔔 Instant Active Mode on Bunking: Marking bunked immediately un-silences the phone so you have full ringer outside class',
+      '🔄 Replaced But Bunked Tracking: Full support for substitutions when you bunked the replacement class'
     ]
   });
 });

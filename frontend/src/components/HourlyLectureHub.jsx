@@ -38,7 +38,23 @@ export default function HourlyLectureHub({ onAttendanceUpdated }) {
       const subs = subRes.data?.subjects || [];
       setSubjects(subs);
 
-      const periods = (ttRes.data?.schedule?.periods || []).filter(p => p.subjectName);
+      const scheduledPeriods = (ttRes.data?.schedule?.periods || []).filter(p => p.subjectName);
+      const extraPeriods = (attRes.data?.records || [])
+        .filter(r => r.isExtra === true)
+        .map(r => ({
+          periodNumber: r.periodNumber,
+          subjectName: r.subjectId?.name || subs.find(s => String(s._id) === String(r.subjectId?._id || r.subjectId))?.name || 'Extra Class',
+          subjectId: r.subjectId?._id || r.subjectId,
+          startTime: r.startTime || '16:00',
+          endTime: r.endTime || '17:00',
+          isExtra: true
+        }));
+
+      const periods = [...scheduledPeriods, ...extraPeriods].sort((a, b) => {
+        if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+        return a.periodNumber - b.periodNumber;
+      });
+
       if (periods.length === 0) {
         setLoading(false);
         return;
@@ -122,7 +138,14 @@ export default function HourlyLectureHub({ onAttendanceUpdated }) {
         autoSilentService.markPeriodBunked(currentPeriod.periodNumber, now);
         toast.success(`Period ${currentPeriod.periodNumber} marked Bunked ❌ Phone restored to Active Mode 🔔 (Outside class)`);
       } else {
-        toast.success(`Period ${currentPeriod.periodNumber} marked Attended ✅`);
+        // Attending class (scheduled or extra) - strictly enforce silent mode!
+        await autoSilentService.setSilentMode({
+          periodNumber: currentPeriod.periodNumber,
+          subjectName: currentPeriod.subjectName,
+          endTime: currentPeriod.endTime || '18:00',
+          isExtra: Boolean(currentPeriod.isExtra)
+        });
+        toast.success(`Period ${currentPeriod.periodNumber} marked Attended ✅ Phone strictly in Silent Mode 🔕`);
       }
 
       await loadHourlySchedule();

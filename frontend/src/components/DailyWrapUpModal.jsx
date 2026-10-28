@@ -24,6 +24,14 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
   const [extraSubId, setExtraSubId] = useState('');
   const [extraPeriodNum, setExtraPeriodNum] = useState(6);
   const [extraStatus, setExtraStatus] = useState('present');
+  const [extraStartTime, setExtraStartTime] = useState(() => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  });
+  const [extraEndTime, setExtraEndTime] = useState(() => {
+    const d = new Date();
+    return `${String((d.getHours() + 1) % 24).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  });
 
   // Load today's schedule, attendance records, and subjects
   const loadTodayData = async () => {
@@ -104,11 +112,31 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         periodNumber: extraPeriodNum,
         date: now,
         status: extraStatus,
+        startTime: extraStartTime,
+        endTime: extraEndTime,
         notes: 'Faculty extra lecture'
       });
-      toast.success(res.data.message || 'Extra class recorded! 🎓');
+
+      const subName = subjects.find(s => String(s._id) === String(extraSubId))?.name || 'Extra Class';
+
+      // If extra class is attended (present), STRICTLY TRIGGER AUTO-SILENT!
+      if (extraStatus === 'present') {
+        await autoSilentService.registerExtraClass({
+          periodNumber: extraPeriodNum,
+          subjectName: subName,
+          startTime: extraStartTime,
+          endTime: extraEndTime,
+          status: 'present'
+        });
+        toast.success(`Extra class (${subName}) recorded! Phone strictly switched to Silent Mode 🔕`);
+      } else if (extraStatus === 'absent' || extraStatus === 'cancelled') {
+        await autoSilentService.markPeriodBunked(extraPeriodNum, now);
+        toast.success(`Extra class logged as ${extraStatus}! Phone restored to Active Mode 🔔`);
+      }
+
       setShowAddExtra(false);
       setExtraSubId('');
+      window.dispatchEvent(new CustomEvent('extra-class-added'));
       await loadTodayData();
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -675,6 +703,36 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       P{extraPeriodNum}
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Extra Class Time Interval */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={extraStartTime}
+                    onChange={(e) => setExtraStartTime(e.target.value)}
+                    className={`w-full rounded-xl p-2 text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark ? 'bg-[#0a0d14] border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={extraEndTime}
+                    onChange={(e) => setExtraEndTime(e.target.value)}
+                    className={`w-full rounded-xl p-2 text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark ? 'bg-[#0a0d14] border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
+                    }`}
+                  />
                 </div>
               </div>
 

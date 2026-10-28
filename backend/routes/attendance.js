@@ -325,7 +325,7 @@ router.get('/today-pending', auth, async (req, res) => {
 // Add / Mark Extra Class (e.g. Period 6, Remedial, or Faculty Extra Lecture)
 router.post('/extra-class', auth, async (req, res) => {
   try {
-    const { subjectId, periodNumber, date, status, notes } = req.body;
+    let { subjectId, periodNumber, date, status, notes, startTime, endTime } = req.body;
     if (!subjectId) return res.status(400).json({ message: 'subjectId is required' });
 
     const subject = await Subject.findOne({ _id: subjectId, userId: req.user._id });
@@ -334,6 +334,15 @@ router.post('/extra-class', auth, async (req, res) => {
     const targetDate = date ? new Date(date) : new Date();
     const periodNum = parseInt(periodNumber, 10) || 6;
     const classStatus = ['present', 'absent', 'substitute', 'cancelled'].includes(status) ? status : 'present';
+
+    // Default start/end time to current hour if not explicitly given
+    if (!startTime || !endTime) {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      startTime = startTime || `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const endH = (now.getHours() + 1) % 24;
+      endTime = endTime || `${pad(endH)}:${pad(now.getMinutes())}`;
+    }
 
     const startOfDay = new Date(targetDate); startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(targetDate); endOfDay.setHours(23, 59, 59, 999);
@@ -348,6 +357,8 @@ router.post('/extra-class', auth, async (req, res) => {
       record.subjectId = subjectId;
       record.status = classStatus;
       record.isExtra = true;
+      record.startTime = startTime;
+      record.endTime = endTime;
       record.notes = notes || 'Extra class taken by faculty';
       record.markedAt = new Date();
       await record.save();
@@ -359,6 +370,8 @@ router.post('/extra-class', auth, async (req, res) => {
         periodNumber: periodNum,
         status: classStatus,
         isExtra: true,
+        startTime,
+        endTime,
         notes: notes || 'Extra class taken by faculty',
         markedAt: new Date()
       });

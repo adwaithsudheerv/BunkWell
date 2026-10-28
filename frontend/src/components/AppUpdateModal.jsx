@@ -6,8 +6,8 @@ import { Sparkles, RefreshCw, Download, X, ChevronRight, CheckCircle2, Zap } fro
 import { useTheme } from '../context/ThemeContext';
 
 // Current installed package version in build
-export const CURRENT_APP_VERSION = '1.4.6';
-export const CURRENT_VERSION_CODE = 23;
+export const CURRENT_APP_VERSION = '1.4.7';
+export const CURRENT_VERSION_CODE = 24;
 
 // Compares semantic versions (e.g., '1.0.0' vs '1.3.2')
 export function isVersionOutdated(currentVer, latestVer, currentCode = CURRENT_VERSION_CODE, latestCode = 15) {

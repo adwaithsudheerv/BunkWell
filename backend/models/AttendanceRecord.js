@@ -17,6 +17,8 @@ const attendanceRecordSchema = new mongoose.Schema({
   replacementAttendance: { type: String, enum: ['present', 'absent'], default: 'present' },
   isReplacement: { type: Boolean, default: false },
   isExtra: { type: Boolean, default: false },
+  startTime: { type: String },
+  endTime: { type: String },
   replacesPeriodNumber: { type: Number },
   replacesSubjectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject' },
   notes: { type: String, trim: true },
