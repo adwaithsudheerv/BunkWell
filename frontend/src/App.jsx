@@ -16,6 +16,7 @@ import TodayPage from './pages/TodayPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import ChatPage from './pages/ChatPage';
 import MassBunkPage from './pages/MassBunkPage';
+import PublicDownloadPage from './pages/PublicDownloadPage';
 import OfflineBanner from './components/OfflineBanner';
 import { autoInitializeNotifications } from './lib/nativeNotifications';
 
@@ -82,6 +83,7 @@ export default function App() {
           />
           <OfflineBanner />
           <Routes>
+            <Route path="/download" element={<PublicDownloadPage />} />
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminPanelPage /></AdminRoute>} />

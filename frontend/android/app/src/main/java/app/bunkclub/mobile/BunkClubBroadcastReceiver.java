@@ -52,16 +52,12 @@ public class BunkClubBroadcastReceiver extends BroadcastReceiver {
         if (ACTION_CLASS_START.equals(action)) {
             if (isBunked) {
                 // User already marked this class as bunked: keep phone unmuted!
-                if (audioManager != null) {
-                    audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                }
+                BunkClubBackgroundPlugin.applyUnmute(context);
                 return;
             }
 
-            // AUTO-MUTE PHONE FOR CLASS
-            if (audioManager != null) {
-                audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-            }
+            // AUTO-MUTE PHONE FOR CLASS (Guaranteed vibrate + ring volume mute)
+            BunkClubBackgroundPlugin.applyMute(context);
 
             // Notification with direct "Bunk Class" action button
             Intent bunkIntent = new Intent(context, BunkClubBroadcastReceiver.class);
@@ -112,10 +108,7 @@ public class BunkClubBroadcastReceiver extends BroadcastReceiver {
         } else if (ACTION_ATTEND_CLICKED.equals(action)) {
             // USER ATTENDING: ENSURE MUTED & CLEAR BUNKED FLAG
             prefs.edit().remove(bunkKey).putBoolean("present_" + today + "_P" + periodNumber, true).apply();
-
-            if (audioManager != null) {
-                audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-            }
+            BunkClubBackgroundPlugin.applyMute(context);
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
@@ -131,10 +124,7 @@ public class BunkClubBroadcastReceiver extends BroadcastReceiver {
         } else if (ACTION_BUNK_CLICKED.equals(action)) {
             // USER BUNKED: IMMEDIATELY UNMUTE PHONE!
             prefs.edit().putBoolean(bunkKey, true).apply();
-
-            if (audioManager != null) {
-                audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-            }
+            BunkClubBackgroundPlugin.applyUnmute(context);
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
@@ -149,9 +139,7 @@ public class BunkClubBroadcastReceiver extends BroadcastReceiver {
 
         } else if (ACTION_CLASS_END.equals(action)) {
             // CLASS ENDED: RESTORE NORMAL RINGER
-            if (audioManager != null) {
-                audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-            }
+            BunkClubBackgroundPlugin.applyUnmute(context);
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)

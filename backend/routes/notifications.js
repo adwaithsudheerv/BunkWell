@@ -67,17 +67,17 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.5.2',
-    versionCode: 29,
+    latestVersion: '1.5.3',
+    versionCode: 30,
     releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.5.2 Glassmorphic Lightning Reconciler & Ghost Bunk Predictor Edition',
-    message: 'Completely redesigned Lightning Mode with segmented glass capsules, extra lecture attendance recording, guaranteed class start auto-silent / end auto-active, and AI Ghost Bunk Predictor!',
+    title: '⚡ BunkClub v1.5.3 Public Download & Lecture Briefing Ledger Edition',
+    message: 'Guaranteed audio muting fallback, faculty notes and homework ledger display, public download portal for Chrome/Brave indexing, and open store compatibility!',
     changelog: [
-      '🔕 Guaranteed Auto-Silent on Class Start: Automatically mutes device as soon as lecture begins, and immediately unmutes when class ends or is bunked',
-      '➕ Extra Class Attendance & Mute: Add extra lectures or labs with custom timing, attend them to gain attendance credit, and auto-mute while in session',
-      '⚡ Rebuilt Lightning Reconciler: Fluid, modern glassmorphic interface with segmented status buttons, day off, and one-tap all-attended',
-      '🔮 Ghost Bunk Predictor: Weekday AI What-If forecast that reveals the best day to bunk with zero risk to your 75% target'
+      '🔕 Guaranteed Physical Audio Mute: Fallback stream volume suppression ensures your phone completely mutes on class attend regardless of OEM DND permission state',
+      '📌 Visible Faculty Notes & Homework: Direct on-card briefing display showing active homework, assignment, and surprise test tasks logged for every lecture',
+      '🌐 Public Download Portal (/download): Searchable on Chrome and Brave so friends can directly download the official APK without needing private links',
+      '🤖 SEO & Open Store Listing: Search engine indexing with robots.txt, sitemap, and Open Graph cards'
     ]
   });
 });

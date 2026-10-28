@@ -62,10 +62,7 @@ public class BunkClubBackgroundPlugin extends Plugin {
             prefs.edit().putBoolean("bunked_" + date + "_P" + periodNumber, true).apply();
 
             // Immediately unmute phone to active audible mode
-            AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
-            if (audioManager != null) {
-                audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-            }
+            applyUnmute(ctx);
 
             call.resolve();
         } catch (Exception e) {
@@ -89,10 +86,7 @@ public class BunkClubBackgroundPlugin extends Plugin {
                  .putBoolean("present_" + date + "_P" + periodNumber, true).apply();
 
             // Mute phone because student is present in lecture/lab
-            AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
-            if (audioManager != null) {
-                audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-            }
+            applyMute(ctx);
 
             call.resolve();
         } catch (Exception e) {
@@ -103,10 +97,7 @@ public class BunkClubBackgroundPlugin extends Plugin {
     @PluginMethod
     public void muteNow(PluginCall call) {
         try {
-            AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
-            if (audioManager != null) {
-                audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-            }
+            applyMute(getContext());
             call.resolve();
         } catch (Exception e) {
             call.reject(e.getMessage());
@@ -116,14 +107,52 @@ public class BunkClubBackgroundPlugin extends Plugin {
     @PluginMethod
     public void unmuteNow(PluginCall call) {
         try {
-            AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
-            if (audioManager != null) {
-                audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-            }
+            applyUnmute(getContext());
             call.resolve();
         } catch (Exception e) {
             call.reject(e.getMessage());
         }
+    }
+
+    public static void applyMute(Context ctx) {
+        if (ctx == null) return;
+        try {
+            AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+            if (audioManager == null) return;
+
+            try {
+                audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+            } catch (Exception e) {
+                // If DND access restricted, fallback to volume streams
+            }
+
+            try {
+                audioManager.setStreamVolume(AudioManager.STREAM_RING, 0, 0);
+                audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, 0, 0);
+            } catch (Exception ignored) {}
+        } catch (Exception ignored) {}
+    }
+
+    public static void applyUnmute(Context ctx) {
+        if (ctx == null) return;
+        try {
+            AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+            if (audioManager == null) return;
+
+            try {
+                audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            } catch (Exception ignored) {}
+
+            try {
+                int maxRing = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING);
+                int targetRing = Math.max(1, maxRing * 2 / 3);
+                audioManager.setStreamVolume(AudioManager.STREAM_RING, targetRing, 0);
+
+                int maxNotif = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION);
+                int targetNotif = Math.max(1, maxNotif * 2 / 3);
+                audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, targetNotif, 0);
+            } catch (Exception ignored) {}
+        } catch (Exception ignored) {}
     }
 
     @PluginMethod

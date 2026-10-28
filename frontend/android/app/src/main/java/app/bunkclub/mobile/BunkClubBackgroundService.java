@@ -194,12 +194,10 @@ public class BunkClubBackgroundService extends Service {
                 }
             }
 
-            if (audioManager != null) {
-                if (insideActiveLecture) {
-                    audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-                } else {
-                    audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                }
+            if (insideActiveLecture) {
+                BunkClubBackgroundPlugin.applyMute(this);
+            } else {
+                BunkClubBackgroundPlugin.applyUnmute(this);
             }
         } catch (Exception e) {
             e.printStackTrace();
