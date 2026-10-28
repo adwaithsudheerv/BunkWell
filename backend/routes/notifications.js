@@ -67,18 +67,17 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.5.1',
-    versionCode: 28,
+    latestVersion: '1.5.2',
+    versionCode: 29,
     releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.5.1 Bunk Runway & Two-Way Attendance Sync Edition',
-    message: 'Instant two-way synchronization between lightning mode and device ringer, real-time command capsule, and replaced old safety radar with the modern Bunk Runway & Fuel Tank Matrix!',
+    title: '⚡ BunkClub v1.5.2 Glassmorphic Lightning Reconciler & Ghost Bunk Predictor Edition',
+    message: 'Completely redesigned Lightning Mode with segmented glass capsules, extra lecture attendance recording, guaranteed class start auto-silent / end auto-active, and AI Ghost Bunk Predictor!',
     changelog: [
-      '⚡ Complete Two-Way Sync: Marking Present or Bunk in lightning mode, labs, or class immediately auto-mutes or auto-unmutes the phone and syncs the floating widget',
-      '🚀 Bunk Runway & Fuel Tank Matrix: Brand new visual fuel gauges and safe bunk credits completely replacing the old radar',
-      '🎛️ Live Lecture & Ringer Command Capsule: Top-of-dashboard status showing current period, time remaining, and instant toggle',
-      '🔔 Symmetrical Notification Actions: Both [ ❌ Bunk (Unmute) ] and [ ✅ Attending (Mute) ] directly responsive from Android notification shade',
-      '✨ Clean Glassmorphic Polish: Refined navigation, zero outdated labels, and ultra-fluid transitions'
+      '🔕 Guaranteed Auto-Silent on Class Start: Automatically mutes device as soon as lecture begins, and immediately unmutes when class ends or is bunked',
+      '➕ Extra Class Attendance & Mute: Add extra lectures or labs with custom timing, attend them to gain attendance credit, and auto-mute while in session',
+      '⚡ Rebuilt Lightning Reconciler: Fluid, modern glassmorphic interface with segmented status buttons, day off, and one-tap all-attended',
+      '🔮 Ghost Bunk Predictor: Weekday AI What-If forecast that reveals the best day to bunk with zero risk to your 75% target'
     ]
   });
 });

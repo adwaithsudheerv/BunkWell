@@ -4,9 +4,10 @@ import toast from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
 import { backgroundSentinel } from '../lib/backgroundSentinel';
 import {
-  CheckCircle2, XCircle, RefreshCw, X, Check,
-  Zap, Clock, ShieldCheck, AlertTriangle, ArrowRight,
-  BookOpen, ChevronRight, Calendar, Slash, RotateCcw, Plus, Trash2
+  Zap, Check, X, RefreshCw, Calendar, Clock,
+  Plus, RotateCcw, Sparkles, ChevronRight, Ban,
+  ShieldCheck, AlertTriangle, Layers, ArrowRight,
+  SlidersHorizontal, CheckCircle2, XCircle
 } from 'lucide-react';
 
 export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
@@ -15,7 +16,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
   const [scheduleData, setScheduleData] = useState(null);
   const [subjects, setSubjects] = useState([]);
   const [records, setRecords] = useState({});
-  const [replacementStates, setReplacementStates] = useState({}); // { [periodNumber]: { subId: string } }
+  const [replacementStates, setReplacementStates] = useState({}); // { [periodNumber]: { subId, attendance } }
   const [isHolidayToday, setIsHolidayToday] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -40,28 +41,27 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       const todayStr = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' }).format(new Date());
       const now = new Date().toISOString().split('T')[0];
 
-      // Check if user previously marked today as a holiday
       const savedHoliday = localStorage.getItem('today_holiday_' + now) === 'true';
       setIsHolidayToday(savedHoliday);
 
       const [ttRes, attRes, subRes] = await Promise.all([
-        api.get(`/timetable/today?day=${todayStr}&timezone=Asia/Kolkata`),
-        api.get(`/attendance?date=${now}`),
-        api.get('/subjects')
+        api.get(`/timetable/today?day=${todayStr}&timezone=Asia/Kolkata`).catch(() => ({ data: { schedule: null } })),
+        api.get(`/attendance?date=${now}`).catch(() => ({ data: { records: [] } })),
+        api.get('/subjects').catch(() => ({ data: { subjects: [] } }))
       ]);
 
-      const sched = ttRes.data.schedule;
+      const sched = ttRes.data?.schedule;
       setScheduleData(sched);
-      setSubjects(subRes.data.subjects || []);
+      setSubjects(subRes.data?.subjects || []);
 
-      // Index records by periodNumber
       const recMap = {};
       const repMap = {};
-      (attRes.data.records || []).forEach(r => {
+      (attRes.data?.records || []).forEach(r => {
         recMap[r.periodNumber] = r;
         if (r.status === 'substitute') {
           repMap[r.periodNumber] = {
             subId: r.replacementSubjectId?._id || r.replacementSubjectId || '',
+            attendance: r.replacementAttendance || 'present'
           };
         }
       });
@@ -94,14 +94,17 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       periodNumber: r.periodNumber,
       subjectName: r.subjectId?.name || subjects.find(s => String(s._id) === String(r.subjectId?._id || r.subjectId))?.name || 'Extra Class',
       subjectId: r.subjectId?._id || r.subjectId,
+      startTime: r.startTime || '16:00',
+      endTime: r.endTime || '17:00',
       isExtra: true
     }));
 
   const periods = [...scheduledPeriods, ...extraPeriods].sort((a, b) => a.periodNumber - b.periodNumber);
 
+  // Add Extra Class: Counts into attendance + triggers auto-mute during that time!
   const handleAddExtraClass = async () => {
     if (!extraSubId) {
-      toast.error('Please choose a subject for the extra class');
+      toast.error('Please select a subject for the extra lecture');
       return;
     }
     setSaving(true);
@@ -123,8 +126,9 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       } else {
         await backgroundSentinel.markPresent(extraPeriodNum, now, subName);
       }
+
       window.dispatchEvent(new CustomEvent('attendance-updated'));
-      toast.success(res.data.message || `Extra class (${subName}) recorded as ${extraStatus}! 🎓`);
+      toast.success(res.data.message || `Extra class (${subName}) recorded! Attendance counted ✅`);
 
       setShowAddExtra(false);
       setExtraSubId('');
@@ -137,7 +141,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
     }
   };
 
-  // 1-Tap "Mark All Attended"
+  // 1-Tap Fast Track: Mark all attended
   const handleMarkAllAttended = async () => {
     if (periods.length === 0) return;
     setSaving(true);
@@ -154,6 +158,8 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
           status: 'present'
         });
         newRecs[p.periodNumber] = { ...newRecs[p.periodNumber], status: 'present' };
+        localStorage.removeItem('bunked_' + now + '_P' + p.periodNumber);
+        localStorage.setItem('present_' + now + '_P' + p.periodNumber, 'true');
       }
 
       setRecords(newRecs);
@@ -162,10 +168,6 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       localStorage.removeItem('today_holiday_' + now);
       localStorage.setItem('wrapup_done_' + now, 'true');
 
-      for (const p of periods) {
-        localStorage.removeItem('bunked_' + now + '_P' + p.periodNumber);
-        localStorage.setItem('present_' + now + '_P' + p.periodNumber, 'true');
-      }
       await backgroundSentinel.evaluate();
       window.dispatchEvent(new CustomEvent('attendance-updated'));
 
@@ -178,7 +180,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
     }
   };
 
-  // 1-Tap "Mark Today as Holiday / Off"
+  // 1-Tap Holiday
   const handleMarkHoliday = async () => {
     if (periods.length === 0) return;
     setSaving(true);
@@ -203,10 +205,10 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       localStorage.setItem('today_holiday_' + now, 'true');
       localStorage.setItem('wrapup_done_' + now, 'true');
 
-      await backgroundSentinel.unmute('Marked as Holiday');
+      await backgroundSentinel.unmute('College Holiday');
       window.dispatchEvent(new CustomEvent('attendance-updated'));
 
-      toast.success('Today marked as Holiday! Classes exempted from attendance. 🎉');
+      toast.success('Today marked as Holiday! Classes exempted from buffer. 🎉');
       if (onRefresh) onRefresh();
     } catch (err) {
       toast.error('Failed to mark holiday');
@@ -225,12 +227,13 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
     toast.success('Restored timetable schedule for today.');
   };
 
-  // Single-Choice Status: ONLY ONE CAN BE ACTIVE
+  // Single-touch status selection
   const handleSetStatus = async (p, status) => {
     setSaving(true);
     try {
       const now = new Date().toISOString().split('T')[0];
       const subId = p.subjectId?._id || p.subjectId;
+      const subName = p.subjectName || p.subjectId?.name || 'Class';
 
       await api.post('/attendance/mark', {
         subjectId: subId,
@@ -239,13 +242,11 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         status
       });
 
-      // Update records with single status
       setRecords(prev => ({
         ...prev,
         [p.periodNumber]: { ...prev[p.periodNumber], status }
       }));
 
-      // If switching away from substitute, clear replacement
       if (status !== 'substitute') {
         setReplacementStates(prev => {
           const next = { ...prev };
@@ -254,8 +255,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         });
       }
 
-      // Auto-mute on attend, auto-unmute on bunk/cancelled
-      const subName = p.subjectName || p.subjectId?.name || 'Class';
+      // Two-Way Sentinel Sync: Mutes on attend, un-mutes on bunk
       if (status === 'absent' || status === 'cancelled') {
         await backgroundSentinel.markBunk(p.periodNumber, now, subName);
       } else if (status === 'present') {
@@ -263,11 +263,12 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       } else {
         await backgroundSentinel.evaluate();
       }
+
       window.dispatchEvent(new CustomEvent('attendance-updated'));
 
       const statusNames = {
-        present: 'Present ✅ (Phone Muted 🔕)',
-        absent: 'Bunked ❌ (Phone Unmuted 🔔)',
+        present: 'Attended (Auto-Muted 🔕)',
+        absent: 'Bunked (Active Ringer 🔔)',
         substitute: 'Replacement Subject 🔄',
         cancelled: 'Cancelled / Faculty Leave ⏸️'
       };
@@ -281,7 +282,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
     }
   };
 
-  // Save replacement class (with option for Attended or Bunked substitute)
+  // Save replacement
   const handleSaveReplacement = async (p, replacementSubId, replacementAttendance = 'present') => {
     setSaving(true);
     try {
@@ -325,7 +326,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
     }
   };
 
-  // Calculate deterministic safe bunks for subjects
+  // Safe bunks map
   const subjectBunkMap = {};
   subjects.forEach(s => {
     const target = (s.targetPercentage || 75) / 100;
@@ -334,120 +335,214 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-[fadeIn_0.2s_ease-out]">
-      <div className={`w-full max-w-lg rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] animate-[slideUp_0.3s_ease-out] border transition-colors ${
-        isDark ? 'bg-[#0e1219] border-slate-700/80 text-white' : 'bg-white border-slate-200 text-slate-900 shadow-slate-300/60'
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xl animate-[fadeIn_0.2s_ease-out]">
+      <div className={`w-full max-w-xl rounded-[32px] p-5 sm:p-7 shadow-2xl flex flex-col max-h-[92vh] animate-[slideUp_0.25s_ease-out] border relative overflow-hidden transition-all ${
+        isDark
+          ? 'bg-gradient-to-b from-[#0e1422] to-[#070a12] border-blue-500/30 text-white shadow-blue-950/50'
+          : 'bg-white border-slate-200 text-slate-900 shadow-2xl'
       }`}>
-        
-        {/* Header */}
-        <div className={`flex items-center justify-between pb-3.5 mb-3 border-b ${
-          isDark ? 'border-slate-800' : 'border-slate-200'
-        }`}>
-          <div className="flex items-center gap-2.5">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-              isDark ? 'bg-blue-600/25 text-blue-400 border border-blue-500/40' : 'bg-blue-50 text-blue-600 border border-blue-200'
-            }`}>
-              <Zap size={22} className={isDark ? 'fill-blue-400' : 'fill-blue-600'} />
+
+        {/* Ambient Top Glow */}
+        <div className="absolute top-0 left-1/4 right-1/4 h-24 bg-blue-500/15 blur-3xl pointer-events-none rounded-full" />
+
+        {/* Header Bar */}
+        <div className="flex items-center justify-between pb-4 border-b border-white/10 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 flex-shrink-0">
+              <Zap size={22} className="fill-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className={`font-extrabold text-base sm:text-lg tracking-tight ${
-                  isDark ? 'text-white' : 'text-slate-900'
-                }`}>
-                  Daily Attendance Reconciliation
+                <h3 className="font-black text-lg sm:text-xl tracking-tight">
+                  Lightning Attendance
                 </h3>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                  Instant Sync
+                </span>
               </div>
-              <p className={`text-xs mt-0.5 ${
-                isDark ? 'text-slate-300' : 'text-slate-500'
-              }`}>
-                Were today's classes taken, cancelled, or replaced?
+              <p className="text-xs text-slate-400 font-medium">
+                One-tap reconciliation for classes, labs & auto-silent ringer.
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className={`p-2 rounded-xl transition-colors ${
-              isDark ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
-            }`}
+            className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-90"
           >
-            <X size={18} />
+            <X size={17} />
           </button>
         </div>
 
-        {/* 1-Tap Fast Track & Holiday Banner */}
-        {periods.length > 0 && !isHolidayToday && (
-          <div className="grid grid-cols-2 gap-2 mb-3">
+        {/* Modern Action Bar */}
+        {!isHolidayToday && (
+          <div className="grid grid-cols-3 gap-2 my-3.5 relative z-10">
             {/* Mark All Attended */}
             <button
               onClick={handleMarkAllAttended}
               disabled={saving}
-              className="flex items-center justify-center gap-1.5 py-3 px-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
+              className="py-2.5 px-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-md shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
-              <Check size={16} /> Mark All Attended
+              <Check size={15} />
+              <span>All Attended</span>
             </button>
 
-            {/* Holiday Option */}
+            {/* Holiday Toggle */}
             <button
               onClick={handleMarkHoliday}
               disabled={saving}
-              className={`flex items-center justify-center gap-1.5 py-3 px-2 rounded-2xl active:scale-95 font-extrabold text-xs shadow-md transition-all disabled:opacity-50 border ${
+              className={`py-2.5 px-2 rounded-2xl font-black text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 border ${
                 isDark
-                  ? 'bg-[#1b2234] hover:bg-[#25304a] text-amber-300 border-amber-500/50'
+                  ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30'
                   : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300'
               }`}
             >
-              <Calendar size={16} className={isDark ? 'text-amber-400' : 'text-amber-600'} /> Today is Holiday
+              <Calendar size={14} className="text-amber-400" />
+              <span>Day Off</span>
+            </button>
+
+            {/* Add Extra Lecture */}
+            <button
+              onClick={() => setShowAddExtra(!showAddExtra)}
+              className="py-2.5 px-2 rounded-2xl bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 border border-blue-500/30 font-black text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Plus size={15} />
+              <span>Extra Class</span>
             </button>
           </div>
         )}
 
-        {/* Holiday Active Celebratory Card */}
+        {/* Add Extra Class Sheet */}
+        {showAddExtra && (
+          <div className="mb-3.5 p-4 rounded-2xl bg-gradient-to-br from-blue-950/40 via-slate-900/60 to-slate-950 border border-blue-500/40 shadow-xl space-y-3 animate-[fadeIn_0.2s_ease-out]">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-blue-400 flex items-center gap-1.5">
+                <Plus size={14} /> Add Extra Class / Lab
+              </span>
+              <button onClick={() => setShowAddExtra(false)} className="text-slate-400 hover:text-white text-xs">✕</button>
+            </div>
+
+            <div className="space-y-2">
+              <select
+                value={extraSubId}
+                onChange={(e) => setExtraSubId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl text-xs font-bold border border-white/10 bg-black/40 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Subject...</option>
+                {subjects.map(s => (
+                  <option key={s._id} value={s._id}>{s.name} ({s.code || 'Sub'})</option>
+                ))}
+              </select>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Period #</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={extraPeriodNum}
+                    onChange={(e) => setExtraPeriodNum(Number(e.target.value))}
+                    className="w-full px-2.5 py-1.5 rounded-xl text-xs font-mono border border-white/10 bg-black/40 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Start Time</label>
+                  <input
+                    type="time"
+                    value={extraStartTime}
+                    onChange={(e) => setExtraStartTime(e.target.value)}
+                    className="w-full px-2 py-1.5 rounded-xl text-xs font-mono border border-white/10 bg-black/40 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">End Time</label>
+                  <input
+                    type="time"
+                    value={extraEndTime}
+                    onChange={(e) => setExtraEndTime(e.target.value)}
+                    className="w-full px-2 py-1.5 rounded-xl text-xs font-mono border border-white/10 bg-black/40 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setExtraStatus('present')}
+                  className={`flex-1 py-1.5 rounded-xl text-xs font-black border transition-all ${
+                    extraStatus === 'present'
+                      ? 'bg-emerald-600 text-white border-emerald-400'
+                      : 'bg-black/20 text-slate-400 border-white/10'
+                  }`}
+                >
+                  Attending (Muted)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExtraStatus('absent')}
+                  className={`flex-1 py-1.5 rounded-xl text-xs font-black border transition-all ${
+                    extraStatus === 'absent'
+                      ? 'bg-rose-600 text-white border-rose-400'
+                      : 'bg-black/20 text-slate-400 border-white/10'
+                  }`}
+                >
+                  Bunked (Active)
+                </button>
+              </div>
+
+              <button
+                onClick={handleAddExtraClass}
+                disabled={saving}
+                className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs shadow-md transition-all active:scale-95 disabled:opacity-50"
+              >
+                Save Extra Class & Sync Ringer
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Holiday Active Celebratory Banner */}
         {isHolidayToday && (
-          <div className={`p-4 mb-3 rounded-2xl flex items-center justify-between gap-3 animate-[fadeIn_0.2s_ease-out] border ${
-            isDark ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' : 'bg-amber-50 border-amber-300 text-amber-900'
-          }`}>
-            <div className="flex items-center gap-2.5">
-              <div className="text-2xl">🎉</div>
+          <div className="p-4 mb-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-3 text-amber-300">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎉</span>
               <div>
-                <p className="font-extrabold text-xs">Today Marked as College Holiday</p>
-                <p className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Classes exempted with zero impact on attendance buffer.</p>
+                <p className="font-black text-xs">Today Marked as College Holiday</p>
+                <p className="text-[11px] text-slate-400">Classes exempted from attendance. Ringer is in active mode.</p>
               </div>
             </div>
             <button
               onClick={handleRestoreClasses}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md whitespace-nowrap active:scale-95"
+              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs shadow-md flex items-center gap-1 active:scale-95"
             >
               <RotateCcw size={12} /> Undo
             </button>
           </div>
         )}
 
-        {/* Period Checklist */}
-        <div className="flex-1 overflow-y-auto space-y-3 pr-1 py-1">
+        {/* Period Cards Stack */}
+        <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 py-1 relative z-10 custom-scrollbar">
           {loading ? (
-            <div className={`p-8 text-center text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Loading today's schedule...
+            <div className="p-8 text-center text-xs text-slate-400 animate-pulse">
+              Syncing live schedule...
             </div>
           ) : periods.length === 0 ? (
-            <div className={`p-8 text-center rounded-2xl border space-y-2 ${
-              isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-            }`}>
+            <div className="p-8 text-center rounded-3xl border border-white/10 bg-white/5 space-y-2">
               <Calendar size={36} className="mx-auto text-blue-500 opacity-80" />
-              <p className="font-extrabold text-sm">No Classes Scheduled Today!</p>
-              <p className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
-                According to your weekly timetable, today is a free day or holiday. Enjoy your time! 🎉
+              <p className="font-black text-sm">No Classes Scheduled Today</p>
+              <p className="text-xs text-slate-400">
+                Weekly timetable has no sessions for today. Enjoy your day!
               </p>
             </div>
           ) : (
             periods.map(p => {
               const currentRec = records[p.periodNumber];
-              const curStatus = currentRec?.status; // 'present' | 'absent' | 'substitute' | 'cancelled'
+              const curStatus = currentRec?.status;
               const repState = replacementStates[p.periodNumber] || {};
               const subId = p.subjectId?._id || p.subjectId;
               const safeBunks = subjectBunkMap[subId] ?? 0;
 
-              // Strictly Mutually Exclusive Flags
               const isPresent = curStatus === 'present';
               const isBunked = curStatus === 'absent';
               const isReplaced = curStatus === 'substitute';
@@ -456,184 +551,152 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
               return (
                 <div
                   key={p.periodNumber}
-                  className={`p-3.5 rounded-2xl border transition-all space-y-3 shadow-sm ${
-                    isDark
-                      ? 'bg-[#141924] border-slate-700/80 hover:border-slate-600'
-                      : 'bg-slate-50/90 border-slate-200 hover:border-slate-300'
+                  className={`p-3.5 rounded-2xl border transition-all ${
+                    isPresent
+                      ? 'bg-emerald-500/5 border-emerald-500/30 shadow-sm shadow-emerald-500/10'
+                      : isBunked
+                      ? 'bg-rose-500/5 border-rose-500/30 shadow-sm shadow-rose-500/10'
+                      : isReplaced
+                      ? 'bg-blue-500/5 border-blue-500/30'
+                      : isCancelled
+                      ? 'bg-amber-500/5 border-amber-500/30 opacity-75'
+                      : 'bg-white/5 border-white/10 hover:border-white/20'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow-sm">
+                  {/* Period Header */}
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="font-mono text-xs font-black px-2.5 py-1 rounded-xl bg-blue-600 text-white shadow-sm flex-shrink-0">
                         P{p.periodNumber}
                       </span>
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className={`font-black text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.subjectName}</p>
+                          <h4 className="font-black text-sm truncate">{p.subjectName}</h4>
                           {p.isExtra && (
-                            <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30">
-                              Extra Class
+                            <span className="text-[9px] uppercase font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                              Extra
                             </span>
                           )}
                         </div>
-                        <p className={`text-[11px] font-mono font-medium ${isDark ? 'text-slate-300' : 'text-slate-500'}`}>
-                          {p.startTime || '—'} - {p.endTime || '—'}
+                        <p className="text-[11px] font-mono text-slate-400">
+                          {p.startTime || '—'} – {p.endTime || '—'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <span
-                        className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border ${
-                          safeBunks > 0
-                            ? isDark
-                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : isDark
-                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}
-                      >
-                        {safeBunks > 0 ? `${safeBunks} safe bunk(s)` : '0 safe bunks'}
+                    <div className="text-right flex-shrink-0">
+                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                        safeBunks > 0
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                          : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                      }`}>
+                        {safeBunks > 0 ? `+${safeBunks} Safe` : '0 Safe'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Strictly Mutually Exclusive Status Selection */}
-                  <div className="grid grid-cols-4 gap-1.5 pt-0.5">
-                    {/* 1. Present */}
+                  {/* Segmented Modern 4-Button Attendance Bar */}
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {/* Attended */}
                     <button
                       type="button"
                       onClick={() => handleSetStatus(p, 'present')}
                       disabled={saving}
-                      className={`py-2 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-1 active:scale-95 ${
+                      className={`py-2 px-1 rounded-xl font-black text-[11px] transition-all flex items-center justify-center gap-1 active:scale-95 ${
                         isPresent
-                          ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 border-2 border-emerald-400 ring-2 ring-emerald-500/20'
-                          : isDark
-                            ? 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-xs'
+                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/40 border border-emerald-400'
+                          : 'bg-black/20 hover:bg-black/30 text-slate-300 border border-white/5'
                       }`}
                     >
-                      <Check size={14} className={isPresent ? 'text-white' : 'text-emerald-500'} /> Present
+                      <Check size={13} className={isPresent ? 'text-white' : 'text-emerald-400'} />
+                      <span>Present</span>
                     </button>
 
-                    {/* 2. Bunked */}
+                    {/* Bunked */}
                     <button
                       type="button"
                       onClick={() => handleSetStatus(p, 'absent')}
                       disabled={saving}
-                      className={`py-2 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-1 active:scale-95 ${
+                      className={`py-2 px-1 rounded-xl font-black text-[11px] transition-all flex items-center justify-center gap-1 active:scale-95 ${
                         isBunked
-                          ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/40 border-2 border-rose-400 ring-2 ring-rose-500/20'
-                          : isDark
-                            ? 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-xs'
+                          ? 'bg-rose-600 text-white shadow-md shadow-rose-600/40 border border-rose-400'
+                          : 'bg-black/20 hover:bg-black/30 text-slate-300 border border-white/5'
                       }`}
                     >
-                      <X size={14} className={isBunked ? 'text-white' : 'text-rose-500'} /> Bunked
+                      <X size={13} className={isBunked ? 'text-white' : 'text-rose-400'} />
+                      <span>Bunk</span>
                     </button>
 
-                    {/* 3. Replaced */}
+                    {/* Replaced */}
                     <button
                       type="button"
                       onClick={() => handleSetStatus(p, 'substitute')}
                       disabled={saving}
-                      className={`py-2 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-1 active:scale-95 ${
+                      className={`py-2 px-1 rounded-xl font-black text-[11px] transition-all flex items-center justify-center gap-1 active:scale-95 ${
                         isReplaced
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40 border-2 border-blue-400 ring-2 ring-blue-500/20'
-                          : isDark
-                            ? 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-xs'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/40 border border-blue-400'
+                          : 'bg-black/20 hover:bg-black/30 text-slate-300 border border-white/5'
                       }`}
                     >
-                      <RefreshCw size={13} className={isReplaced ? 'text-white' : 'text-blue-500'} /> Replaced
+                      <RefreshCw size={12} className={isReplaced ? 'text-white' : 'text-blue-400'} />
+                      <span>Replace</span>
                     </button>
 
-                    {/* 4. Cancelled */}
+                    {/* Off / Cancelled */}
                     <button
                       type="button"
                       onClick={() => handleSetStatus(p, 'cancelled')}
                       disabled={saving}
-                      className={`py-2 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-1 active:scale-95 ${
+                      className={`py-2 px-1 rounded-xl font-black text-[11px] transition-all flex items-center justify-center gap-1 active:scale-95 ${
                         isCancelled
-                          ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/40 border-2 border-amber-400 ring-2 ring-amber-500/20'
-                          : isDark
-                            ? 'bg-[#1b2232] hover:bg-[#232c40] text-slate-100 border border-slate-700'
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-xs'
+                          ? 'bg-amber-600 text-white shadow-md shadow-amber-600/40 border border-amber-400'
+                          : 'bg-black/20 hover:bg-black/30 text-slate-300 border border-white/5'
                       }`}
                     >
-                      <Slash size={13} className={isCancelled ? 'text-white' : 'text-amber-500'} /> Cancelled
+                      <Ban size={12} className={isCancelled ? 'text-white' : 'text-amber-400'} />
+                      <span>Off</span>
                     </button>
                   </div>
 
-                  {/* Inline Replacement Selector (Only shown if Replaced is chosen) */}
+                  {/* Inline Substitute Selector if Replaced is chosen */}
                   {isReplaced && (
-                    <div className={`p-3.5 rounded-2xl border space-y-2.5 mt-2 animate-[fadeIn_0.2s_ease-out] ${
-                      isDark ? 'bg-blue-600/15 border-blue-500/40 text-blue-200' : 'bg-blue-50 border-blue-200 text-blue-900'
-                    }`}>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-black">
-                          Which subject took Period {p.periodNumber}?
-                        </p>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                          Substitution
-                        </span>
-                      </div>
+                    <div className="mt-2.5 pt-2 border-t border-white/10 space-y-2 animate-[fadeIn_0.15s_ease-out]">
+                      <p className="text-[11px] font-bold text-blue-400">Who substituted this lecture?</p>
                       <select
                         value={repState.subId || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val) handleSaveReplacement(p, val, repState.attendance || 'present');
-                        }}
-                        className={`w-full rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-400 border ${
-                          isDark ? 'bg-[#0a0d14] border-blue-500/60 text-white' : 'bg-white border-blue-300 text-slate-900 shadow-xs'
-                        }`}
+                        onChange={(e) => handleSaveReplacement(p, e.target.value, repState.attendance || 'present')}
+                        className="w-full px-3 py-1.5 rounded-xl text-xs font-bold border border-white/10 bg-black/40 text-white focus:outline-none"
                       >
-                        <option value="">-- Choose Replacement Subject (e.g. Maths) --</option>
-                        {subjects.filter(s => (s._id || s.id) !== subId).map(s => (
-                          <option key={s._id} value={s._id}>
-                            {s.name} ({s.code || 'Class'})
-                          </option>
+                        <option value="">Select substitute subject...</option>
+                        {subjects.map(s => (
+                          <option key={s._id} value={s._id}>{s.name}</option>
                         ))}
                       </select>
 
-                      {/* Did you attend or bunk this replacement class? */}
-                      {repState.subId && (
-                        <div className="pt-1.5 border-t border-blue-500/20 space-y-1.5">
-                          <p className="text-[11px] font-bold text-slate-400">
-                            Did you attend or bunk this replacement class?
-                          </p>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleSaveReplacement(p, repState.subId, 'present')}
-                              className={`py-2 px-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
-                                (repState.attendance || 'present') === 'present'
-                                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/30 border border-emerald-400'
-                                  : isDark ? 'bg-slate-800 text-slate-300 hover:text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'
-                              }`}
-                            >
-                              <Check size={14} /> Attended Substitute
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleSaveReplacement(p, repState.subId, 'absent')}
-                              className={`py-2 px-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
-                                repState.attendance === 'absent'
-                                  ? 'bg-rose-600 text-white shadow-md shadow-rose-500/30 border border-rose-400'
-                                  : isDark ? 'bg-slate-800 text-slate-300 hover:text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'
-                              }`}
-                            >
-                              <X size={14} /> Replaced but Bunked!
-                            </button>
-                          </div>
-                          {repState.attendance === 'absent' && (
-                            <p className="text-[10px] text-rose-400 font-bold bg-rose-500/10 p-1.5 rounded-lg border border-rose-500/20">
-                              ⚠️ Absence recorded for substitute subject
-                            </p>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleSaveReplacement(p, repState.subId, 'present')}
+                          className={`flex-1 py-1 rounded-xl text-[10px] font-black border transition-all ${
+                            repState.attendance !== 'absent'
+                              ? 'bg-emerald-600 text-white border-emerald-400'
+                              : 'bg-black/30 text-slate-400 border-white/10'
+                          }`}
+                        >
+                          Attended Replacement
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveReplacement(p, repState.subId, 'absent')}
+                          className={`flex-1 py-1 rounded-xl text-[10px] font-black border transition-all ${
+                            repState.attendance === 'absent'
+                              ? 'bg-rose-600 text-white border-rose-400'
+                              : 'bg-black/30 text-slate-400 border-white/10'
+                          }`}
+                        >
+                          Bunked Replacement
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -642,176 +705,14 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
           )}
         </div>
 
-        {/* Extra Class Section (e.g. Period 6, Remedial / Extra Faculty Lecture) */}
-        <div className={`mt-2 pt-2 border-t ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-          {!showAddExtra ? (
-            <button
-              type="button"
-              onClick={() => {
-                const nextPeriod = periods.length > 0 ? Math.max(...periods.map(p => p.periodNumber)) + 1 : 1;
-                setExtraPeriodNum(nextPeriod);
-                setShowAddExtra(true);
-              }}
-              className="w-full py-2.5 px-3 rounded-2xl border border-dashed border-blue-500/50 hover:border-blue-500 text-blue-500 hover:bg-blue-500/10 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
-            >
-              <Plus size={15} />
-              <span>➕ Add Extra Class (e.g. Period 6, Remedial / Special Lecture)</span>
-            </button>
-          ) : (
-            <div className={`p-3.5 rounded-2xl border space-y-3 animate-[fadeIn_0.2s_ease-out] ${
-              isDark ? 'bg-[#151c28] border-blue-500/40' : 'bg-blue-50/70 border-blue-200'
-            }`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black flex items-center gap-1.5 text-blue-500">
-                  <Zap size={14} className="fill-blue-500" />
-                  Add Extra Class / Period
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowAddExtra(false)}
-                  className={`p-1 rounded-lg ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-black'}`}
-                >
-                  <X size={15} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
-                    Subject
-                  </label>
-                  <select
-                    value={extraSubId}
-                    onChange={(e) => setExtraSubId(e.target.value)}
-                    className={`w-full rounded-xl p-2 text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDark ? 'bg-[#0a0d14] border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
-                    }`}
-                  >
-                    <option value="">-- Select Subject --</option>
-                    {subjects.map(s => (
-                      <option key={s._id} value={s._id}>
-                        {s.name} ({s.code || 'Class'})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
-                    Period Number
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="1"
-                      max="15"
-                      value={extraPeriodNum}
-                      onChange={(e) => setExtraPeriodNum(Number(e.target.value))}
-                      className={`w-full rounded-xl p-2 text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        isDark ? 'bg-[#0a0d14] border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
-                      }`}
-                    />
-                    <span className="text-xs font-mono font-bold text-blue-400 whitespace-nowrap">
-                      P{extraPeriodNum}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Extra Class Time Interval */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
-                    Start Time
-                  </label>
-                  <input
-                    type="time"
-                    value={extraStartTime}
-                    onChange={(e) => setExtraStartTime(e.target.value)}
-                    className={`w-full rounded-xl p-2 text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDark ? 'bg-[#0a0d14] border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
-                    End Time
-                  </label>
-                  <input
-                    type="time"
-                    value={extraEndTime}
-                    onChange={(e) => setExtraEndTime(e.target.value)}
-                    className={`w-full rounded-xl p-2 text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDark ? 'bg-[#0a0d14] border-slate-700 text-white' : 'bg-white border-slate-300 text-black'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 text-slate-400">
-                  Status
-                </label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {[
-                    { id: 'present', label: '✓ Attended', color: 'bg-emerald-600' },
-                    { id: 'absent', label: '✕ Bunked', color: 'bg-red-600' },
-                    { id: 'substitute', label: '🔄 Swapped', color: 'bg-blue-600' },
-                    { id: 'cancelled', label: '🚫 Cancelled', color: 'bg-amber-600' }
-                  ].map(st => (
-                    <button
-                      key={st.id}
-                      type="button"
-                      onClick={() => setExtraStatus(st.id)}
-                      className={`py-1.5 px-1 rounded-xl text-[11px] font-extrabold border transition-all ${
-                        extraStatus === st.id
-                          ? `${st.color} text-white border-transparent shadow-sm scale-102`
-                          : isDark ? 'bg-slate-800/80 text-slate-400 border-slate-700' : 'bg-white text-slate-600 border-slate-300'
-                      }`}
-                    >
-                      {st.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowAddExtra(false)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={saving || !extraSubId}
-                  onClick={handleAddExtraClass}
-                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-md shadow-blue-500/30 active:scale-95 disabled:opacity-50"
-                >
-                  {saving ? 'Saving...' : 'Save Extra Class'}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Footer */}
-        <div className={`pt-3.5 mt-2 border-t flex items-center justify-between gap-3 ${
-          isDark ? 'border-slate-800' : 'border-slate-200'
-        }`}>
-          <p className={`text-xs font-medium ${
-            isDark ? 'text-slate-300' : 'text-slate-500'
-          }`}>
-            Attendance auto-updates into your subject buffers.
+        <div className="pt-3 mt-2 border-t border-white/10 flex items-center justify-between relative z-10">
+          <p className="text-[11px] text-slate-400 font-medium">
+            Mutes phone during active lecture • Unmutes on bunk
           </p>
           <button
-            onClick={() => {
-              const now = new Date().toISOString().split('T')[0];
-              localStorage.setItem('wrapup_done_' + now, 'true');
-              onClose();
-            }}
-            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-lg shadow-blue-500/30 transition-all active:scale-95"
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs shadow-md shadow-blue-600/30 transition-all active:scale-95"
           >
             Done
           </button>

@@ -13,6 +13,7 @@ import OnboardingModal from '../components/OnboardingModal';
 import QuickBunkSimulator from '../components/QuickBunkSimulator';
 import ShareTimetableModal from '../components/ShareTimetableModal';
 import BunkRunwayMatrix, { openDailyWrapUp } from '../components/BunkRunwayMatrix';
+import SmartBunkForecast from '../components/SmartBunkForecast';
 import HourlyLectureHub from '../components/HourlyLectureHub';
 
 function SubjectCard({ subject, target, onUpdate }) {
@@ -155,6 +156,7 @@ export default function DashboardPage() {
   }
   const [analytics, setAnalytics] = useState(null);
   const [todaySchedule, setTodaySchedule] = useState(null);
+  const [fullTimetable, setFullTimetable] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showTour, setShowTour] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -164,9 +166,11 @@ export default function DashboardPage() {
     return Promise.all([
       api.get('/analytics/overview'),
       api.get('/timetable/today'),
-    ]).then(([analyticsRes, todayRes]) => {
+      api.get('/timetable').catch(() => ({ data: { timetable: null } }))
+    ]).then(([analyticsRes, todayRes, ttRes]) => {
       setAnalytics(analyticsRes.data);
       setTodaySchedule(todayRes.data);
+      setFullTimetable(ttRes.data?.timetable || null);
     }).catch(console.error);
   };
 
@@ -344,6 +348,15 @@ export default function DashboardPage() {
       {analytics?.subjects && analytics.subjects.length > 0 && (
         <BunkRunwayMatrix
           subjects={analytics.subjects}
+          target={target}
+        />
+      )}
+
+      {/* AI Smart Bunk Forecast & Best Day to Bunk */}
+      {analytics?.subjects && analytics.subjects.length > 0 && fullTimetable && (
+        <SmartBunkForecast
+          subjects={analytics.subjects}
+          timetable={fullTimetable}
           target={target}
         />
       )}
