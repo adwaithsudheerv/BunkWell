@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
-import { autoSilentService } from '../lib/classAutoSilent';
 import {
   Clock, Check, X, RefreshCw, Slash, ChevronRight,
   BookOpen, AlertCircle, FileText, Sparkles, Send, BellRing, CheckCircle2
@@ -135,17 +134,9 @@ export default function HourlyLectureHub({ onAttendanceUpdated }) {
       });
 
       if (status === 'absent' || status === 'cancelled') {
-        autoSilentService.markPeriodBunked(currentPeriod.periodNumber, now);
-        toast.success(`Period ${currentPeriod.periodNumber} marked Bunked ❌ Phone restored to Active Mode 🔔 (Outside class)`);
+        toast.success(`Period ${currentPeriod.periodNumber} marked Bunked ❌`);
       } else {
-        // Attending class (scheduled or extra) - strictly enforce silent mode!
-        await autoSilentService.setSilentMode({
-          periodNumber: currentPeriod.periodNumber,
-          subjectName: currentPeriod.subjectName,
-          endTime: currentPeriod.endTime || '18:00',
-          isExtra: Boolean(currentPeriod.isExtra)
-        });
-        toast.success(`Period ${currentPeriod.periodNumber} marked Attended ✅ Phone strictly in Silent Mode 🔕`);
+        toast.success(`Period ${currentPeriod.periodNumber} marked Attended ✅`);
       }
 
       await loadHourlySchedule();
@@ -207,7 +198,7 @@ export default function HourlyLectureHub({ onAttendanceUpdated }) {
               </span>
               {isBunked && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                  Bunked (Active Ringer 🔔)
+                  Bunked ❌
                 </span>
               )}
               {isAttended && (
@@ -362,8 +353,7 @@ export default function HourlyLectureHub({ onAttendanceUpdated }) {
                     periodNumber: nextPeriod.periodNumber,
                     status: 'cancelled'
                   }).then(() => {
-                    autoSilentService.markPeriodBunked(nextPeriod.periodNumber, now);
-                    toast.success(`Period ${nextPeriod.periodNumber} marked Free/Cancelled! Phone stays in active mode.`);
+                    toast.success(`Period ${nextPeriod.periodNumber} marked Free/Cancelled!`);
                     loadHourlySchedule();
                     if (onAttendanceUpdated) onAttendanceUpdated();
                   });
@@ -383,8 +373,7 @@ export default function HourlyLectureHub({ onAttendanceUpdated }) {
                     periodNumber: nextPeriod.periodNumber,
                     status: 'absent'
                   }).then(() => {
-                    autoSilentService.markPeriodBunked(nextPeriod.periodNumber, now);
-                    toast.error(`Pre-bunked Period ${nextPeriod.periodNumber}! Active mode maintained.`);
+                    toast.error(`Pre-bunked Period ${nextPeriod.periodNumber}!`);
                     loadHourlySchedule();
                     if (onAttendanceUpdated) onAttendanceUpdated();
                   });

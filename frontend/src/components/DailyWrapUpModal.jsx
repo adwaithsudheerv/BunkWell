@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
-import { autoSilentService } from '../lib/classAutoSilent';
 import {
   CheckCircle2, XCircle, RefreshCw, X, Check,
   Zap, Clock, ShieldCheck, AlertTriangle, ArrowRight,
@@ -118,25 +117,10 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       });
 
       const subName = subjects.find(s => String(s._id) === String(extraSubId))?.name || 'Extra Class';
-
-      // If extra class is attended (present), STRICTLY TRIGGER AUTO-SILENT!
-      if (extraStatus === 'present') {
-        await autoSilentService.registerExtraClass({
-          periodNumber: extraPeriodNum,
-          subjectName: subName,
-          startTime: extraStartTime,
-          endTime: extraEndTime,
-          status: 'present'
-        });
-        toast.success(`Extra class (${subName}) recorded! Phone strictly switched to Silent Mode 🔕`);
-      } else if (extraStatus === 'absent' || extraStatus === 'cancelled') {
-        await autoSilentService.markPeriodBunked(extraPeriodNum, now);
-        toast.success(`Extra class logged as ${extraStatus}! Phone restored to Active Mode 🔔`);
-      }
+      toast.success(res.data.message || `Extra class (${subName}) recorded as ${extraStatus}! 🎓`);
 
       setShowAddExtra(false);
       setExtraSubId('');
-      window.dispatchEvent(new CustomEvent('extra-class-added'));
       await loadTodayData();
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -251,14 +235,9 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         });
       }
 
-      // If bunked or cancelled, ensure active phone mode is immediately restored!
-      if (status === 'absent' || status === 'cancelled') {
-        autoSilentService.markPeriodBunked(p.periodNumber, now);
-      }
-
       const statusNames = {
         present: 'Present ✅',
-        absent: 'Bunked ❌ (Active Mode 🔔)',
+        absent: 'Bunked ❌',
         substitute: 'Replacement Subject 🔄',
         cancelled: 'Cancelled / Faculty Leave ⏸️'
       };
@@ -299,8 +278,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       }));
 
       if (replacementAttendance === 'absent') {
-        autoSilentService.markPeriodBunked(p.periodNumber, now);
-        toast.error(`Period ${p.periodNumber}: Replaced by substitute, but BUNKED! (Absence logged for substitute & Active Mode Restored) ❌`);
+        toast.error(`Period ${p.periodNumber}: Replaced by substitute, but BUNKED! (Absence logged for substitute) ❌`);
       } else {
         toast.success(`Period ${p.periodNumber} marked replaced & attended! ✅`);
       }
@@ -617,7 +595,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                           </div>
                           {repState.attendance === 'absent' && (
                             <p className="text-[10px] text-rose-400 font-bold bg-rose-500/10 p-1.5 rounded-lg border border-rose-500/20">
-                              ⚠️ Absence recorded for substitute subject • Phone restored to Active Mode 🔔 (Outside class)
+                              ⚠️ Absence recorded for substitute subject
                             </p>
                           )}
                         </div>

@@ -47,17 +47,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/bunk_widget_info" />
         </receiver>
-        <!-- Class Auto-Silent Exact Alarm & Bunk Receiver -->
-        <receiver
-            android:name=".ClassAlarmReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="app.bunkclub.action.CLASS_START" />
-                <action android:name="app.bunkclub.action.CLASS_END" />
-                <action android:name="app.bunkclub.action.BUNK_DIRECT" />
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
     </application>
 
     <!-- Permissions -->
@@ -71,7 +60,5 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

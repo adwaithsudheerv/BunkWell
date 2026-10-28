@@ -67,18 +67,19 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.4.7',
-    versionCode: 24,
+    latestVersion: '1.4.9',
+    versionCode: 26,
     releaseDate: '2026-10-28',
     downloadUrl: 'https://bunkwell.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.4.7 Strict Class & Extra Hour Auto-Silent Edition',
-    message: 'Strict auto-silent for extra classes and remedial hours, continuous 10s ringer verification, and guaranteed background silence execution!',
+    title: '⚡ BunkClub v1.4.9 Streamlined & Clean UI Edition',
+    message: 'Removed redundant auto-silent audio clutter, restored 100% clean top view, with Hourly Lecture Hub, Next Class Briefing, and Replaced-Bunk tracking!',
     changelog: [
-      '🔕 Extra Class Auto-Silent: Dynamically added extra classes and remedial lectures are automatically recognized, setting the phone to silent mode immediately',
-      '⏱️ Strict Ringer Verification: Periodic 10s cycle strictly verifies that whenever you are in class, phone is in silent mode, and whenever outside class or bunked, phone is active',
-      '⏰ Native Background Alarms: Android system alarms trigger silent mode at lecture start and active mode at end even if you never opened the app all day',
-      '🔔 Instant Active Mode on Bunking: Marking bunked immediately un-silences the phone so you have full ringer outside class',
-      '🔄 Replaced But Bunked Tracking: Full support for substitutions when you bunked the replacement class'
+      '🚀 Streamlined & Clean: Removed redundant audio-manager and background silent clutter; clean native phone control restored',
+      '📱 100% Unobstructed View: No floating top elements blocking headers, full clean visibility across all mobile screens',
+      '📖 Hourly Lecture Hub & Debrief: Front page card to log faculty homework, notes, and quiz announcements right after every lecture',
+      '📌 Next Class Mission Briefing: Live countdown preview for next class displaying assigned tasks and notes from the previous lecture',
+      '🔄 Replaced But Bunked Tracking: Full support for substitutions when you bunked the replacement class',
+      '🔥 Whispr Tab: Ultra-modern view-once ephemeral messaging directly in the bottom navigation bar'
     ]
   });
 });

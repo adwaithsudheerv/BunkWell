@@ -12,8 +12,6 @@ import { Capacitor } from '@capacitor/core';
 import InstallPWAButton from './InstallPWAButton';
 import DailyWrapUpModal from './DailyWrapUpModal';
 import AppUpdateModal from './AppUpdateModal';
-import DynamicAlertPill from './DynamicAlertPill';
-import { autoSilentService } from '../lib/classAutoSilent';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Bunk Radar' },
@@ -59,15 +57,6 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [wrapUpOpen, setWrapUpOpen] = useState(false);
   const [threeDotOpen, setThreeDotOpen] = useState(false);
-
-  // Initialize Auto-Silent service on mount
-  useEffect(() => {
-    try {
-      autoSilentService.init();
-    } catch (e) {
-      console.warn('Auto-Silent init failed:', e);
-    }
-  }, []);
 
   // Global listener: allows opening the lightning point (DailyWrapUpModal) from any component,
   // notifications, popups, or deficit summary cards.
@@ -191,8 +180,6 @@ export default function Layout() {
         isDark ? 'bg-[#090b0e] text-slate-100' : 'bg-[#f8f6f0] text-[#0a0a0c]'
       }`}
     >
-      {/* Dynamic Heads-Up Notification Island */}
-      <DynamicAlertPill />
       {/* Background ambient lighting for Dark Mode */}
       {isDark && (
         <div
@@ -257,6 +244,7 @@ export default function Layout() {
               <span className="text-blue-500">Club</span>
             </span>
           </Link>
+
           <div className="flex items-center gap-1.5">
             {!Capacitor.isNativePlatform() && (
               <InstallPWAButton className="py-1 px-2.5 text-[11px]" />
