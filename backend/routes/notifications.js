@@ -67,16 +67,19 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.5.7',
-    versionCode: 34,
+    latestVersion: '1.5.8',
+    versionCode: 35,
     releaseDate: '2026-10-30',
     downloadUrl: 'https://bunkclub-app.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.5.7 Mathematical Attendance & Database Integrity Edition',
-    message: 'Strict college timetable period validation (1-8), zero rogue attendance records, and mathematically exact cancelled class preservation!',
+    title: '⚡ BunkClub v1.5.8 Butter Smooth & Supabase Edition',
+    message: 'Permanent cloud storage, On Duty integration, active/silent ringer, and universal custom timetables!',
     changelog: [
-      '🛡️ Hardened Period Bounds (P1-P8): Guaranteed timetable alignment preventing any out-of-range periods',
-      '🎯 Cancelled Class Precision: Calling off a class preserves your exact attendance percentage and attended class count without distortions',
-      '🧹 Global Database Self-Healing: Cleansed rogue bunk history entries across all subjects and locked initial baselines'
+      '☁️ Supabase Cloud Database: 100% persistent data across reboots & spin-downs',
+      '🛡️ Hardened Period Bounds (P1-P8): Guaranteed timetable alignment preventing out-of-bounds periods',
+      '🎯 Cancelled Class Precision: Calling off a class preserves your exact attendance percentage and attended class count',
+      '🔔 Active/Silent Mode: Native ringer notifications on mode changes with clean badges',
+      '✨ On Duty (OD) Included in Day Score & Attendance Ledgers',
+      '💬 Whispr Navigation: Streamlined to bottom navigation bar'
     ]
   });
 });
@@ -86,12 +89,12 @@ router.post('/broadcast-update', async (req, res) => {
   try {
     const users = await User.find({ 'pushSubscriptions.0': { $exists: true } });
     const payload = JSON.stringify({
-      title: '🚀 BunkClub v1.3.0 Final Master Release Available',
-      body: 'Single-choice attendance reconciliation, holiday toggle, smart login & clean UI ready. Tap to update!',
+      title: '🚀 BunkClub v1.5.8 Update Available',
+      body: 'Permanent Supabase sync, On Duty tracking, and smoothed interface ready. Tap to update!',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: {
-        url: 'https://bunkwell.onrender.com/BunkClub.apk'
+        url: 'https://bunkclub-app.onrender.com/BunkClub.apk'
       }
     });
 
