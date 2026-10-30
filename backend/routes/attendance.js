@@ -40,13 +40,7 @@ router.post('/quick-mark', auth, async (req, res) => {
     const subject = await Subject.findOne({ _id: subjectId, userId: req.user._id });
     if (!subject) return res.status(404).json({ message: 'Subject not found' });
 
-    subject.totalClasses += 1;
-    if (status === 'present') {
-      subject.attendedClasses += 1;
-    }
-    await subject.save();
-
-    // Record in AttendanceRecord so it appears in the MAM register / attendance log
+    // Record in AttendanceRecord so it appears in the register / attendance log
     const today = new Date();
     const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(); dayEnd.setHours(23, 59, 59, 999);
@@ -62,17 +56,23 @@ router.post('/quick-mark', auth, async (req, res) => {
       date: today,
       periodNumber,
       status: status, // 'present' or 'absent'
+      isExtra: false,
+      notes: 'Quick mark from subject card',
       markedAt: today
     });
     await record.save();
 
+    await recalculateSubject(req.user._id, subjectId);
+    const updatedSubject = await Subject.findById(subjectId);
+
     res.json({
       message: status === 'present' ? 'Attended class logged! ✅' : 'Bunk recorded for today! ❌',
-      subject
+      subject: updatedSubject
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
+});
 });
 
 // Helper: Recalculate subject attendance stats based on all records + preserve baseline

@@ -3,10 +3,35 @@ const auth = require('../middleware/auth');
 const Subject = require('../models/Subject');
 const router = express.Router();
 
-// Get all subjects for user
+// Get all subjects for user (with automatic baseline protection & self-healing)
 router.get('/', auth, async (req, res) => {
   try {
     const subjects = await Subject.find({ userId: req.user._id, isActive: true }).sort({ name: 1 });
+    const AttendanceRecord = require('../models/AttendanceRecord');
+
+    // Self-healing check: Ensure every subject has its baseline locked
+    for (const s of subjects) {
+      if (s.baseTotalClasses === undefined || s.baseTotalClasses === null) {
+        const records = await AttendanceRecord.find({ userId: req.user._id, subjectId: s._id });
+        const effectiveRecords = records.filter(r => {
+          if (r.status === 'not_marked') return false;
+          if (r.status === 'substitute' && r.replacementSubjectId && String(r.replacementSubjectId) !== String(s._id)) return false;
+          return true;
+        });
+        const recTotal = effectiveRecords.filter(r => r.status !== 'cancelled').length;
+        const recAttended = effectiveRecords.filter(r => ['present', 'substitute', 'lab', 'on_duty'].includes(r.status)).length;
+
+        if ((s.totalClasses || 0) > recTotal) {
+          s.baseTotalClasses = Math.max(0, (s.totalClasses || 0) - recTotal);
+          s.baseAttendedClasses = Math.max(0, (s.attendedClasses || 0) - recAttended);
+        } else {
+          s.baseTotalClasses = s.totalClasses || 0;
+          s.baseAttendedClasses = s.attendedClasses || 0;
+        }
+        await s.save();
+      }
+    }
+
     res.json({ subjects });
   } catch (err) {
     res.status(500).json({ message: err.message });

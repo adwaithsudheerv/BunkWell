@@ -35,7 +35,9 @@ async function syncTimetableToAttendanceAndShare(userId, timetable, user) {
             type: subName.toLowerCase().includes('lab') ? 'lab' : 'theory',
             targetPercentage: 75,
             totalClasses: 0,
-            attendedClasses: 0
+            attendedClasses: 0,
+            baseTotalClasses: 0,
+            baseAttendedClasses: 0
           });
           await subDoc.save();
           subMap.set(key, subDoc);
