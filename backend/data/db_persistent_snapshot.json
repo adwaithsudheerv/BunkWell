@@ -1,11 +1,11 @@
 {
   "version": "1.0",
-  "lockedAt": "2026-10-26T03:33:38.283Z",
+  "lockedAt": "2026-10-30T12:48:59.082Z",
   "counts": {
     "users": 3,
     "subjects": 34,
     "timetables": 3,
-    "attendanceRecords": 47
+    "attendanceRecords": 19
   },
   "data": {
     "users": [
@@ -17,6 +17,9 @@
         "studentId": "MY.AC.P2MCA26001",
         "college": "Amrita Vishwa vidyapeedham",
         "department": "CS",
+        "section": "A",
+        "classNetwork": [],
+        "isClassVerified": true,
         "semester": 1,
         "year": 1,
         "attendanceTarget": 80,
@@ -26,14 +29,21 @@
         "notificationsEnabled": true,
         "createdAt": "2026-10-25T07:48:17.857Z",
         "updatedAt": "2026-10-25T07:48:18.397Z",
-        "__v": 0
+        "__v": 0,
+        "vouchesReceived": []
       },
       {
         "_id": "6adec6ac5b53aabc4c794b83",
         "username": "adwaithsudheer",
         "password": "$2a$12$PDIUXf2I4sQlyMf0vJBKH.Wz3GKOeVo/WtNOn1AFAGJLDb/YsKOMm",
+        "plainKey": "960974",
         "name": "adwaithsudheer",
         "email": "adwaithsudheer@bunkclub.local",
+        "college": "General",
+        "department": "General",
+        "section": "A",
+        "classNetwork": [],
+        "isClassVerified": true,
         "semester": 1,
         "year": 1,
         "attendanceTarget": 80,
@@ -43,15 +53,21 @@
         "notificationsEnabled": true,
         "createdAt": "2026-10-26T03:19:08.058Z",
         "updatedAt": "2026-10-26T03:19:10.349Z",
-        "plainKey": "960974",
-        "__v": 0
+        "__v": 0,
+        "vouchesReceived": []
       },
       {
         "_id": "6adec6dd5b53aabc4c794ba4",
         "username": "sonal",
         "password": "$2a$12$u4a/T6Pp4pMk/S2Xzn0HtOCLlT4MsW4dJTZOhUhVazRdN2.cgH/O2",
+        "plainKey": "960974",
         "name": "sonal",
         "email": "sonal@bunkclub.local",
+        "college": "General",
+        "department": "General",
+        "section": "A",
+        "classNetwork": [],
+        "isClassVerified": true,
         "semester": 1,
         "year": 1,
         "attendanceTarget": 80,
@@ -61,8 +77,8 @@
         "notificationsEnabled": true,
         "createdAt": "2026-10-26T03:19:57.145Z",
         "updatedAt": "2026-10-26T03:19:59.447Z",
-        "plainKey": "960974",
-        "__v": 0
+        "__v": 0,
+        "vouchesReceived": []
       }
     ],
     "subjects": [
@@ -76,9 +92,15 @@
         "type": "theory",
         "totalClasses": 0,
         "attendedClasses": 0,
+        "baseTotalClasses": 0,
+        "baseAttendedClasses": 0,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-25T07:49:36.901Z",
         "__v": 0
       },
@@ -92,9 +114,15 @@
         "type": "theory",
         "totalClasses": 0,
         "attendedClasses": 0,
+        "baseTotalClasses": 0,
+        "baseAttendedClasses": 0,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-25T07:50:03.597Z",
         "__v": 0
       },
@@ -108,9 +136,15 @@
         "type": "theory",
         "totalClasses": 0,
         "attendedClasses": 0,
+        "baseTotalClasses": 0,
+        "baseAttendedClasses": 0,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-25T07:50:31.594Z",
         "__v": 0
       },
@@ -124,9 +158,15 @@
         "type": "elective",
         "totalClasses": 0,
         "attendedClasses": 0,
+        "baseTotalClasses": 0,
+        "baseAttendedClasses": 0,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-25T07:51:04.424Z",
         "__v": 0
       },
@@ -138,11 +178,17 @@
         "faculty": "Dr. Pushpa B R",
         "color": "#0047FF",
         "type": "theory",
-        "totalClasses": 20,
-        "attendedClasses": 17,
+        "totalClasses": 21,
+        "attendedClasses": 18,
+        "baseTotalClasses": 20,
+        "baseAttendedClasses": 17,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.863Z",
         "__v": 0
       },
@@ -154,11 +200,17 @@
         "faculty": "Dr. Pushpa B R / Mr. Sudarshan Duth P",
         "color": "#0047FF",
         "type": "lab",
-        "totalClasses": 10,
+        "totalClasses": 9,
         "attendedClasses": 9,
+        "baseTotalClasses": 9,
+        "baseAttendedClasses": 9,
         "cancelledClasses": 0,
         "totalPlannedClasses": 20,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.863Z",
         "__v": 0
       },
@@ -170,11 +222,17 @@
         "faculty": "Mr. Sudarshan Duth P",
         "color": "#10b981",
         "type": "theory",
-        "totalClasses": 18,
-        "attendedClasses": 15,
+        "totalClasses": 11,
+        "attendedClasses": 9,
+        "baseTotalClasses": 11,
+        "baseAttendedClasses": 9,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.864Z",
         "__v": 0
       },
@@ -186,11 +244,17 @@
         "faculty": "Ms. Kanchana V",
         "color": "#f59e0b",
         "type": "theory",
-        "totalClasses": 22,
-        "attendedClasses": 19,
+        "totalClasses": 25,
+        "attendedClasses": 20,
+        "baseTotalClasses": 25,
+        "baseAttendedClasses": 20,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.864Z",
         "__v": 0
       },
@@ -202,11 +266,17 @@
         "faculty": "Ms. Kanchana V / Dr. Priya Govindarajan",
         "color": "#f59e0b",
         "type": "lab",
-        "totalClasses": 10,
-        "attendedClasses": 9,
+        "totalClasses": 14,
+        "attendedClasses": 10,
+        "baseTotalClasses": 14,
+        "baseAttendedClasses": 10,
         "cancelledClasses": 0,
         "totalPlannedClasses": 20,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.864Z",
         "__v": 0
       },
@@ -218,11 +288,17 @@
         "faculty": "Mr. Manjunatha H S",
         "color": "#8b5cf6",
         "type": "theory",
-        "totalClasses": 16,
-        "attendedClasses": 14,
+        "totalClasses": 15,
+        "attendedClasses": 13,
+        "baseTotalClasses": 15,
+        "baseAttendedClasses": 13,
         "cancelledClasses": 0,
         "totalPlannedClasses": 35,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.864Z",
         "__v": 0
       },
@@ -235,10 +311,16 @@
         "color": "#06b6d4",
         "type": "theory",
         "totalClasses": 20,
-        "attendedClasses": 17,
+        "attendedClasses": 16,
+        "baseTotalClasses": 20,
+        "baseAttendedClasses": 16,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.864Z",
         "__v": 0
       },
@@ -250,11 +332,17 @@
         "faculty": "Dr. Manohar N / Ms. Bhavani R",
         "color": "#06b6d4",
         "type": "lab",
-        "totalClasses": 10,
-        "attendedClasses": 9,
+        "totalClasses": 16,
+        "attendedClasses": 16,
+        "baseTotalClasses": 16,
+        "baseAttendedClasses": 16,
         "cancelledClasses": 0,
         "totalPlannedClasses": 20,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.864Z",
         "__v": 0
       },
@@ -266,11 +354,17 @@
         "faculty": "Ms. Vijayalakshmi M K",
         "color": "#ec4899",
         "type": "theory",
-        "totalClasses": 24,
-        "attendedClasses": 20,
+        "totalClasses": 32,
+        "attendedClasses": 28,
+        "baseTotalClasses": 31,
+        "baseAttendedClasses": 27,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.864Z",
         "__v": 0
       },
@@ -282,11 +376,17 @@
         "faculty": "Mr. Karthik M / Mr. Vaishnav / Ms. Sridevi P",
         "color": "#14b8a6",
         "type": "theory",
-        "totalClasses": 14,
-        "attendedClasses": 12,
+        "totalClasses": 24,
+        "attendedClasses": 21,
+        "baseTotalClasses": 24,
+        "baseAttendedClasses": 21,
         "cancelledClasses": 0,
         "totalPlannedClasses": 30,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.864Z",
         "__v": 0
       },
@@ -300,9 +400,15 @@
         "type": "theory",
         "totalClasses": 14,
         "attendedClasses": 12,
+        "baseTotalClasses": 14,
+        "baseAttendedClasses": 12,
         "cancelledClasses": 0,
         "totalPlannedClasses": 30,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.865Z",
         "__v": 0
       },
@@ -314,11 +420,17 @@
         "faculty": "Ms. Princy KTM / Mr. Santhosh Kumar B J",
         "color": "#6366f1",
         "type": "theory",
-        "totalClasses": 22,
-        "attendedClasses": 18,
+        "totalClasses": 31,
+        "attendedClasses": 27,
+        "baseTotalClasses": 31,
+        "baseAttendedClasses": 27,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.865Z",
         "__v": 0
       },
@@ -330,11 +442,17 @@
         "faculty": "Ms. Princy KTM / Mr. Santhosh Kumar B J",
         "color": "#6366f1",
         "type": "lab",
-        "totalClasses": 10,
-        "attendedClasses": 9,
+        "totalClasses": 31,
+        "attendedClasses": 27,
+        "baseTotalClasses": 31,
+        "baseAttendedClasses": 27,
         "cancelledClasses": 0,
         "totalPlannedClasses": 20,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.865Z",
         "__v": 0
       },
@@ -346,11 +464,17 @@
         "faculty": "Dr. Priya Govindarajan",
         "color": "#3b82f6",
         "type": "theory",
-        "totalClasses": 18,
-        "attendedClasses": 15,
+        "totalClasses": 24,
+        "attendedClasses": 20,
+        "baseTotalClasses": 23,
+        "baseAttendedClasses": 19,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.865Z",
         "__v": 0
       },
@@ -364,9 +488,15 @@
         "type": "theory",
         "totalClasses": 12,
         "attendedClasses": 10,
+        "baseTotalClasses": 12,
+        "baseAttendedClasses": 10,
         "cancelledClasses": 0,
         "totalPlannedClasses": 25,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:27.865Z",
         "__v": 0
       },
@@ -380,9 +510,15 @@
         "type": "theory",
         "totalClasses": 20,
         "attendedClasses": 17,
+        "baseTotalClasses": 19,
+        "baseAttendedClasses": 16,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.853Z",
         "__v": 0
       },
@@ -396,9 +532,15 @@
         "type": "lab",
         "totalClasses": 10,
         "attendedClasses": 9,
+        "baseTotalClasses": 10,
+        "baseAttendedClasses": 9,
         "cancelledClasses": 0,
         "totalPlannedClasses": 20,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -412,9 +554,15 @@
         "type": "theory",
         "totalClasses": 18,
         "attendedClasses": 15,
+        "baseTotalClasses": 18,
+        "baseAttendedClasses": 15,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -428,9 +576,15 @@
         "type": "theory",
         "totalClasses": 22,
         "attendedClasses": 19,
+        "baseTotalClasses": 22,
+        "baseAttendedClasses": 19,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -444,9 +598,15 @@
         "type": "lab",
         "totalClasses": 10,
         "attendedClasses": 9,
+        "baseTotalClasses": 10,
+        "baseAttendedClasses": 9,
         "cancelledClasses": 0,
         "totalPlannedClasses": 20,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -460,9 +620,15 @@
         "type": "theory",
         "totalClasses": 16,
         "attendedClasses": 14,
+        "baseTotalClasses": 16,
+        "baseAttendedClasses": 14,
         "cancelledClasses": 0,
         "totalPlannedClasses": 35,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -476,9 +642,15 @@
         "type": "theory",
         "totalClasses": 20,
         "attendedClasses": 17,
+        "baseTotalClasses": 20,
+        "baseAttendedClasses": 17,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -492,9 +664,15 @@
         "type": "lab",
         "totalClasses": 10,
         "attendedClasses": 9,
+        "baseTotalClasses": 10,
+        "baseAttendedClasses": 9,
         "cancelledClasses": 0,
         "totalPlannedClasses": 20,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -508,9 +686,15 @@
         "type": "theory",
         "totalClasses": 24,
         "attendedClasses": 20,
+        "baseTotalClasses": 23,
+        "baseAttendedClasses": 19,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -524,9 +708,15 @@
         "type": "theory",
         "totalClasses": 14,
         "attendedClasses": 12,
+        "baseTotalClasses": 14,
+        "baseAttendedClasses": 12,
         "cancelledClasses": 0,
         "totalPlannedClasses": 30,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -540,9 +730,15 @@
         "type": "theory",
         "totalClasses": 14,
         "attendedClasses": 12,
+        "baseTotalClasses": 14,
+        "baseAttendedClasses": 12,
         "cancelledClasses": 0,
         "totalPlannedClasses": 30,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.854Z",
         "__v": 0
       },
@@ -554,11 +750,17 @@
         "faculty": "Ms. Princy KTM / Mr. Santhosh Kumar B J",
         "color": "#6366f1",
         "type": "theory",
-        "totalClasses": 22,
-        "attendedClasses": 18,
+        "totalClasses": 31,
+        "attendedClasses": 27,
+        "baseTotalClasses": 31,
+        "baseAttendedClasses": 27,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.855Z",
         "__v": 0
       },
@@ -570,11 +772,17 @@
         "faculty": "Ms. Princy KTM / Mr. Santhosh Kumar B J",
         "color": "#6366f1",
         "type": "lab",
-        "totalClasses": 10,
-        "attendedClasses": 9,
+        "totalClasses": 31,
+        "attendedClasses": 27,
+        "baseTotalClasses": 31,
+        "baseAttendedClasses": 27,
         "cancelledClasses": 0,
         "totalPlannedClasses": 20,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.855Z",
         "__v": 0
       },
@@ -588,9 +796,15 @@
         "type": "theory",
         "totalClasses": 18,
         "attendedClasses": 15,
+        "baseTotalClasses": 17,
+        "baseAttendedClasses": 14,
         "cancelledClasses": 0,
         "totalPlannedClasses": 45,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.855Z",
         "__v": 0
       },
@@ -604,9 +818,15 @@
         "type": "theory",
         "totalClasses": 12,
         "attendedClasses": 10,
+        "baseTotalClasses": 12,
+        "baseAttendedClasses": 10,
         "cancelledClasses": 0,
         "totalPlannedClasses": 25,
         "isActive": true,
+        "lastTask": {
+          "taskType": "none",
+          "description": ""
+        },
         "createdAt": "2026-10-26T03:20:29.855Z",
         "__v": 0
       }
@@ -798,6 +1018,7 @@
         "userId": "6adec6dd5b53aabc4c794ba4",
         "semesterName": "MCA Semester 1 - Section A",
         "section": "A",
+        "shareCode": "BC-6808",
         "isShareCodeRevealed": false,
         "semesterNumber": 1,
         "defaultStartTime": "09:00",
@@ -1130,8 +1351,7 @@
         "isActive": true,
         "createdAt": "2026-10-26T03:20:27.953Z",
         "updatedAt": "2026-10-26T03:24:53.845Z",
-        "__v": 0,
-        "shareCode": "BC-6808"
+        "__v": 0
       },
       {
         "_id": "6adec6fd5b53aabc4c794c48",
@@ -1469,8 +1689,9 @@
         ],
         "isActive": true,
         "createdAt": "2026-10-26T03:20:29.951Z",
-        "updatedAt": "2026-10-26T03:20:30.050Z",
-        "__v": 0
+        "updatedAt": "2026-10-30T12:39:31.088Z",
+        "__v": 0,
+        "shareCode": "BC-5548"
       }
     ],
     "attendanceRecords": [
@@ -1483,6 +1704,7 @@
         "status": "present",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "markedAt": "2026-10-24T00:00:00.000Z",
         "createdAt": "2026-10-26T03:20:28.053Z",
         "updatedAt": "2026-10-26T03:20:28.053Z",
@@ -1497,6 +1719,7 @@
         "status": "present",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "markedAt": "2026-10-24T00:00:00.000Z",
         "createdAt": "2026-10-26T03:20:28.054Z",
         "updatedAt": "2026-10-26T03:20:28.054Z",
@@ -1511,6 +1734,7 @@
         "status": "present",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "markedAt": "2026-10-24T00:00:00.000Z",
         "createdAt": "2026-10-26T03:20:28.054Z",
         "updatedAt": "2026-10-26T03:20:28.054Z",
@@ -1525,6 +1749,7 @@
         "status": "present",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "markedAt": "2026-10-24T00:00:00.000Z",
         "createdAt": "2026-10-26T03:20:30.054Z",
         "updatedAt": "2026-10-26T03:20:30.054Z",
@@ -1539,6 +1764,7 @@
         "status": "present",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "markedAt": "2026-10-24T00:00:00.000Z",
         "createdAt": "2026-10-26T03:20:30.054Z",
         "updatedAt": "2026-10-26T03:20:30.054Z",
@@ -1553,6 +1779,7 @@
         "status": "present",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "markedAt": "2026-10-24T00:00:00.000Z",
         "createdAt": "2026-10-26T03:20:30.054Z",
         "updatedAt": "2026-10-26T03:20:30.054Z",
@@ -1563,13 +1790,14 @@
         "userId": "6adec6dd5b53aabc4c794ba4",
         "subjectId": "6adec6fb5b53aabc4c794bbc",
         "date": "2026-10-26T03:24:53.858Z",
+        "dayOfWeek": "Monday",
         "periodNumber": 1,
         "status": "not_marked",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "createdAt": "2026-10-26T03:24:53.858Z",
         "updatedAt": "2026-10-26T03:24:53.859Z",
-        "dayOfWeek": "Monday",
         "__v": 0
       },
       {
@@ -1577,13 +1805,14 @@
         "userId": "6adec6dd5b53aabc4c794ba4",
         "subjectId": "6adec6fb5b53aabc4c794bbe",
         "date": "2026-10-26T03:24:53.945Z",
+        "dayOfWeek": "Monday",
         "periodNumber": 2,
         "status": "not_marked",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "createdAt": "2026-10-26T03:24:53.945Z",
         "updatedAt": "2026-10-26T03:24:53.946Z",
-        "dayOfWeek": "Monday",
         "__v": 0
       },
       {
@@ -1591,13 +1820,14 @@
         "userId": "6adec6dd5b53aabc4c794ba4",
         "subjectId": "6adec6fb5b53aabc4c794bbf",
         "date": "2026-10-26T03:24:53.948Z",
+        "dayOfWeek": "Monday",
         "periodNumber": 3,
         "status": "not_marked",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "createdAt": "2026-10-26T03:24:53.948Z",
         "updatedAt": "2026-10-26T03:24:53.948Z",
-        "dayOfWeek": "Monday",
         "__v": 0
       },
       {
@@ -1605,13 +1835,14 @@
         "userId": "6adec6dd5b53aabc4c794ba4",
         "subjectId": "6adec6fb5b53aabc4c794bc1",
         "date": "2026-10-26T03:24:53.950Z",
+        "dayOfWeek": "Monday",
         "periodNumber": 4,
         "status": "not_marked",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "createdAt": "2026-10-26T03:24:53.950Z",
         "updatedAt": "2026-10-26T03:24:53.950Z",
-        "dayOfWeek": "Monday",
         "__v": 0
       },
       {
@@ -1619,13 +1850,134 @@
         "userId": "6adec6dd5b53aabc4c794ba4",
         "subjectId": "6adec6fb5b53aabc4c794bc0",
         "date": "2026-10-26T03:24:53.951Z",
+        "dayOfWeek": "Monday",
         "periodNumber": 5,
         "status": "not_marked",
         "replacementAttendance": "present",
         "isReplacement": false,
+        "isExtra": false,
         "createdAt": "2026-10-26T03:24:53.951Z",
         "updatedAt": "2026-10-26T03:24:53.952Z",
-        "dayOfWeek": "Monday",
+        "__v": 0
+      },
+      {
+        "_id": "6ae4900389789a8a8d8da563",
+        "userId": "6adec6ac5b53aabc4c794b83",
+        "subjectId": "6adec6fd5b53aabc4c794c43",
+        "date": "2026-10-30T12:39:31.192Z",
+        "periodNumber": 1,
+        "status": "not_marked",
+        "replacementAttendance": "present",
+        "isReplacement": false,
+        "isExtra": false,
+        "createdAt": "2026-10-30T12:39:31.192Z",
+        "updatedAt": "2026-10-30T12:39:31.193Z",
+        "dayOfWeek": "Friday",
+        "__v": 0
+      },
+      {
+        "_id": "6ae4900389789a8a8d8da566",
+        "userId": "6adec6ac5b53aabc4c794b83",
+        "subjectId": "6adec6fd5b53aabc4c794c40",
+        "date": "2026-10-30T12:39:31.200Z",
+        "periodNumber": 2,
+        "status": "not_marked",
+        "replacementAttendance": "present",
+        "isReplacement": false,
+        "isExtra": false,
+        "createdAt": "2026-10-30T12:39:31.200Z",
+        "updatedAt": "2026-10-30T12:39:31.200Z",
+        "dayOfWeek": "Friday",
+        "__v": 0
+      },
+      {
+        "_id": "6ae4900389789a8a8d8da569",
+        "userId": "6adec6ac5b53aabc4c794b83",
+        "subjectId": "6adec6fd5b53aabc4c794c45",
+        "date": "2026-10-30T12:39:31.286Z",
+        "periodNumber": 3,
+        "status": "not_marked",
+        "replacementAttendance": "present",
+        "isReplacement": false,
+        "isExtra": false,
+        "createdAt": "2026-10-30T12:39:31.287Z",
+        "updatedAt": "2026-10-30T12:39:31.287Z",
+        "dayOfWeek": "Friday",
+        "__v": 0
+      },
+      {
+        "_id": "6ae4900389789a8a8d8da56c",
+        "userId": "6adec6ac5b53aabc4c794b83",
+        "subjectId": "6adec6fd5b53aabc4c794c38",
+        "date": "2026-10-30T12:39:31.289Z",
+        "periodNumber": 4,
+        "status": "not_marked",
+        "replacementAttendance": "present",
+        "isReplacement": false,
+        "isExtra": false,
+        "createdAt": "2026-10-30T12:39:31.289Z",
+        "updatedAt": "2026-10-30T12:39:31.289Z",
+        "dayOfWeek": "Friday",
+        "__v": 0
+      },
+      {
+        "_id": "6ae4900389789a8a8d8da56f",
+        "userId": "6adec6ac5b53aabc4c794b83",
+        "subjectId": "6adec6fd5b53aabc4c794c3d",
+        "date": "2026-10-30T12:39:31.291Z",
+        "periodNumber": 5,
+        "status": "not_marked",
+        "replacementAttendance": "present",
+        "isReplacement": false,
+        "isExtra": false,
+        "createdAt": "2026-10-30T12:39:31.291Z",
+        "updatedAt": "2026-10-30T12:39:31.291Z",
+        "dayOfWeek": "Friday",
+        "__v": 0
+      },
+      {
+        "_id": "6ae4900389789a8a8d8da572",
+        "userId": "6adec6ac5b53aabc4c794b83",
+        "subjectId": "6adec6fd5b53aabc4c794c46",
+        "date": "2026-10-30T12:39:31.292Z",
+        "periodNumber": 6,
+        "status": "not_marked",
+        "replacementAttendance": "present",
+        "isReplacement": false,
+        "isExtra": false,
+        "createdAt": "2026-10-30T12:39:31.292Z",
+        "updatedAt": "2026-10-30T12:39:31.293Z",
+        "dayOfWeek": "Friday",
+        "__v": 0
+      },
+      {
+        "_id": "6ae4900389789a8a8d8da575",
+        "userId": "6adec6ac5b53aabc4c794b83",
+        "subjectId": "6adec6fd5b53aabc4c794c44",
+        "date": "2026-10-30T12:39:31.294Z",
+        "periodNumber": 7,
+        "status": "not_marked",
+        "replacementAttendance": "present",
+        "isReplacement": false,
+        "isExtra": false,
+        "createdAt": "2026-10-30T12:39:31.294Z",
+        "updatedAt": "2026-10-30T12:39:31.294Z",
+        "dayOfWeek": "Friday",
+        "__v": 0
+      },
+      {
+        "_id": "6ae4900389789a8a8d8da578",
+        "userId": "6adec6ac5b53aabc4c794b83",
+        "subjectId": "6adec6fd5b53aabc4c794c44",
+        "date": "2026-10-30T12:39:31.387Z",
+        "periodNumber": 8,
+        "status": "not_marked",
+        "replacementAttendance": "present",
+        "isReplacement": false,
+        "isExtra": false,
+        "createdAt": "2026-10-30T12:39:31.387Z",
+        "updatedAt": "2026-10-30T12:39:31.388Z",
+        "dayOfWeek": "Friday",
         "__v": 0
       }
     ]
