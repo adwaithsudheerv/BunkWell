@@ -95,6 +95,7 @@ async function syncTimetableToAttendanceAndShare(userId, timetable, user) {
     );
 
     await timetable.save();
+    try { require('../services/supabaseSync').pushTimetableToSupabase(timetable); } catch (e) {}
 
     // 3. Automatically sync Today's Attendance periods so user doesn't need to manually add them!
     const todayStr = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' }).format(new Date());
@@ -165,6 +166,7 @@ router.post('/', auth, async (req, res) => {
     await Timetable.updateMany({ userId: req.user._id }, { isActive: false });
     const timetable = new Timetable({ userId: req.user._id, ...req.body });
     await timetable.save();
+    try { require('../services/supabaseSync').pushTimetableToSupabase(timetable); } catch (e) {}
 
     // Automatically sync timetable into subjects, attendance & admin share vault
     await syncTimetableToAttendanceAndShare(req.user._id, timetable, req.user);
@@ -226,6 +228,7 @@ router.post('/reveal-code', auth, async (req, res) => {
       timetable.shareCode = `BC-${Math.floor(1000 + Math.random() * 9000)}`;
     }
     await timetable.save();
+    try { require('../services/supabaseSync').pushTimetableToSupabase(timetable); } catch (e) {}
 
     await syncTimetableToAttendanceAndShare(req.user._id, timetable, req.user);
 

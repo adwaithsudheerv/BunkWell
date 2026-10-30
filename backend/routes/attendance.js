@@ -109,6 +109,7 @@ router.post('/quick-mark', auth, async (req, res) => {
       });
       await record.save();
     }
+    try { require('../services/supabaseSync').pushAttendanceRecordToSupabase(record); } catch (e) {}
 
     await recalculateSubject(req.user._id, subjectId);
     const updatedSubject = await Subject.findById(subjectId);
@@ -160,6 +161,7 @@ async function recalculateSubject(userId, subjectId) {
   subject.cancelledClasses = recordedCancelled;
 
   await subject.save();
+  try { require('../services/supabaseSync').pushSubjectToSupabase(subject); } catch (e) {}
   return subject;
 }
 
@@ -307,6 +309,7 @@ router.post('/mark', auth, async (req, res) => {
       await recalculateSubject(req.user._id, subjectId);
     }
 
+    try { require('../services/supabaseSync').pushAttendanceRecordToSupabase(record); } catch (e) {}
     try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
 
     const populated = await AttendanceRecord.findById(record._id)
@@ -460,6 +463,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (!record) return res.status(404).json({ message: 'Record not found' });
     const subId = record.subjectId;
     await AttendanceRecord.deleteOne({ _id: record._id });
+    try { require('../services/supabaseSync').deleteAttendanceRecordFromSupabase(record._id); } catch (e) {}
     if (subId) {
       await recalculateSubject(req.user._id, subId);
     }

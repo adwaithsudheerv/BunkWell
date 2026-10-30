@@ -161,14 +161,17 @@ async function startServer() {
     console.error('Fatal DB connection error:', dbErr);
   }
 
-  // Persistent data lock/unlock auto-recovery (Restores data seamlessly if empty/fresh container)
+  // Connect and sync live data from Supabase Permanent Cloud Database
   try {
-    const { unlockAndRestoreIfEmpty } = require('./services/dbPersistence');
-    await unlockAndRestoreIfEmpty();
+    const { restoreAllFromSupabase } = require('./services/supabaseSync');
+    const restored = await restoreAllFromSupabase();
+    if (!restored) {
+      // Fallback only if Supabase connection has network glitch
+      const { unlockAndRestoreIfEmpty } = require('./services/dbPersistence');
+      await unlockAndRestoreIfEmpty();
+    }
     const { cleanRogueRecordsAndAuditAllSubjects } = require('./services/cleanRogueRecords');
     await cleanRogueRecordsAndAuditAllSubjects();
-    const { ensureSharedTimetableBC1139 } = require('./services/defaultTimetable');
-    await ensureSharedTimetableBC1139();
   } catch (restoreErr) {
     console.error('Data restore notice:', restoreErr.message);
   }

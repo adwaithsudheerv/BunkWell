@@ -57,6 +57,8 @@ router.post('/', auth, async (req, res) => {
       baseAttendedClasses: initialAttended
     });
     await subject.save();
+    try { require('../services/supabaseSync').pushSubjectToSupabase(subject); } catch (e) {}
+    try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
     res.status(201).json({ subject });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -96,6 +98,8 @@ router.put('/:id', auth, async (req, res) => {
     if (req.body.code !== undefined) subject.code = req.body.code;
 
     await subject.save();
+    try { require('../services/supabaseSync').pushSubjectToSupabase(subject); } catch (e) {}
+    try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
     res.json({ subject });
   } catch (err) {
     res.status(500).json({ message: err.message });

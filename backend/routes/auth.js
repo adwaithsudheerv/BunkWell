@@ -66,6 +66,7 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save();
+    try { require('../services/supabaseSync').pushUserToSupabase(user); } catch (e) {}
     try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
 
     const token = createToken(user._id);
@@ -191,6 +192,7 @@ router.post('/reset-password-direct', async (req, res) => {
 
     user.password = newPassword;
     await user.save();
+    try { require('../services/supabaseSync').pushUserToSupabase(user); } catch (e) {}
     try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
     const token = createToken(user._id);
     res.json({ message: 'Password updated successfully!', token, user: user.toSafeObject() });

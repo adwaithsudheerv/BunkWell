@@ -21,13 +21,6 @@ async function cleanRogueRecordsAndAuditAllSubjects() {
     console.log(`🔍 [Global DB Integrity] Auditing ${subjects.length} active subject(s)...`);
 
     for (const subject of subjects) {
-      // If Problem Solving / PS was corrupted to 26/29 or 26/26, restore its true baseline (27 attended out of 31 total)
-      const isPS = subject.name && (subject.name.toUpperCase() === 'PS' || subject.name.toLowerCase().includes('problem'));
-      if (isPS && (subject.baseTotalClasses < 31 || subject.totalClasses < 31 || subject.attendedClasses < 27)) {
-        subject.baseTotalClasses = 31;
-        subject.baseAttendedClasses = 27;
-      }
-
       const allRecords = await AttendanceRecord.find({
         userId: subject.userId,
         subjectId: subject._id,
