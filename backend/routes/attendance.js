@@ -75,7 +75,7 @@ router.post('/quick-mark', auth, async (req, res) => {
   }
 });
 
-// Helper: Recalculate subject attendance stats based on all records
+// Helper: Recalculate subject attendance stats based on all records + preserve baseline
 async function recalculateSubject(userId, subjectId) {
   if (!subjectId) return null;
   const subject = await Subject.findOne({ _id: subjectId, userId });
@@ -92,12 +92,25 @@ async function recalculateSubject(userId, subjectId) {
     return true;
   });
 
-  subject.totalClasses = effectiveRecords.filter(r => r.status !== 'cancelled').length;
-  subject.attendedClasses = effectiveRecords.filter(r => ['present', 'substitute', 'lab', 'on_duty'].includes(r.status)).length;
-  subject.cancelledClasses = allRecords.filter(r =>
+  const recordedTotal = effectiveRecords.filter(r => r.status !== 'cancelled').length;
+  const recordedAttended = effectiveRecords.filter(r => ['present', 'substitute', 'lab', 'on_duty'].includes(r.status)).length;
+  const recordedCancelled = allRecords.filter(r =>
     r.status === 'cancelled' ||
     (r.status === 'substitute' && r.replacementSubjectId && String(r.replacementSubjectId) !== String(subjectId))
   ).length;
+
+  // IMPORTANT: Preserve student's baseline past attendance!
+  // If baseTotalClasses is not initialized, calculate baseline from previous total
+  if (subject.baseTotalClasses === undefined || subject.baseTotalClasses === null || subject.baseTotalClasses === 0) {
+    if ((subject.totalClasses || 0) > recordedTotal) {
+      subject.baseTotalClasses = Math.max(0, (subject.totalClasses || 0) - recordedTotal);
+      subject.baseAttendedClasses = Math.max(0, (subject.attendedClasses || 0) - recordedAttended);
+    }
+  }
+
+  subject.totalClasses = (subject.baseTotalClasses || 0) + recordedTotal;
+  subject.attendedClasses = (subject.baseAttendedClasses || 0) + recordedAttended;
+  subject.cancelledClasses = recordedCancelled;
 
   await subject.save();
   return subject;
@@ -390,6 +403,22 @@ router.post('/extra-class', auth, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: 'Failed to log extra class: ' + err.message });
+  }
+});
+
+// Delete an attendance record
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const record = await AttendanceRecord.findOne({ _id: req.params.id, userId: req.user._id });
+    if (!record) return res.status(404).json({ message: 'Record not found' });
+    const subId = record.subjectId;
+    await AttendanceRecord.deleteOne({ _id: record._id });
+    if (subId) {
+      await recalculateSubject(req.user._id, subId);
+    }
+    res.json({ success: true, message: 'Record deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

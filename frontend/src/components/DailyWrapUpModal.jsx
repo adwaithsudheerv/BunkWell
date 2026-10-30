@@ -87,9 +87,9 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
   const scheduledPeriods = (scheduleData?.periods || []).filter(p => p.subjectName);
   const scheduledNums = new Set(scheduledPeriods.map(p => p.periodNumber));
 
-  // Combine scheduled periods with any extra periods recorded today
+  // Combine scheduled periods with any genuine extra periods recorded today
   const extraPeriods = Object.values(records)
-    .filter(r => r && r.periodNumber && !scheduledNums.has(r.periodNumber))
+    .filter(r => r && r.periodNumber && !scheduledNums.has(r.periodNumber) && r.isExtra === true)
     .map(r => ({
       periodNumber: r.periodNumber,
       subjectName: r.subjectId?.name || subjects.find(s => String(s._id) === String(r.subjectId?._id || r.subjectId))?.name || 'Extra Class',

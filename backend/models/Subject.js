@@ -10,6 +10,8 @@ const subjectSchema = new mongoose.Schema({
   type: { type: String, enum: ['theory', 'lab', 'elective'], default: 'theory' },
   totalClasses: { type: Number, default: 0 },
   attendedClasses: { type: Number, default: 0 },
+  baseTotalClasses: { type: Number, default: 0 },
+  baseAttendedClasses: { type: Number, default: 0 },
   cancelledClasses: { type: Number, default: 0 },
   totalPlannedClasses: { type: Number, default: 45 },
   isActive: { type: Boolean, default: true },

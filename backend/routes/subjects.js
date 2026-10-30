@@ -18,14 +18,18 @@ router.post('/', auth, async (req, res) => {
   try {
     const { name, color, type, timetableId, totalClasses, attendedClasses } = req.body;
     if (!name) return res.status(400).json({ message: 'Subject name required' });
+    const initialTotal = Math.max(0, parseInt(totalClasses, 10) || 0);
+    const initialAttended = Math.max(0, parseInt(attendedClasses, 10) || 0);
     const subject = new Subject({
       userId: req.user._id,
       name,
       color: color || '#0047FF',
       type: type || 'theory',
       timetableId,
-      totalClasses: Math.max(0, parseInt(totalClasses, 10) || 0),
-      attendedClasses: Math.max(0, parseInt(attendedClasses, 10) || 0),
+      totalClasses: initialTotal,
+      attendedClasses: initialAttended,
+      baseTotalClasses: initialTotal,
+      baseAttendedClasses: initialAttended
     });
     await subject.save();
     res.status(201).json({ subject });
@@ -34,15 +38,39 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Update subject
+// Update subject with baseline preservation
 router.put('/:id', auth, async (req, res) => {
   try {
-    const subject = await Subject.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
-      req.body,
-      { new: true }
-    );
+    const AttendanceRecord = require('../models/AttendanceRecord');
+    const subject = await Subject.findOne({ _id: req.params.id, userId: req.user._id });
     if (!subject) return res.status(404).json({ message: 'Subject not found' });
+
+    if (req.body.totalClasses !== undefined || req.body.attendedClasses !== undefined) {
+      const allRecords = await AttendanceRecord.find({ userId: req.user._id, subjectId: subject._id });
+      const effectiveRecords = allRecords.filter(r => {
+        if (r.status === 'not_marked') return false;
+        if (r.status === 'substitute' && r.replacementSubjectId && String(r.replacementSubjectId) !== String(subject._id)) return false;
+        return true;
+      });
+      const recordedTotal = effectiveRecords.filter(r => r.status !== 'cancelled').length;
+      const recordedAttended = effectiveRecords.filter(r => ['present', 'substitute', 'lab', 'on_duty'].includes(r.status)).length;
+
+      const newTotal = req.body.totalClasses !== undefined ? Math.max(0, parseInt(req.body.totalClasses, 10) || 0) : subject.totalClasses;
+      const newAttended = req.body.attendedClasses !== undefined ? Math.max(0, parseInt(req.body.attendedClasses, 10) || 0) : subject.attendedClasses;
+
+      subject.baseTotalClasses = Math.max(0, newTotal - recordedTotal);
+      subject.baseAttendedClasses = Math.max(0, newAttended - recordedAttended);
+      subject.totalClasses = newTotal;
+      subject.attendedClasses = newAttended;
+    }
+
+    if (req.body.name) subject.name = req.body.name.trim();
+    if (req.body.color) subject.color = req.body.color;
+    if (req.body.type) subject.type = req.body.type;
+    if (req.body.faculty !== undefined) subject.faculty = req.body.faculty;
+    if (req.body.code !== undefined) subject.code = req.body.code;
+
+    await subject.save();
     res.json({ subject });
   } catch (err) {
     res.status(500).json({ message: err.message });

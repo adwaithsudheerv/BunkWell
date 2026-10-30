@@ -67,18 +67,16 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.5.4',
-    versionCode: 31,
+    latestVersion: '1.5.5',
+    versionCode: 32,
     releaseDate: '2026-10-30',
     downloadUrl: 'https://bunkclub-app.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.5.4 Wake-Up Alarm & On-Duty (OD) Edition',
-    message: 'First period morning wake-up alarm with auto-skip, On Duty (OD) attendance credit with active ringer, compact audio status widget, and 24/7 background class muting!',
+    title: '⚡ BunkClub v1.5.5 Baseline Attendance & Lightning Timetable Integrity Edition',
+    message: 'Permanent past attendance protection, guaranteed baseline persistence across daily wrap-up, and strict timetable period schedule filtering!',
     changelog: [
-      '⏰ First Period Wake-Up Alarm: Automated morning wake-up alarm ringing before your day\'s first lecture starts with configurable offset (30m, 60m, 90m, 120m) and smart off-day detection',
-      '🎖️ On Duty (OD) Attendance Mode: Full attendance credit for event/college duties with active normal phone ringer preservation and dedicated ledger records',
-      '🔔 Compact Floating Audio Mode: Ultra-compact audio mode badge with instant notifications on silent/active state transitions',
-      '🎯 Single Whispr Location: Streamlined navigation keeping Whispr exclusively in the bottom navigation bar',
-      '🧭 High-Contrast Guide Flow: Crystal-clear visible Next button throughout the interactive guide walkthrough'
+      '🛡️ Permanent Baseline Attendance Protection: Editing your subject attendance (e.g. 18/21) now locks as a permanent historical baseline that is never overwritten by daily period logging',
+      '⚡ Strict Lightning Attendance Filtering: Daily Wrap-Up strictly renders only your scheduled timetable periods and verified extra classes',
+      '🎖️ Seamless On Duty (OD) Reconciliation: OD attendance adds to your attended ledger and keeps normal ringer active without touching past historical counts'
     ]
   });
 });
