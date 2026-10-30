@@ -43,6 +43,15 @@ function SubjectCard({ subject, target, onUpdate }) {
     });
   };
 
+  const isSameDay = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const today = new Date();
+    return d.getFullYear() === today.getFullYear() &&
+           d.getMonth() === today.getMonth() &&
+           d.getDate() === today.getDate();
+  };
+
   return (
     <div className="glass-card rounded-3xl p-5 border border-white/10 relative overflow-hidden flex flex-col justify-between hover:border-blue-500/40 transition-all shadow-sm">
       {/* Accent vertical line (matching reference photo) */}
@@ -105,7 +114,7 @@ function SubjectCard({ subject, target, onUpdate }) {
           </div>
         </div>
 
-        {/* Bunk History Pill */}
+        {/* Bunk & OD History Pill */}
         <div className="mt-4 pt-3 border-t border-white/10">
           <button
             type="button"
@@ -114,7 +123,7 @@ function SubjectCard({ subject, target, onUpdate }) {
           >
             <span className="flex items-center gap-1.5">
               <Clock size={13} className="text-blue-500" />
-              Bunked Dates ({bunkCount})
+              Bunked History ({bunkCount})
             </span>
             {bunkExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
@@ -123,23 +132,36 @@ function SubjectCard({ subject, target, onUpdate }) {
             <div className="mt-2 space-y-1 animate-[fadeIn_0.2s_ease-out]">
               {bunkCount === 0 ? (
                 <p className="text-[11px] text-slate-500 italic py-0.5">
-                  No bunks recorded in BunkClub yet 🎯
+                  No bunks or OD recorded yet 🎯
                 </p>
               ) : (
-                <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
-                  {subject.bunkHistory.map((b, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-white/5 border border-white/5 text-xs"
-                    >
-                      <span className="font-medium text-slate-300">
-                        📅 {formatDate(b.date)}
-                      </span>
-                      <span className="font-bold text-red-400 text-[11px]">
-                        Period {b.periodNumber}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+                  {subject.bunkHistory.map((b, i) => {
+                    const isOD = b.status === 'on_duty' || b.isOD;
+                    const sameDay = isSameDay(b.date);
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-center justify-between py-1.5 px-2.5 rounded-xl border text-xs transition-colors ${
+                          isOD
+                            ? 'bg-purple-500/10 border-purple-500/25'
+                            : 'bg-white/5 border-white/5'
+                        }`}
+                      >
+                        <span className="font-medium text-slate-300 flex items-center gap-1">
+                          <span>📅</span>
+                          <span>{sameDay ? 'Today, ' : ''}{formatDate(b.date)}</span>
+                        </span>
+                        <span className={`font-black text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                          isOD
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
+                            : 'bg-red-500/15 text-red-400 border border-red-500/20'
+                        }`}>
+                          Period {b.periodNumber} • {isOD ? 'OD' : 'Bunked'}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -178,9 +200,14 @@ export default function DashboardPage() {
   useEffect(() => {
     loadData().finally(() => setLoading(false));
 
+    const handleUpdate = () => loadData();
+    window.addEventListener('attendance-updated', handleUpdate);
+
     if (!localStorage.getItem('bunkwell_tour_done')) {
       setShowTour(true);
     }
+
+    return () => window.removeEventListener('attendance-updated', handleUpdate);
   }, []);
 
   const handleSeedDemo = async () => {

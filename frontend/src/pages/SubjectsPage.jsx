@@ -211,6 +211,9 @@ export default function SubjectsPage() {
 
   useEffect(() => {
     loadData();
+    const handleUpdate = () => loadData();
+    window.addEventListener('attendance-updated', handleUpdate);
+    return () => window.removeEventListener('attendance-updated', handleUpdate);
   }, []);
 
   const handleQuickMark = async (subjectId, status) => {
@@ -241,6 +244,15 @@ export default function SubjectsPage() {
       month: 'short',
       year: 'numeric'
     });
+  };
+
+  const isSameDay = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const today = new Date();
+    return d.getFullYear() === today.getFullYear() &&
+           d.getMonth() === today.getMonth() &&
+           d.getDate() === today.getDate();
   };
 
   return (
@@ -436,23 +448,36 @@ export default function SubjectsPage() {
                       <div className="mt-2.5 space-y-1.5 animate-[fadeIn_0.2s_ease-out]">
                         {bunkCount === 0 ? (
                           <p className="text-[11px] text-slate-500 italic py-1">
-                            No bunks recorded in BunkClub yet 🎯
+                            No bunks or OD recorded yet 🎯
                           </p>
                         ) : (
                           <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
-                            {s.bunkHistory.map((b, i) => (
-                              <div
-                                key={i}
-                                className="flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-white/5 border border-white/5 text-xs"
-                              >
-                                <span className="font-medium text-slate-300">
-                                  📅 {formatDate(b.date)}
-                                </span>
-                                <span className="font-bold text-red-400 text-[11px]">
-                                  Period {b.periodNumber}
-                                </span>
-                              </div>
-                            ))}
+                            {s.bunkHistory.map((b, i) => {
+                              const isOD = b.status === 'on_duty' || b.isOD;
+                              const sameDay = isSameDay(b.date);
+                              return (
+                                <div
+                                  key={i}
+                                  className={`flex items-center justify-between py-1.5 px-2.5 rounded-xl border text-xs transition-colors ${
+                                    isOD
+                                      ? 'bg-purple-500/10 border-purple-500/25'
+                                      : 'bg-white/5 border-white/5'
+                                  }`}
+                                >
+                                  <span className="font-medium text-slate-300 flex items-center gap-1">
+                                    <span>📅</span>
+                                    <span>{sameDay ? 'Today, ' : ''}{formatDate(b.date)}</span>
+                                  </span>
+                                  <span className={`font-black text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                                    isOD
+                                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
+                                      : 'bg-red-500/15 text-red-400 border border-red-500/20'
+                                  }`}>
+                                    Period {b.periodNumber} • {isOD ? 'OD' : 'Bunked'}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>

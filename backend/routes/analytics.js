@@ -10,10 +10,10 @@ router.get('/overview', auth, async (req, res) => {
     const subjects = await Subject.find({ userId: req.user._id, isActive: true });
     const target = req.user.attendanceTarget || 80;
 
-    // Fetch all recorded bunks for this user (sorted newest first)
+    // Fetch all recorded bunks and OD (on-duty) records for this user (sorted newest first)
     const bunkRecords = await AttendanceRecord.find({
       userId: req.user._id,
-      status: 'absent'
+      status: { $in: ['absent', 'on_duty'] }
     }).sort({ date: -1, periodNumber: -1 });
 
     const overview = subjects.map(s => {
@@ -41,6 +41,8 @@ router.get('/overview', auth, async (req, res) => {
           date: r.date,
           periodNumber: r.periodNumber,
           dayOfWeek: r.dayOfWeek,
+          status: r.status,
+          isOD: r.status === 'on_duty',
         }));
 
       return {
