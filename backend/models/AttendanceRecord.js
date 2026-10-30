@@ -8,7 +8,7 @@ const attendanceRecordSchema = new mongoose.Schema({
   periodNumber: { type: Number, required: true },
   status: {
     type: String,
-    enum: ['present', 'absent', 'cancelled', 'substitute', 'lab', 'not_marked'],
+    enum: ['present', 'absent', 'cancelled', 'substitute', 'lab', 'on_duty', 'not_marked'],
     default: 'not_marked',
   },
   substituteFaculty: { type: String, trim: true },

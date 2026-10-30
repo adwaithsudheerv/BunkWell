@@ -36,9 +36,13 @@ export default function AttendancePage() {
     loadData();
   }, [selectedSubject]);
 
-  // Toggle cell status on click (e.g. Present <-> Absent)
+  // Toggle cell status on click (e.g. Present -> Absent -> On Duty -> Present)
   const handleToggleCell = async (rec) => {
-    const nextStatus = rec.status === 'present' ? 'absent' : 'present';
+    let nextStatus = 'present';
+    if (rec.status === 'present') nextStatus = 'absent';
+    else if (rec.status === 'absent') nextStatus = 'on_duty';
+    else if (rec.status === 'on_duty') nextStatus = 'present';
+
     try {
       const res = await api.post('/attendance/mark', {
         subjectId: rec.subjectId?._id || rec.subjectId,
@@ -46,7 +50,8 @@ export default function AttendancePage() {
         periodNumber: rec.periodNumber,
         status: nextStatus
       });
-      toast.success(`Period ${rec.periodNumber} marked ${nextStatus === 'present' ? 'Present (P) ✅' : 'Absent (A) ❌'}`);
+      const label = nextStatus === 'present' ? 'Present (P) ✅' : nextStatus === 'on_duty' ? 'On Duty (OD) 🏅' : 'Absent (A) ❌';
+      toast.success(`Period ${rec.periodNumber} marked ${label}`);
       // Update local state smoothly
       setRecords(prev => prev.map(r => r._id === rec._id ? { ...r, status: nextStatus } : r));
     } catch (err) {
@@ -84,7 +89,8 @@ export default function AttendancePage() {
 
   // Compute overall register statistics
   const totalClasses = records.filter(r => r.status !== 'not_marked' && r.status !== 'cancelled').length;
-  const totalPresent = records.filter(r => ['present', 'substitute', 'lab'].includes(r.status)).length;
+  const totalPresent = records.filter(r => ['present', 'substitute', 'lab', 'on_duty'].includes(r.status)).length;
+  const totalOD = records.filter(r => r.status === 'on_duty').length;
   const totalAbsent = records.filter(r => r.status === 'absent').length;
   const overallRate = totalClasses > 0 ? ((totalPresent / totalClasses) * 100).toFixed(1) : '100.0';
 
@@ -128,8 +134,8 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      {/* Top 4 Quick Stats (Matching Mam's register counters) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      {/* Top 5 Quick Stats (Matching Mam's register counters) */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
         <div className="glass-card rounded-2xl p-3 sm:p-3.5 border border-white/10 text-center">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Days Logged</p>
           <p className="text-xl sm:text-2xl font-black text-white mt-0.5">{sortedDates.length}</p>
@@ -137,6 +143,10 @@ export default function AttendancePage() {
         <div className="glass-card rounded-2xl p-3 sm:p-3.5 border border-white/10 text-center">
           <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Present (P)</p>
           <p className="text-xl sm:text-2xl font-black text-emerald-400 mt-0.5">{totalPresent}</p>
+        </div>
+        <div className="glass-card rounded-2xl p-3 sm:p-3.5 border border-white/10 text-center">
+          <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">On Duty (OD)</p>
+          <p className="text-xl sm:text-2xl font-black text-purple-400 mt-0.5">{totalOD}</p>
         </div>
         <div className="glass-card rounded-2xl p-3 sm:p-3.5 border border-white/10 text-center">
           <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Absent / Bunk (A)</p>
@@ -239,6 +249,7 @@ export default function AttendancePage() {
                             );
                           }
 
+                          const isOD = rec.status === 'on_duty';
                           const isP = ['present', 'substitute', 'lab'].includes(rec.status);
                           const isA = rec.status === 'absent';
                           const subName = rec.subjectId?.name || 'Class';
@@ -248,16 +259,18 @@ export default function AttendancePage() {
                               <button
                                 type="button"
                                 onClick={() => handleToggleCell(rec)}
-                                title={`${subName} (Period ${pNum}): Click to toggle P/A`}
+                                title={`${subName} (Period ${pNum}): ${isOD ? 'On Duty (OD)' : isP ? 'Present (P)' : isA ? 'Absent (A)' : 'Pending'}`}
                                 className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl font-black text-xs inline-flex flex-col items-center justify-center transition-all active:scale-90 shadow-sm cursor-pointer ${
-                                  isP
+                                  isOD
+                                    ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/25'
+                                    : isP
                                     ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20'
                                     : isA
                                     ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/20'
                                     : 'bg-white/10 text-slate-400 hover:bg-white/20'
                                 }`}
                               >
-                                <span>{isP ? 'P' : isA ? 'A' : '·'}</span>
+                                <span>{isOD ? 'OD' : isP ? 'P' : isA ? 'A' : '·'}</span>
                                 <span className="text-[7px] truncate max-w-[28px] opacity-75 font-normal">
                                   {subName.slice(0, 4)}
                                 </span>

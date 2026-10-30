@@ -14,6 +14,7 @@ import QuickBunkSimulator from '../components/QuickBunkSimulator';
 import ShareTimetableModal from '../components/ShareTimetableModal';
 import BunkRunwayMatrix, { openDailyWrapUp } from '../components/BunkRunwayMatrix';
 import SmartBunkForecast from '../components/SmartBunkForecast';
+import MorningClassWakeUpAlarm from '../components/MorningClassWakeUpAlarm';
 import HourlyLectureHub from '../components/HourlyLectureHub';
 
 function SubjectCard({ subject, target, onUpdate }) {
@@ -360,6 +361,9 @@ export default function DashboardPage() {
           target={target}
         />
       )}
+
+      {/* Morning Class Wake-Up Alarm (Optional 1st period wake-up) */}
+      <MorningClassWakeUpAlarm />
 
       {/* Quick Bunk Simulator */}
       {analytics?.subjects && analytics.subjects.length > 0 && (

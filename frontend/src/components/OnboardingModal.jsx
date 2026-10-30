@@ -237,9 +237,10 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
             {step < slides.length - 1 ? (
               <button
                 onClick={() => setStep(s => s + 1)}
-                className="px-4 py-2 rounded-xl bg-white text-black text-xs font-semibold hover:bg-slate-200 transition-all flex items-center gap-1"
+                className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-extrabold text-xs hover:bg-blue-500 active:scale-95 transition-all shadow-md shadow-blue-600/30 flex items-center gap-1.5 border border-blue-400/40"
               >
-                Next <ChevronRight size={14} />
+                <span>Next</span>
+                <ChevronRight size={15} />
               </button>
             ) : (
               <button

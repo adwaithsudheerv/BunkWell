@@ -67,17 +67,18 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.5.3',
-    versionCode: 30,
-    releaseDate: '2026-10-28',
+    latestVersion: '1.5.4',
+    versionCode: 31,
+    releaseDate: '2026-10-30',
     downloadUrl: 'https://bunkclub-app.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.5.3 Public Download & Lecture Briefing Ledger Edition',
-    message: 'Guaranteed audio muting fallback, faculty notes and homework ledger display, public download portal for Chrome/Brave indexing, and open store compatibility!',
+    title: '⚡ BunkClub v1.5.4 Wake-Up Alarm & On-Duty (OD) Edition',
+    message: 'First period morning wake-up alarm with auto-skip, On Duty (OD) attendance credit with active ringer, compact audio status widget, and 24/7 background class muting!',
     changelog: [
-      '🔕 Guaranteed Physical Audio Mute: Fallback stream volume suppression ensures your phone completely mutes on class attend regardless of OEM DND permission state',
-      '📌 Visible Faculty Notes & Homework: Direct on-card briefing display showing active homework, assignment, and surprise test tasks logged for every lecture',
-      '🌐 Public Download Portal (/download): Searchable on Chrome and Brave so friends can directly download the official APK without needing private links',
-      '🤖 SEO & Open Store Listing: Search engine indexing with robots.txt, sitemap, and Open Graph cards'
+      '⏰ First Period Wake-Up Alarm: Automated morning wake-up alarm ringing before your day\'s first lecture starts with configurable offset (30m, 60m, 90m, 120m) and smart off-day detection',
+      '🎖️ On Duty (OD) Attendance Mode: Full attendance credit for event/college duties with active normal phone ringer preservation and dedicated ledger records',
+      '🔔 Compact Floating Audio Mode: Ultra-compact audio mode badge with instant notifications on silent/active state transitions',
+      '🎯 Single Whispr Location: Streamlined navigation keeping Whispr exclusively in the bottom navigation bar',
+      '🧭 High-Contrast Guide Flow: Crystal-clear visible Next button throughout the interactive guide walkthrough'
     ]
   });
 });

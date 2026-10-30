@@ -132,13 +132,13 @@ export default function FloatingClassControl() {
         </div>
       )}
 
-      {/* 2. FLOATING BOTTOM-RIGHT CLASS & RINGER CONTROL (Never Blocks Top Nav!) */}
-      <div className="fixed bottom-20 right-4 z-30 flex flex-col items-end gap-2 select-none pointer-events-none">
+      {/* 2. FLOATING BOTTOM-RIGHT CLASS & RINGER CONTROL (Compact & Non-Intrusive) */}
+      <div className="fixed bottom-20 right-3.5 z-30 flex flex-col items-end gap-2 select-none pointer-events-none">
         <div className="pointer-events-auto">
           {collapsed ? (
             <button
               onClick={() => setCollapsed(false)}
-              className={`p-3 rounded-full shadow-2xl border transition-all active:scale-95 flex items-center justify-center ${
+              className={`p-2.5 rounded-full shadow-2xl border transition-all active:scale-95 flex items-center justify-center ${
                 status.isMuted
                   ? 'bg-amber-600 text-white border-amber-400 shadow-amber-500/30 animate-pulse'
                   : status.isBunked
@@ -147,66 +147,66 @@ export default function FloatingClassControl() {
               }`}
               title={status.isMuted ? 'Auto-Muted (In Class)' : status.isBunked ? 'Bunked (Active Ringer)' : 'Normal Ringer'}
             >
-              {status.isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              {status.isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
             </button>
           ) : (
-            <div className={`p-3 rounded-2xl border shadow-2xl backdrop-blur-xl transition-all max-w-xs ${
+            <div className={`p-2.5 rounded-2xl border shadow-2xl backdrop-blur-xl transition-all max-w-[240px] text-xs ${
               status.isMuted
                 ? 'bg-gradient-to-r from-amber-950/90 to-slate-900/90 border-amber-500/50 text-white shadow-amber-500/20'
                 : status.isBunked
                 ? 'bg-gradient-to-r from-rose-950/90 to-slate-900/90 border-rose-500/50 text-white shadow-rose-500/20'
                 : isDark ? 'bg-[#0f172a]/90 border-white/10 text-slate-200' : 'bg-white/95 border-slate-200 text-slate-800 shadow-slate-300'
             }`}>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+              <div className="flex items-center justify-between gap-1.5 mb-1">
+                <span className={`text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${
                   status.isMuted ? 'text-amber-400' : status.isBunked ? 'text-rose-400' : 'text-emerald-400'
                 }`}>
-                  {status.isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                  {status.isMuted ? <VolumeX size={12} /> : <Volume2 size={12} />}
                   <span>
-                    {status.isMuted ? 'Auto-Muted (In Lecture)' : status.isBunked ? 'Bunked (Ringer Active)' : 'Active Ringer'}
+                    {status.isMuted ? 'Lecture Auto-Muted' : status.isBunked ? 'Active Mode' : 'Ringer Active'}
                   </span>
                 </span>
                 <button
                   onClick={() => setCollapsed(true)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-white"
+                  className="p-0.5 rounded text-slate-400 hover:text-white"
                   title="Minimize"
                 >
-                  <ChevronDown size={14} />
+                  <ChevronDown size={13} />
                 </button>
               </div>
 
-              <p className="text-xs font-bold leading-tight">
+              <p className="text-[11px] font-bold leading-tight truncate">
                 {status.text}
               </p>
 
               {/* Bidirectional One-Touch Sync Controls */}
               {status.session && (
-                <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center gap-2">
+                <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center gap-1.5">
                   {status.isMuted ? (
                     <button
                       onClick={() => handleToggleAttendance('bunk')}
                       disabled={actionLoading}
-                      className="flex-1 py-1.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-[11px] shadow-sm transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
+                      className="flex-1 py-1 px-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-[10px] shadow-sm transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
                     >
-                      <XCircle size={13} />
-                      <span>Bunk & Unmute 🔔</span>
+                      <XCircle size={12} />
+                      <span>Bunk & Unmute</span>
                     </button>
                   ) : (
                     <button
                       onClick={() => handleToggleAttendance('present')}
                       disabled={actionLoading}
-                      className="flex-1 py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] shadow-sm transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
+                      className="flex-1 py-1 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] shadow-sm transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
                     >
-                      <CheckCircle2 size={13} />
-                      <span>Attending & Mute 🔕</span>
+                      <CheckCircle2 size={12} />
+                      <span>Attending & Mute</span>
                     </button>
                   )}
                   <button
                     onClick={() => backgroundSentinel.requestPermissions()}
-                    className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300"
+                    className="p-1 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300"
                     title="Background Permission Settings"
                   >
-                    <Zap size={14} />
+                    <Zap size={13} />
                   </button>
                 </div>
               )}

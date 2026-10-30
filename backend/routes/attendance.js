@@ -93,7 +93,7 @@ async function recalculateSubject(userId, subjectId) {
   });
 
   subject.totalClasses = effectiveRecords.filter(r => r.status !== 'cancelled').length;
-  subject.attendedClasses = effectiveRecords.filter(r => ['present', 'substitute', 'lab'].includes(r.status)).length;
+  subject.attendedClasses = effectiveRecords.filter(r => ['present', 'substitute', 'lab', 'on_duty'].includes(r.status)).length;
   subject.cancelledClasses = allRecords.filter(r =>
     r.status === 'cancelled' ||
     (r.status === 'substitute' && r.replacementSubjectId && String(r.replacementSubjectId) !== String(subjectId))
@@ -333,7 +333,7 @@ router.post('/extra-class', auth, async (req, res) => {
 
     const targetDate = date ? new Date(date) : new Date();
     const periodNum = parseInt(periodNumber, 10) || 6;
-    const classStatus = ['present', 'absent', 'substitute', 'cancelled'].includes(status) ? status : 'present';
+    const classStatus = ['present', 'absent', 'substitute', 'cancelled', 'on_duty'].includes(status) ? status : 'present';
 
     // Default start/end time to current hour if not explicitly given
     if (!startTime || !endTime) {

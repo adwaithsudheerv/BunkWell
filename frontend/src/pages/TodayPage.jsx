@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 const STATUS_CONFIG = {
   present: { label: 'Present', color: '#10b981', bg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' },
   absent: { label: 'Absent', color: '#ef4444', bg: 'bg-red-500/15 border-red-500/30 text-red-400' },
+  on_duty: { label: 'On Duty (OD)', color: '#a855f7', bg: 'bg-purple-500/15 border-purple-500/30 text-purple-400' },
   substitute: { label: 'Replaced', color: '#0047FF', bg: 'bg-blue-600/15 border-blue-500/30 text-blue-400' },
   cancelled: { label: 'Cancelled', color: '#64748b', bg: 'bg-slate-500/15 border-slate-500/30 text-slate-400' },
   not_marked: { label: 'Pending', color: '#94a3b8', bg: 'bg-white/5 border-white/10 text-slate-400' },
@@ -55,7 +56,7 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
       setIsReplaced(false);
 
       const subName = period.subjectName || period.subjectId?.name || 'Class';
-      if (newStatus === 'absent' || newStatus === 'cancelled') {
+      if (newStatus === 'absent' || newStatus === 'cancelled' || newStatus === 'on_duty') {
         await backgroundSentinel.markBunk(period.periodNumber, date, subName);
       } else if (newStatus === 'present') {
         await backgroundSentinel.markPresent(period.periodNumber, date, subName);
@@ -149,6 +150,7 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
           <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${cfg.bg}`}>
             {status === 'present' && <CheckCircle2 size={13} />}
             {status === 'absent' && <XCircle size={13} />}
+            {status === 'on_duty' && <ShieldCheck size={13} />}
             {status === 'substitute' && <RefreshCw size={13} />}
             {status === 'cancelled' && <Ban size={13} />}
             <span>{cfg.label}</span>
@@ -162,7 +164,7 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
       </div>
 
       {/* Direct Attendance Buttons */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         {/* Present */}
         <button
           onClick={() => mark('present')}
@@ -189,6 +191,20 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
           <XCircle size={15} /> Absent
         </button>
 
+        {/* On Duty (OD) */}
+        <button
+          onClick={() => mark('on_duty')}
+          disabled={marking}
+          title="On Duty Leave (Counts as present + active ringer)"
+          className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold border transition-all active:scale-95 disabled:opacity-60 ${
+            status === 'on_duty'
+              ? 'bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-600/25'
+              : 'border-white/10 text-purple-300 hover:border-purple-500/50 hover:text-purple-400 hover:bg-purple-500/10'
+          }`}
+        >
+          <ShieldCheck size={15} /> OD
+        </button>
+
         {/* Replaced */}
         <button
           onClick={handleOpenReplace}
@@ -206,13 +222,13 @@ function PeriodCard({ period, date, existingRecord, subjects, onMark }) {
         <button
           onClick={() => mark('cancelled')}
           disabled={marking}
-          className={`col-span-3 sm:col-span-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all active:scale-95 disabled:opacity-60 ${
+          className={`col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all active:scale-95 disabled:opacity-60 ${
             status === 'cancelled'
               ? 'bg-slate-600 text-white border-slate-500'
               : 'border-white/10 text-slate-400 hover:border-slate-500/50 hover:text-slate-300 hover:bg-white/5'
           }`}
         >
-          <Ban size={14} /> Cancelled
+          <Ban size={14} /> Off
         </button>
       </div>
 

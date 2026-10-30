@@ -7,7 +7,7 @@ import {
   Zap, Check, X, RefreshCw, Calendar, Clock,
   Plus, RotateCcw, Sparkles, ChevronRight, Ban,
   ShieldCheck, AlertTriangle, Layers, ArrowRight,
-  SlidersHorizontal, CheckCircle2, XCircle
+  SlidersHorizontal, CheckCircle2, XCircle, Award
 } from 'lucide-react';
 
 export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
@@ -255,8 +255,8 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
         });
       }
 
-      // Two-Way Sentinel Sync: Mutes on attend, un-mutes on bunk
-      if (status === 'absent' || status === 'cancelled') {
+      // Two-Way Sentinel Sync: Mutes on attend, un-mutes on bunk or on-duty
+      if (status === 'absent' || status === 'cancelled' || status === 'on_duty') {
         await backgroundSentinel.markBunk(p.periodNumber, now, subName);
       } else if (status === 'present') {
         await backgroundSentinel.markPresent(p.periodNumber, now, subName);
@@ -269,6 +269,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
       const statusNames = {
         present: 'Attended (Auto-Muted 🔕)',
         absent: 'Bunked (Active Ringer 🔔)',
+        on_duty: 'On Duty Leave (Counted + Active Ringer 🔔) 🏅',
         substitute: 'Replacement Subject 🔄',
         cancelled: 'Cancelled / Faculty Leave ⏸️'
       };
@@ -545,6 +546,7 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
 
               const isPresent = curStatus === 'present';
               const isBunked = curStatus === 'absent';
+              const isOnDuty = curStatus === 'on_duty';
               const isReplaced = curStatus === 'substitute';
               const isCancelled = curStatus === 'cancelled';
 
@@ -556,6 +558,8 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       ? 'bg-emerald-500/5 border-emerald-500/30 shadow-sm shadow-emerald-500/10'
                       : isBunked
                       ? 'bg-rose-500/5 border-rose-500/30 shadow-sm shadow-rose-500/10'
+                      : isOnDuty
+                      ? 'bg-purple-500/10 border-purple-500/35 shadow-sm shadow-purple-500/10'
                       : isReplaced
                       ? 'bg-blue-500/5 border-blue-500/30'
                       : isCancelled
@@ -595,20 +599,20 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                     </div>
                   </div>
 
-                  {/* Segmented Modern 4-Button Attendance Bar */}
-                  <div className="grid grid-cols-4 gap-1.5">
+                  {/* Segmented Modern 5-Button Attendance Bar (Present, Bunk, OD, Replace, Off) */}
+                  <div className="grid grid-cols-5 gap-1">
                     {/* Attended */}
                     <button
                       type="button"
                       onClick={() => handleSetStatus(p, 'present')}
                       disabled={saving}
-                      className={`py-2 px-1 rounded-xl font-black text-[11px] transition-all flex items-center justify-center gap-1 active:scale-95 ${
+                      className={`py-2 px-1 rounded-xl font-black text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-0.5 active:scale-95 ${
                         isPresent
                           ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/40 border border-emerald-400'
                           : 'bg-black/20 hover:bg-black/30 text-slate-300 border border-white/5'
                       }`}
                     >
-                      <Check size={13} className={isPresent ? 'text-white' : 'text-emerald-400'} />
+                      <Check size={12} className={isPresent ? 'text-white' : 'text-emerald-400'} />
                       <span>Present</span>
                     </button>
 
@@ -617,14 +621,30 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       type="button"
                       onClick={() => handleSetStatus(p, 'absent')}
                       disabled={saving}
-                      className={`py-2 px-1 rounded-xl font-black text-[11px] transition-all flex items-center justify-center gap-1 active:scale-95 ${
+                      className={`py-2 px-1 rounded-xl font-black text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-0.5 active:scale-95 ${
                         isBunked
                           ? 'bg-rose-600 text-white shadow-md shadow-rose-600/40 border border-rose-400'
                           : 'bg-black/20 hover:bg-black/30 text-slate-300 border border-white/5'
                       }`}
                     >
-                      <X size={13} className={isBunked ? 'text-white' : 'text-rose-400'} />
+                      <X size={12} className={isBunked ? 'text-white' : 'text-rose-400'} />
                       <span>Bunk</span>
+                    </button>
+
+                    {/* On Duty (OD) */}
+                    <button
+                      type="button"
+                      onClick={() => handleSetStatus(p, 'on_duty')}
+                      disabled={saving}
+                      title="On Duty Leave: Attendance counted + phone stays on active ringer"
+                      className={`py-2 px-1 rounded-xl font-black text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-0.5 active:scale-95 ${
+                        isOnDuty
+                          ? 'bg-purple-600 text-white shadow-md shadow-purple-600/40 border border-purple-400'
+                          : 'bg-purple-950/20 hover:bg-purple-900/30 text-purple-300 border border-purple-500/20'
+                      }`}
+                    >
+                      <Award size={12} className={isOnDuty ? 'text-white' : 'text-purple-400'} />
+                      <span>OD</span>
                     </button>
 
                     {/* Replaced */}
@@ -632,13 +652,13 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       type="button"
                       onClick={() => handleSetStatus(p, 'substitute')}
                       disabled={saving}
-                      className={`py-2 px-1 rounded-xl font-black text-[11px] transition-all flex items-center justify-center gap-1 active:scale-95 ${
+                      className={`py-2 px-1 rounded-xl font-black text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-0.5 active:scale-95 ${
                         isReplaced
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-600/40 border border-blue-400'
                           : 'bg-black/20 hover:bg-black/30 text-slate-300 border border-white/5'
                       }`}
                     >
-                      <RefreshCw size={12} className={isReplaced ? 'text-white' : 'text-blue-400'} />
+                      <RefreshCw size={11} className={isReplaced ? 'text-white' : 'text-blue-400'} />
                       <span>Replace</span>
                     </button>
 
@@ -647,13 +667,13 @@ export default function DailyWrapUpModal({ isOpen, onClose, onRefresh }) {
                       type="button"
                       onClick={() => handleSetStatus(p, 'cancelled')}
                       disabled={saving}
-                      className={`py-2 px-1 rounded-xl font-black text-[11px] transition-all flex items-center justify-center gap-1 active:scale-95 ${
+                      className={`py-2 px-1 rounded-xl font-black text-[10px] sm:text-[11px] transition-all flex items-center justify-center gap-0.5 active:scale-95 ${
                         isCancelled
                           ? 'bg-amber-600 text-white shadow-md shadow-amber-600/40 border border-amber-400'
                           : 'bg-black/20 hover:bg-black/30 text-slate-300 border border-white/5'
                       }`}
                     >
-                      <Ban size={12} className={isCancelled ? 'text-white' : 'text-amber-400'} />
+                      <Ban size={11} className={isCancelled ? 'text-white' : 'text-amber-400'} />
                       <span>Off</span>
                     </button>
                   </div>

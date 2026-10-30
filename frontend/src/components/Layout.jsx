@@ -262,21 +262,6 @@ export default function Layout() {
             )}
 
             {/* Ghost Terminal Button (Pass Chits & Bunk Sync by User ID) */}
-            <NavLink
-              to="/chat"
-              className={({ isActive }) =>
-                `relative p-2 rounded-xl transition-all ${
-                  isActive
-                    ? 'text-amber-500 bg-amber-500/10'
-                    : isDark ? 'text-slate-300 hover:text-white hover:bg-white/10' : 'text-slate-700 hover:text-black hover:bg-black/5'
-                }`
-              }
-              title="Ghost Terminal (Pass Chits & Bunk Sync by User ID)"
-            >
-              <Flame size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-[#0c0e14]" />
-            </NavLink>
-
             {/* Three-Dot Menu (Houses Subjects, Analytics, Settings, Theme) */}
             <div className="relative">
               <button
