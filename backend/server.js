@@ -165,6 +165,8 @@ async function startServer() {
   try {
     const { unlockAndRestoreIfEmpty } = require('./services/dbPersistence');
     await unlockAndRestoreIfEmpty();
+    const { cleanRogueRecordsAndAuditAllSubjects } = require('./services/cleanRogueRecords');
+    await cleanRogueRecordsAndAuditAllSubjects();
     const { ensureSharedTimetableBC1139 } = require('./services/defaultTimetable');
     await ensureSharedTimetableBC1139();
   } catch (restoreErr) {

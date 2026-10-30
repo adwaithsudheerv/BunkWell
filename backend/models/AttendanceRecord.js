@@ -5,7 +5,7 @@ const attendanceRecordSchema = new mongoose.Schema({
   subjectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true },
   date: { type: Date, required: true },
   dayOfWeek: { type: String },
-  periodNumber: { type: Number, required: true },
+  periodNumber: { type: Number, required: true, min: 1, max: 12 },
   status: {
     type: String,
     enum: ['present', 'absent', 'cancelled', 'substitute', 'lab', 'on_duty', 'not_marked'],

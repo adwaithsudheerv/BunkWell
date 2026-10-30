@@ -40,27 +40,75 @@ router.post('/quick-mark', auth, async (req, res) => {
     const subject = await Subject.findOne({ _id: subjectId, userId: req.user._id });
     if (!subject) return res.status(404).json({ message: 'Subject not found' });
 
-    // Record in AttendanceRecord so it appears in the register / attendance log
     const today = new Date();
-    const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(); dayEnd.setHours(23, 59, 59, 999);
-    const todayRecords = await AttendanceRecord.countDocuments({
+    const dayStart = new Date(today); dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(today); dayEnd.setHours(23, 59, 59, 999);
+
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayDay = days[today.getDay()];
+    const Timetable = require('../models/Timetable');
+    const tt = await Timetable.findOne({ userId: req.user._id, isActive: true });
+    const todaySched = tt?.days?.find(d => d.day === todayDay);
+
+    // Find periods scheduled for this subject today
+    const subjectPeriods = (todaySched?.periods || [])
+      .filter(p => String(p.subjectId) === String(subjectId) || p.subjectName?.trim().toLowerCase() === subject.name.trim().toLowerCase())
+      .map(p => p.periodNumber);
+
+    // Existing records for today
+    const existingRecs = await AttendanceRecord.find({
       userId: req.user._id,
       date: { $gte: dayStart, $lte: dayEnd }
     });
-    const periodNumber = todayRecords + 1;
+    const usedPeriods = new Set(existingRecs.map(r => r.periodNumber));
 
-    const record = new AttendanceRecord({
+    // Prefer scheduled period not yet marked
+    let periodNumber = subjectPeriods.find(p => !usedPeriods.has(p));
+    if (!periodNumber) {
+      if (subjectPeriods.length > 0) {
+        periodNumber = subjectPeriods[0];
+      } else {
+        // Unscheduled subject: find first available period between 1 and 8
+        for (let i = 1; i <= 8; i++) {
+          if (!usedPeriods.has(i)) {
+            periodNumber = i;
+            break;
+          }
+        }
+        if (!periodNumber) periodNumber = 1;
+      }
+    }
+
+    // Clamp strictly between 1 and 8 (never allow invalid period numbers like 78)
+    periodNumber = Math.min(8, Math.max(1, periodNumber));
+
+    // Update existing record for this period if one exists, or create new
+    let record = await AttendanceRecord.findOne({
       userId: req.user._id,
-      subjectId,
-      date: today,
-      periodNumber,
-      status: status, // 'present' or 'absent'
-      isExtra: false,
-      notes: 'Quick mark from subject card',
-      markedAt: today
+      date: { $gte: dayStart, $lte: dayEnd },
+      periodNumber
     });
-    await record.save();
+
+    if (record) {
+      record.subjectId = subjectId;
+      record.status = status;
+      record.isExtra = false;
+      record.notes = 'Quick mark from subject card';
+      record.markedAt = today;
+      await record.save();
+    } else {
+      record = new AttendanceRecord({
+        userId: req.user._id,
+        subjectId,
+        date: today,
+        periodNumber,
+        status,
+        isExtra: false,
+        notes: 'Quick mark from subject card',
+        markedAt: today
+      });
+      await record.save();
+    }
 
     await recalculateSubject(req.user._id, subjectId);
     const updatedSubject = await Subject.findById(subjectId);

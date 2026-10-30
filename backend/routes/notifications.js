@@ -67,16 +67,16 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.5.6',
-    versionCode: 33,
+    latestVersion: '1.5.7',
+    versionCode: 34,
     releaseDate: '2026-10-30',
     downloadUrl: 'https://bunkclub-app.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.5.6 Seamless Universal Login & Master Vault Sync Edition',
-    message: 'Instant single-step auto-registration for all new students, protected 401 routing, and real-time Master Vault visibility!',
+    title: '⚡ BunkClub v1.5.7 Mathematical Attendance & Database Integrity Edition',
+    message: 'Strict college timetable period validation (1-8), zero rogue attendance records, and mathematically exact cancelled class preservation!',
     changelog: [
-      '🚀 Seamless 1-Step Login & Auto-Registration: New students can now simply enter their username and password to instantly register and enter BunkClub with zero friction',
-      '👑 Instant Master Admin Vault Visibility: Every new registered student immediately appears in the Admin Directory with credentials recovery and timetable status',
-      '🛡️ Hardened Auth Routing: Eliminated 401 interceptor loop on login screens, ensuring smooth entry across all mobile devices'
+      '🛡️ Hardened Period Bounds (P1-P8): Guaranteed timetable alignment preventing any out-of-range periods',
+      '🎯 Cancelled Class Precision: Calling off a class preserves your exact attendance percentage and attended class count without distortions',
+      '🧹 Global Database Self-Healing: Cleansed rogue bunk history entries across all subjects and locked initial baselines'
     ]
   });
 });
