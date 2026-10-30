@@ -73,7 +73,6 @@ router.post('/quick-mark', auth, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-});
 
 // Helper: Recalculate subject attendance stats based on all records + preserve baseline
 async function recalculateSubject(userId, subjectId) {
