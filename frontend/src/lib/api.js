@@ -87,8 +87,8 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle 401
-    if (err.response?.status === 401) {
+    // Handle 401: Only redirect to /login for protected API routes, never on /auth endpoints
+    if (err.response?.status === 401 && !config?.url?.includes('/auth/')) {
       localStorage.removeItem('bunkwell_token');
       localStorage.removeItem('bunkwell_user');
       window.location.href = '/login';

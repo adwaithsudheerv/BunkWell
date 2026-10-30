@@ -92,7 +92,11 @@ export default function LoginPage() {
           navigate('/admin');
           return;
         }
-        toast.success(`Welcome back @${cleanUsername}! 🎓`);
+        if (res?.isNewUser) {
+          toast.success(`Account created! Welcome @${cleanUsername} 🎉`);
+        } else {
+          toast.success(`Welcome back @${cleanUsername}! 🎓`);
+        }
       } else {
         await register({
           username: cleanUsername,

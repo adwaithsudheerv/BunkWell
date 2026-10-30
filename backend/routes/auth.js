@@ -114,18 +114,39 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const user = await User.findOne({
+    let user = await User.findOne({
       $or: [
         { username: cleanUsername },
         { email: cleanUsername }
       ]
     });
 
+    // 🌟 SEAMLESS AUTO-REGISTRATION:
+    // If user does not exist yet, automatically create their account and log them in immediately!
     if (!user) {
-      return res.status(401).json({
-        message: `Username "${cleanUsername}" is not registered yet. Create your account with this username!`,
-        notFound: true,
-        username: cleanUsername
+      if (cleanUsername.length < 3) {
+        return res.status(400).json({ message: 'Username must be at least 3 characters long' });
+      }
+      if (password.length < 4) {
+        return res.status(400).json({ message: 'Password must be at least 4 characters long' });
+      }
+
+      user = new User({
+        username: cleanUsername,
+        name: cleanUsername,
+        password: password,
+        email: `${cleanUsername}@bunkclub.local`,
+        attendanceTarget: 80
+      });
+      await user.save();
+      try { require('../services/dbPersistence').triggerAutoSnapshot(); } catch (e) {}
+
+      const token = createToken(user._id);
+      return res.json({
+        token,
+        user: user.toSafeObject(),
+        isNewUser: true,
+        message: `Welcome to BunkClub @${cleanUsername}! Account created.`
       });
     }
 

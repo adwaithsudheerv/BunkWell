@@ -67,16 +67,16 @@ router.post('/test', auth, async (req, res) => {
 // Get latest app version info for in-app updates
 router.get('/version', (req, res) => {
   res.json({
-    latestVersion: '1.5.5',
-    versionCode: 32,
+    latestVersion: '1.5.6',
+    versionCode: 33,
     releaseDate: '2026-10-30',
     downloadUrl: 'https://bunkclub-app.onrender.com/BunkClub.apk',
-    title: '⚡ BunkClub v1.5.5 Baseline Attendance & Lightning Timetable Integrity Edition',
-    message: 'Permanent past attendance protection, guaranteed baseline persistence across daily wrap-up, and strict timetable period schedule filtering!',
+    title: '⚡ BunkClub v1.5.6 Seamless Universal Login & Master Vault Sync Edition',
+    message: 'Instant single-step auto-registration for all new students, protected 401 routing, and real-time Master Vault visibility!',
     changelog: [
-      '🛡️ Permanent Baseline Attendance Protection: Editing your subject attendance (e.g. 18/21) now locks as a permanent historical baseline that is never overwritten by daily period logging',
-      '⚡ Strict Lightning Attendance Filtering: Daily Wrap-Up strictly renders only your scheduled timetable periods and verified extra classes',
-      '🎖️ Seamless On Duty (OD) Reconciliation: OD attendance adds to your attended ledger and keeps normal ringer active without touching past historical counts'
+      '🚀 Seamless 1-Step Login & Auto-Registration: New students can now simply enter their username and password to instantly register and enter BunkClub with zero friction',
+      '👑 Instant Master Admin Vault Visibility: Every new registered student immediately appears in the Admin Directory with credentials recovery and timetable status',
+      '🛡️ Hardened Auth Routing: Eliminated 401 interceptor loop on login screens, ensuring smooth entry across all mobile devices'
     ]
   });
 });
