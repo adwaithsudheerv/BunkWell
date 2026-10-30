@@ -338,7 +338,7 @@ router.get('/weekly', auth, async (req, res) => {
     records.forEach(r => {
       const d = new Date(r.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
       if (!byDay[d]) byDay[d] = { date: d, present: 0, absent: 0, cancelled: 0 };
-      if (['present', 'substitute', 'lab'].includes(r.status)) byDay[d].present++;
+      if (['present', 'substitute', 'lab', 'on_duty'].includes(r.status)) byDay[d].present++;
       else if (r.status === 'absent') byDay[d].absent++;
       else if (r.status === 'cancelled') byDay[d].cancelled++;
     });

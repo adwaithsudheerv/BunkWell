@@ -28,7 +28,7 @@ export const TIME_BLOCKS = [
 export default function TimetablePage() {
   const [subjects, setSubjects] = useState([]);
   const [timetableId, setTimetableId] = useState(null);
-  const [semName, setSemName] = useState('MCA Semester 1');
+  const [semName, setSemName] = useState('Current Semester');
   const [section, setSection] = useState('A');
   const [shareCode, setShareCode] = useState('');
   const [isShareCodeRevealed, setIsShareCodeRevealed] = useState(false);

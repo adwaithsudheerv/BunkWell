@@ -163,7 +163,7 @@ export default function FloatingClassControl() {
                 }`}>
                   {status.isMuted ? <VolumeX size={12} /> : <Volume2 size={12} />}
                   <span>
-                    {status.isMuted ? 'Lecture Auto-Muted' : status.isBunked ? 'Active Mode' : 'Ringer Active'}
+                    {status.isMuted ? 'Silent' : 'Active'}
                   </span>
                 </span>
                 <button

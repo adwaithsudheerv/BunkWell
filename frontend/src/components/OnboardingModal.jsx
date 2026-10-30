@@ -92,6 +92,10 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
               <span className="text-red-400 font-bold block mb-1">✗ Absent (Bunk)</span>
               <span className="text-slate-400">Skipped or missed the lecture.</span>
             </div>
+            <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 col-span-2">
+              <span className="text-purple-400 font-bold block mb-1">🏅 On Duty (OD) Leave</span>
+              <span className="text-slate-400">Official college duty / event leave (attendance counted & ringer active).</span>
+            </div>
             <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
               <span className="text-blue-400 font-bold block mb-1">🔄 Replaced</span>
               <span className="text-slate-400">Class or teacher substituted.</span>
@@ -203,7 +207,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
               className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm active:scale-95 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
             >
               <Sparkles size={16} />
-              {seeding ? 'Loading MCA Timetable…' : 'Load Official MCA Timetable (Code: BC-1139)'}
+              {seeding ? 'Loading Sample Timetable…' : 'Explore Sample Timetable (Code: BC-1139)'}
             </button>
           </div>
         )}
@@ -228,7 +232,7 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
             {step > 0 && (
               <button
                 onClick={() => setStep(s => s - 1)}
-                className="px-3 py-2 rounded-xl border border-white/10 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1"
+                className="px-3.5 py-2.5 rounded-xl border border-white/20 text-xs font-bold text-white hover:bg-white/10 transition-all flex items-center gap-1"
               >
                 <ChevronLeft size={14} /> Back
               </button>
@@ -237,15 +241,15 @@ export default function OnboardingModal({ isOpen, onClose, onDemoLoaded }) {
             {step < slides.length - 1 ? (
               <button
                 onClick={() => setStep(s => s + 1)}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-extrabold text-xs hover:bg-blue-500 active:scale-95 transition-all shadow-md shadow-blue-600/30 flex items-center gap-1.5 border border-blue-400/40"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-xs hover:from-blue-500 hover:to-indigo-500 active:scale-95 transition-all shadow-lg shadow-blue-500/40 flex items-center gap-1.5 border border-blue-300/40 ring-2 ring-blue-500/20"
               >
-                <span>Next</span>
-                <ChevronRight size={15} />
+                <span className="tracking-wide">Next</span>
+                <ChevronRight size={16} className="text-white" />
               </button>
             ) : (
               <button
                 onClick={handleFinish}
-                className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition-all flex items-center gap-1"
+                className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-all flex items-center gap-1 shadow-lg shadow-emerald-500/25"
               >
                 Got It! Start Exploring <CheckCircle2 size={14} />
               </button>

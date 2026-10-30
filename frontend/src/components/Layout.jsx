@@ -289,14 +289,6 @@ export default function Layout() {
                     <span>Subjects Management</span>
                   </Link>
                   <Link
-                    to="/chat"
-                    onClick={() => setThreeDotOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
-                  >
-                    <Flame size={16} />
-                    <span>Ghost Whispers (@UserIDs)</span>
-                  </Link>
-                  <Link
                     to="/analytics"
                     onClick={() => setThreeDotOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"

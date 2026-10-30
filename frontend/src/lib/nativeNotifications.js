@@ -251,3 +251,38 @@ export async function scheduleScheduleReminders(timetable) {
     console.warn('Failed to schedule local notifications:', err);
   }
 }
+
+// Sent notification whenever Active Mode or Silent Mode is toggled
+let lastNotificationMode = null;
+export async function notifyRingerModeChange(mode, subjectName) {
+  try {
+    const isMuted = mode === 'silent' || mode === 'muted';
+    const modeKey = `${isMuted ? 'silent' : 'active'}_${subjectName || 'general'}`;
+    if (lastNotificationMode === modeKey) return;
+    lastNotificationMode = modeKey;
+
+    const title = isMuted ? '🔕 Silent Mode Active' : '🔔 Active Mode Active';
+    const body = isMuted
+      ? `Lecture in session: ${subjectName || 'Class'}. Phone auto-muted.`
+      : `Lecture finished or bunked: ${subjectName || 'Class'}. Ringer is audible.`;
+
+    if (Capacitor.isNativePlatform()) {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: 9911,
+            title,
+            body,
+            channelId: 'bunkclub_alerts',
+            schedule: { at: new Date(Date.now() + 100) },
+          }
+        ]
+      });
+    } else if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      new Notification(title, { body, icon: '/icon-192.png' });
+    }
+  } catch (e) {
+    console.warn('Ringer notification error:', e);
+  }
+}
+

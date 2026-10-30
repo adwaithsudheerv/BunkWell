@@ -75,7 +75,7 @@ export default function AttendancePage() {
       };
     }
     dateMap[dStr].periods[rec.periodNumber] = rec;
-    if (['present', 'substitute', 'lab'].includes(rec.status)) {
+    if (['present', 'substitute', 'lab', 'on_duty'].includes(rec.status)) {
       dateMap[dStr].presentCount++;
       dateMap[dStr].total++;
     } else if (rec.status === 'absent') {

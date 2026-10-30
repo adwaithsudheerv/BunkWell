@@ -145,7 +145,7 @@ export default function BunkRunwayMatrix({ subjects = [], target = 75 }) {
                     ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
                     : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                 }`}>
-                  {liveSentinel.isMuted ? 'Auto-Muted in Session' : liveSentinel.isBunked ? 'Bunked • Active Mode' : 'Audible Active Mode'}
+                  {liveSentinel.isMuted ? '🔕 Silent' : '🔔 Active'}
                 </span>
                 <span className="text-[11px] font-semibold text-slate-400">
                   {liveSentinel.session ? `P${liveSentinel.session.periodNumber}` : 'Day Standby'}

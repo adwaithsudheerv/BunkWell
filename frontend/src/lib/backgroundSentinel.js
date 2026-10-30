@@ -1,5 +1,6 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import api from './api';
+import { notifyRingerModeChange } from './nativeNotifications';
 
 const BunkClubBackground = registerPlugin('BunkClubBackground');
 
@@ -173,6 +174,7 @@ class BackgroundSentinelService {
           if (Capacitor.isNativePlatform()) {
             try { await BunkClubBackground.unmuteNow(); } catch (e) {}
           }
+          notifyRingerModeChange('active', currentPeriod.subjectName);
           window.dispatchEvent(new CustomEvent('sentinel-status', {
             detail: {
               isMuted: false,
@@ -187,6 +189,7 @@ class BackgroundSentinelService {
           if (Capacitor.isNativePlatform()) {
             try { await BunkClubBackground.muteNow(); } catch (e) {}
           }
+          notifyRingerModeChange('silent', currentPeriod.subjectName);
           window.dispatchEvent(new CustomEvent('sentinel-status', {
             detail: {
               isMuted: true,
@@ -215,6 +218,7 @@ class BackgroundSentinelService {
         await BunkClubBackground.unmuteNow();
       } catch (e) {}
     }
+    notifyRingerModeChange('active', reason);
 
     window.dispatchEvent(new CustomEvent('sentinel-status', {
       detail: {
